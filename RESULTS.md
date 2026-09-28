@@ -37,6 +37,7 @@
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |
+| 2026-09-29 | `b3d2c83` / thinking disabled, max 50 steps, $0.5 cap | `deepseek-flash` | `django__django-16429` | YES | 8 | prompt 24226 / completion 1128 / cache 20224 | $0.002675544 max estimate | provider 8; tools 9; wall 11.99s; patch yes; terminal submitted |
 
 Deferred live-review items (not changed in this round): SDK `max_retries=0`,
 adding the git commit to the first trajectory record, and filtering reproduction
