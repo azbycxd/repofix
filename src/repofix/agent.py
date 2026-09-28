@@ -63,6 +63,7 @@ class AgentConfig:
     model: str = "deepseek-flash"
     base_url: str = "https://api.deepseek.com"
     thinking: str = "disabled"
+    temperature: float = 0.0
     max_steps: int = 50
     max_cost_usd: float = 0.5
     tool_timeout_seconds: int = 60
@@ -119,6 +120,7 @@ def request_chat_completion(
 ) -> Any:
     return client.chat.completions.create(
         model=config.model,
+        temperature=config.temperature,
         messages=messages,
         tools=TOOLS,
         reasoning_effort="none",
