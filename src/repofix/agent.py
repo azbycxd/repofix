@@ -93,7 +93,7 @@ def create_deepseek_client(api_key: str, config: AgentConfig) -> OpenAI:
         api_key=api_key,
         base_url=config.base_url,
         timeout=config.provider_timeout_seconds,
-        max_retries=0,
+        max_retries=2,
     )
 
 
@@ -165,11 +165,13 @@ class RepoFixAgent:
         issue: str,
         trajectory_path: Path,
         api_key: str,
+        git_commit: str,
         config: AgentConfig | None = None,
         client: Any | None = None,
     ) -> None:
         self.env = env
         self.issue = issue
+        self.git_commit = git_commit
         self.config = config or AgentConfig()
         self.client = client or create_deepseek_client(api_key, self.config)
         self.trace = TrajectoryWriter(trajectory_path, secrets=[api_key])
@@ -197,6 +199,7 @@ class RepoFixAgent:
                 "type": "config",
                 "step": 0,
                 "model": self.config.model,
+                "git_commit": self.git_commit,
                 "config": asdict(self.config),
                 "system_prompt": SYSTEM_PROMPT,
                 "problem_statement": self.issue,

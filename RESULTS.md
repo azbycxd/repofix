@@ -37,8 +37,29 @@
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |
-| 2026-09-29 | `b3d2c83` / thinking disabled, max 50 steps, $0.5 cap | `deepseek-flash` | `django__django-16429` | YES | 8 | prompt 24226 / completion 1128 / cache 20224 | $0.002675544 max estimate | provider 8; tools 9; wall 11.99s; patch yes; terminal submitted |
+| 2026-09-29 | `66bd442` / thinking disabled, max 50 steps, $0.5 cap | `deepseek-flash` | `django__django-16429` | YES | 8 | prompt 24226 / completion 1128 / cache 20224 | $0.002675544 max estimate | provider 8; tools 9; wall 11.99s; patch yes; terminal submitted; issue 自带文件和修法；修后验证，未先复现 |
 
-Deferred live-review items (not changed in this round): SDK `max_retries=0`,
-adding the git commit to the first trajectory record, and filtering reproduction
+Deferred live-review item (not changed in this round): filtering reproduction
 scripts from `get_diff`.
+
+## Step 1.3 DEV baseline
+
+| Task | Resolved | Steps | Cost |
+| --- | --- | ---: | ---: |
+| `django__django-16429` | YES | 5 | $0.001322988 |
+| `django__django-15277` | YES | 7 | $0.002455224 |
+| `django__django-13343` | YES | 24 | $0.012987696 |
+| `django__django-16454` | YES | 36 | $0.010402284 |
+| `django__django-16950` | YES | 50 | $0.042569856 |
+
+- Date: 2026-09-29
+- Run ID: `step-1-3-minimal-baseline`
+- Git commit: `4318e33cad71d4f8a319355b85bf02e1f9b092f1`
+- Model / config: `deepseek-flash`; thinking disabled; 50-step limit; $0.5 cost limit; SDK `max_retries=2`
+- Resolved tasks: `django__django-16429`, `django__django-15277`, `django__django-13343`, `django__django-16454`, `django__django-16950`
+- Resolved count for this five-task DEV baseline: 5 / 5
+- Total Provider calls / tool calls: 122 / 140
+- Total tokens: prompt 1,653,020 / cache hit 1,601,408 / completion 37,205 / prompt + completion 1,690,225
+- Total cost: $0.069738048 maximum estimate
+- Agent total wall time: 328.45 seconds
+- Harness wall time: 136.25 seconds
