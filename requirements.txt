@@ -1,0 +1,5 @@
+swebench==5.0.2
+datasets==5.0.1
+openai==3.19.2
+docker==7.2.0
+python-dotenv==1.2.3

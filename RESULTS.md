@@ -32,3 +32,8 @@
 
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
+
+## Step 1.2 experiments
+
+| Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |
