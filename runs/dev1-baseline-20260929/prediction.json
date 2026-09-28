@@ -1,0 +1,7 @@
+[
+  {
+    "instance_id": "django__django-16429",
+    "model_patch": "diff --git a/django/utils/timesince.py b/django/utils/timesince.py\nindex 701c49bab9..f582d0e4f2 100644\n--- a/django/utils/timesince.py\n+++ b/django/utils/timesince.py\n@@ -97,6 +97,7 @@ def timesince(d, now=None, reversed=False, time_strings=None, depth=2):\n             d.hour,\n             d.minute,\n             d.second,\n+            tzinfo=d.tzinfo,\n         )\n     else:\n         pivot = d\ndiff --git a/tests/utils_tests/test_timesince.py b/tests/utils_tests/test_timesince.py\nindex bf05f32f5e..54cb0cb1d4 100644\n--- a/tests/utils_tests/test_timesince.py\n+++ b/tests/utils_tests/test_timesince.py\n@@ -1,6 +1,6 @@\n import datetime\n \n-from django.test import TestCase\n+from django.test import TestCase, override_settings\n from django.test.utils import requires_tz_support\n from django.utils import timezone, translation\n from django.utils.timesince import timesince, timeuntil\n@@ -236,6 +236,13 @@ class TimesinceTests(TestCase):\n             with self.subTest():\n                 self.assertEqual(timesince(t, value), expected)\n \n+    @requires_tz_support\n+    @override_settings(USE_TZ=True)\n+    def test_long_interval_with_tz(self):\n+        now = timezone.now()\n+        d = now - datetime.timedelta(days=31)\n+        self.assertEqual(timesince(d), \"1\\xa0month\")\n+\n     def test_depth_invalid(self):\n         msg = \"depth must be greater than 0.\"\n         with self.assertRaisesMessage(ValueError, msg):\n",
+    "model_name_or_path": "deepseek-flash"
+  }
+]

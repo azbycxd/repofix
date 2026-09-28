@@ -1,0 +1,16 @@
+{
+  "instance_id": "django__django-16429",
+  "status": "submitted",
+  "submitted": true,
+  "steps": 5,
+  "provider_calls": 5,
+  "tool_calls": 6,
+  "prompt_tokens": 10725,
+  "cache_hit_tokens": 8448,
+  "completion_tokens": 491,
+  "max_estimated_cost_usd": 0.001322988,
+  "wall_time_seconds": 7.979890186004923,
+  "patch_nonempty": true,
+  "trajectory_path": "runs/step-1-3-minimal-baseline/django__django-16429.jsonl",
+  "patch_path": "runs/step-1-3-minimal-baseline/django__django-16429.patch"
+}

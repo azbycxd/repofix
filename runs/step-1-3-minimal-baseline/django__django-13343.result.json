@@ -1,0 +1,16 @@
+{
+  "instance_id": "django__django-13343",
+  "status": "submitted",
+  "submitted": true,
+  "steps": 24,
+  "provider_calls": 24,
+  "tool_calls": 35,
+  "prompt_tokens": 267324,
+  "cache_hit_tokens": 255616,
+  "completion_tokens": 6618,
+  "max_estimated_cost_usd": 0.012987695999999996,
+  "wall_time_seconds": 64.20070968400978,
+  "patch_nonempty": true,
+  "trajectory_path": "runs/step-1-3-minimal-baseline/django__django-13343.jsonl",
+  "patch_path": "runs/step-1-3-minimal-baseline/django__django-13343.patch"
+}
