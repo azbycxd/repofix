@@ -37,3 +37,7 @@
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |
+
+Deferred live-review items (not changed in this round): SDK `max_retries=0`,
+adding the git commit to the first trajectory record, and filtering reproduction
+scripts from `get_diff`.

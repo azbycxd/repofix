@@ -88,6 +88,42 @@ class AgentResult:
     trajectory_path: str
 
 
+def create_deepseek_client(api_key: str, config: AgentConfig) -> OpenAI:
+    return OpenAI(
+        api_key=api_key,
+        base_url=config.base_url,
+        timeout=config.provider_timeout_seconds,
+        max_retries=0,
+    )
+
+
+def request_chat_completion(
+    client: Any, messages: list[dict[str, Any]], config: AgentConfig
+) -> Any:
+    return client.chat.completions.create(
+        model=config.model,
+        messages=messages,
+        tools=TOOLS,
+        reasoning_effort="none",
+        extra_body={"thinking": {"type": "disabled"}},
+        max_completion_tokens=config.max_completion_tokens,
+        timeout=config.provider_timeout_seconds,
+    )
+
+
+def parse_tool_arguments(arguments_text: str) -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        arguments = json.loads(arguments_text)
+    except json.JSONDecodeError as exc:
+        return None, f"Invalid tool arguments: malformed JSON ({exc})"
+    if not isinstance(arguments, dict):
+        return None, (
+            "Invalid tool arguments: expected a JSON object, "
+            f"got {type(arguments).__name__}"
+        )
+    return arguments, None
+
+
 class TrajectoryWriter:
     def __init__(self, path: Path, secrets: list[str] | None = None) -> None:
         self.path = path
@@ -135,12 +171,7 @@ class RepoFixAgent:
         self.env = env
         self.issue = issue
         self.config = config or AgentConfig()
-        self.client = client or OpenAI(
-            api_key=api_key,
-            base_url=self.config.base_url,
-            timeout=self.config.provider_timeout_seconds,
-            max_retries=0,
-        )
+        self.client = client or create_deepseek_client(api_key, self.config)
         self.trace = TrajectoryWriter(trajectory_path, secrets=[api_key])
 
     @staticmethod
@@ -186,14 +217,8 @@ class RepoFixAgent:
         for step in range(1, self.config.max_steps + 1):
             call_started = time.monotonic()
             try:
-                response = self.client.chat.completions.create(
-                    model=self.config.model,
-                    messages=messages,
-                    tools=TOOLS,
-                    reasoning_effort="none",
-                    extra_body={"thinking": {"type": "disabled"}},
-                    max_completion_tokens=self.config.max_completion_tokens,
-                    timeout=self.config.provider_timeout_seconds,
+                response = request_chat_completion(
+                    self.client, messages, self.config
                 )
             except Exception as exc:
                 self.trace.write(
@@ -269,11 +294,11 @@ class RepoFixAgent:
                     tool_call_count += 1
                     name = tool_call.function.name
                     arguments_text = tool_call.function.arguments or "{}"
-                    try:
-                        arguments = json.loads(arguments_text)
-                    except json.JSONDecodeError as exc:
-                        observation = f"Invalid tool arguments: {exc}"
+                    arguments, argument_error = parse_tool_arguments(arguments_text)
+                    if argument_error is not None:
+                        observation = argument_error
                     else:
+                        assert arguments is not None
                         if name == "bash" and isinstance(arguments.get("command"), str):
                             try:
                                 result = self.env.execute(
