@@ -1,4 +1,4 @@
-"""Run one DEV task or the frozen five-task RepoFix 1.3 baseline."""
+"""Run one DEV task or a frozen five-task RepoFix DEV experiment."""
 
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ from repofix.agent import (  # noqa: E402
     AgentConfig,
     RepoFixAgent,
     TrajectoryWriter,
+    format_tool_observation,
     parse_tool_arguments,
 )
 from repofix.env import DockerEnv  # noqa: E402
@@ -101,6 +102,54 @@ def checked_execute(env: DockerEnv, command: str):
     return result
 
 
+def check_tool_output_truncation(env: DockerEnv) -> None:
+    config = AgentConfig()
+    suffix = "\n[exit_code=0]"
+    small = "short output\n"
+    small_view = format_tool_observation(
+        small,
+        suffix,
+        None,
+        config.tool_output_max_chars,
+        config.tool_output_head_chars,
+        config.tool_output_tail_chars,
+    )
+    assert not small_view.truncated
+    assert small_view.content == small + suffix
+    assert small_view.returned_chars == len(small + suffix)
+
+    large = (
+        "HEAD_SENTINEL\n"
+        + "".join(f"line-{index:04d}-{'x' * 24}\n" for index in range(1_000))
+        + "TAIL_SENTINEL\n"
+    )
+    output_path = "/tmp/repofix_out_offline_check.txt"
+    env.write_text_file(output_path, large)
+    large_view = format_tool_observation(
+        large,
+        suffix,
+        output_path,
+        config.tool_output_max_chars,
+        config.tool_output_head_chars,
+        config.tool_output_tail_chars,
+    )
+    assert large_view.truncated
+    assert large_view.original_chars == len(large)
+    assert large_view.original_lines == len(large.splitlines())
+    assert large[: config.tool_output_head_chars] in large_view.content
+    assert large[-config.tool_output_tail_chars :] in large_view.content
+    assert output_path in large_view.content
+    assert large_view.returned_chars == len(large_view.content)
+
+    restored = env.execute(f"cat {output_path}")
+    assert not restored.timed_out and restored.exit_code == 0
+    assert restored.output == large
+    print("TOOL_OUTPUT_SMALL_UNCHANGED=PASS")
+    print("TOOL_OUTPUT_LARGE_TRUNCATED=PASS")
+    print("TOOL_OUTPUT_HEAD_TAIL=PASS")
+    print("TOOL_OUTPUT_FULL_FILE_READBACK=PASS")
+
+
 def offline_check(
     selected_ids: list[str],
     instances: dict[str, dict[str, Any]],
@@ -109,7 +158,7 @@ def offline_check(
 ) -> None:
     check_tool_argument_parsing()
     print("TOOL_ARGUMENT_CHECKS=PASS")
-    for instance_id in selected_ids:
+    for index, instance_id in enumerate(selected_ids):
         spec = make_test_spec(instances[instance_id])
         print(f"OFFLINE_INSTANCE={instance_id}")
         with DockerEnv(spec.instance_id, spec.image, f"{run_id}-check") as env:
@@ -125,6 +174,8 @@ def offline_check(
                     f"django was not imported from {DockerEnv.workdir}: {django_path}"
                 )
             checked_execute(env, "git status --short")
+            if index == 0:
+                check_tool_output_truncation(env)
     print("TESTBED_DJANGO_IMPORT_CHECKS=PASS")
     print(f"DEEPSEEK_API_KEY_PRESENT={'YES' if api_key_present else 'NO'}")
     print("PROVIDER_CALLS=0")
@@ -138,6 +189,7 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
         "steps": result.steps,
         "provider_calls": result.provider_calls,
         "tool_calls": result.tool_calls,
+        "truncations": result.truncations,
         "prompt_tokens": result.prompt_tokens,
         "cache_hit_tokens": result.cache_hit_tokens,
         "completion_tokens": result.completion_tokens,
@@ -151,6 +203,7 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
 def run_instance(
     instance: dict[str, Any],
     run_dir: Path,
+    trajectory_dir: Path,
     run_id: str,
     api_key: str,
     git_commit: str,
@@ -158,7 +211,7 @@ def run_instance(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     spec = make_test_spec(instance)
     instance_id = spec.instance_id
-    trajectory_path = run_dir / f"{instance_id}.jsonl"
+    trajectory_path = trajectory_dir / f"{instance_id}.jsonl"
     patch = ""
     try:
         with DockerEnv(instance_id, spec.image, run_id) as env:
@@ -194,6 +247,7 @@ def run_instance(
             "steps": 0,
             "provider_calls": 0,
             "tool_calls": 0,
+            "truncations": 0,
             "prompt_tokens": 0,
             "cache_hit_tokens": None,
             "completion_tokens": 0,
@@ -227,6 +281,14 @@ def main() -> int:
     selection.add_argument("--all-dev", action="store_true")
     parser.add_argument("--run-id")
     parser.add_argument(
+        "--output-dir",
+        help="Experiment output directory; defaults to runs/<run-id>.",
+    )
+    parser.add_argument(
+        "--trajectory-dir",
+        help="Optional single canonical directory for review trajectories.",
+    )
+    parser.add_argument(
         "--offline-check",
         action="store_true",
         help="Validate selected DEV containers without a Provider call.",
@@ -257,10 +319,33 @@ def main() -> int:
 
     if not api_key:
         raise RuntimeError("DEEPSEEK_API_KEY is not set")
-    run_dir = PROJECT_ROOT / "runs" / run_id
+    run_dir = (
+        Path(args.output_dir)
+        if args.output_dir
+        else PROJECT_ROOT / "runs" / run_id
+    )
+    if not run_dir.is_absolute():
+        run_dir = PROJECT_ROOT / run_dir
+    run_dir = run_dir.resolve()
+    trajectory_dir = (
+        Path(args.trajectory_dir) if args.trajectory_dir else run_dir
+    )
+    if not trajectory_dir.is_absolute():
+        trajectory_dir = PROJECT_ROOT / trajectory_dir
+    trajectory_dir = trajectory_dir.resolve()
+    for path in (run_dir, trajectory_dir):
+        if path != PROJECT_ROOT and PROJECT_ROOT not in path.parents:
+            raise RuntimeError("Experiment output must remain inside the project")
     if run_dir.exists() and any(run_dir.iterdir()):
         raise RuntimeError(f"Run directory is not empty: {run_dir}")
+    if (
+        trajectory_dir != run_dir
+        and trajectory_dir.exists()
+        and any(trajectory_dir.iterdir())
+    ):
+        raise RuntimeError(f"Trajectory directory is not empty: {trajectory_dir}")
     run_dir.mkdir(parents=True, exist_ok=True)
+    trajectory_dir.mkdir(parents=True, exist_ok=True)
 
     git_commit = current_git_commit()
     config = AgentConfig()
@@ -268,7 +353,13 @@ def main() -> int:
     predictions: list[dict[str, Any]] = []
     for instance_id in selected_ids:
         summary, prediction = run_instance(
-            instances[instance_id], run_dir, run_id, api_key, git_commit, config
+            instances[instance_id],
+            run_dir,
+            trajectory_dir,
+            run_id,
+            api_key,
+            git_commit,
+            config,
         )
         summaries.append(summary)
         predictions.append(prediction)
@@ -285,6 +376,7 @@ def main() -> int:
         "model": config.model,
         "instance_ids": selected_ids,
         "results": summaries,
+        "trajectory_dir": str(trajectory_dir.relative_to(PROJECT_ROOT)),
         "predictions_path": str(predictions_path.relative_to(PROJECT_ROOT)),
     }
     (run_dir / "batch_results.json").write_text(

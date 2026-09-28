@@ -15,6 +15,9 @@ from .env import DockerEnv
 
 
 DEEPSEEK_PRICING_URL = "https://api-docs.deepseek.com/quick_start/pricing/"
+TOOL_OUTPUT_MAX_CHARS = 12_000
+TOOL_OUTPUT_HEAD_CHARS = 6_000
+TOOL_OUTPUT_TAIL_CHARS = 6_000
 
 SYSTEM_PROMPT = """You are a coding agent working on one public SWE-bench issue.
 The repository is at /testbed. Use bash to inspect, edit, and test the repository.
@@ -63,6 +66,9 @@ class AgentConfig:
     max_steps: int = 50
     max_cost_usd: float = 0.5
     tool_timeout_seconds: int = 60
+    tool_output_max_chars: int = TOOL_OUTPUT_MAX_CHARS
+    tool_output_head_chars: int = TOOL_OUTPUT_HEAD_CHARS
+    tool_output_tail_chars: int = TOOL_OUTPUT_TAIL_CHARS
     provider_timeout_seconds: int = 300
     max_completion_tokens: int = 8192
     # Conservative peak prices in USD per 1M tokens, fetched 2026-09-28.
@@ -80,12 +86,23 @@ class AgentResult:
     steps: int
     provider_calls: int
     tool_calls: int
+    truncations: int
     prompt_tokens: int
     cache_hit_tokens: int | None
     completion_tokens: int
     max_estimated_cost_usd: float
     wall_time_seconds: float
     trajectory_path: str
+
+
+@dataclass(frozen=True)
+class ToolObservation:
+    content: str
+    truncated: bool
+    original_chars: int
+    original_lines: int
+    returned_chars: int
+    full_output_path: str | None
 
 
 def create_deepseek_client(api_key: str, config: AgentConfig) -> OpenAI:
@@ -122,6 +139,56 @@ def parse_tool_arguments(arguments_text: str) -> tuple[dict[str, Any] | None, st
             f"got {type(arguments).__name__}"
         )
     return arguments, None
+
+
+def format_tool_observation(
+    output: str,
+    status_suffix: str,
+    full_output_path: str | None,
+    max_chars: int = TOOL_OUTPUT_MAX_CHARS,
+    head_chars: int = TOOL_OUTPUT_HEAD_CHARS,
+    tail_chars: int = TOOL_OUTPUT_TAIL_CHARS,
+) -> ToolObservation:
+    """Return an unchanged short observation or a clearly marked head/tail view."""
+    if min(max_chars, head_chars, tail_chars) <= 0:
+        raise ValueError("tool output limits must be positive")
+    if head_chars + tail_chars > max_chars:
+        raise ValueError("tool output head and tail exceed the maximum")
+
+    original_chars = len(output)
+    original_lines = len(output.splitlines())
+    if original_chars <= max_chars:
+        content = output + status_suffix
+        return ToolObservation(
+            content=content,
+            truncated=False,
+            original_chars=original_chars,
+            original_lines=original_lines,
+            returned_chars=len(content),
+            full_output_path=None,
+        )
+
+    if not full_output_path:
+        raise ValueError("a full output path is required for truncated output")
+    content = (
+        "[RepoFix: tool output truncated]\n"
+        f"Original output: {original_chars} characters, {original_lines} lines.\n"
+        f"Showing first {head_chars} and last {tail_chars} characters.\n"
+        f"Full output saved at {full_output_path}; use bash to inspect it.\n"
+        "--- HEAD ---\n"
+        f"{output[:head_chars]}\n"
+        "--- TAIL ---\n"
+        f"{output[-tail_chars:]}"
+        f"{status_suffix}"
+    )
+    return ToolObservation(
+        content=content,
+        truncated=True,
+        original_chars=original_chars,
+        original_lines=original_lines,
+        returned_chars=len(content),
+        full_output_path=full_output_path,
+    )
 
 
 class TrajectoryWriter:
@@ -208,6 +275,7 @@ class RepoFixAgent:
 
         provider_calls = 0
         tool_call_count = 0
+        truncation_count = 0
         prompt_tokens = 0
         completion_tokens = 0
         cache_hit_total = 0
@@ -298,8 +366,16 @@ class RepoFixAgent:
                     name = tool_call.function.name
                     arguments_text = tool_call.function.arguments or "{}"
                     arguments, argument_error = parse_tool_arguments(arguments_text)
+                    observation_metadata: dict[str, Any]
                     if argument_error is not None:
                         observation = argument_error
+                        observation_metadata = {
+                            "truncated": False,
+                            "original_chars": len(observation),
+                            "original_lines": len(observation.splitlines()),
+                            "returned_chars": len(observation),
+                            "full_output_path": None,
+                        }
                     else:
                         assert arguments is not None
                         if name == "bash" and isinstance(arguments.get("command"), str):
@@ -310,26 +386,106 @@ class RepoFixAgent:
                                 )
                             except Exception as exc:
                                 observation = f"Fatal runtime error: {exc}"
+                                observation_metadata = {
+                                    "truncated": False,
+                                    "original_chars": len(observation),
+                                    "original_lines": len(observation.splitlines()),
+                                    "returned_chars": len(observation),
+                                    "full_output_path": None,
+                                }
                                 fatal_runtime_error = True
                                 status = "fatal_runtime_error"
                             else:
-                                observation = result.output
                                 if result.timed_out:
-                                    observation += "\n[command timed out]"
+                                    status_suffix = "\n[command timed out]"
                                 else:
-                                    observation += f"\n[exit_code={result.exit_code}]"
+                                    status_suffix = f"\n[exit_code={result.exit_code}]"
+                                full_output_path = None
+                                if (
+                                    len(result.output)
+                                    > self.config.tool_output_max_chars
+                                ):
+                                    full_output_path = (
+                                        f"/tmp/repofix_out_{tool_call_count}.txt"
+                                    )
+                                    try:
+                                        self.env.write_text_file(
+                                            full_output_path, result.output
+                                        )
+                                    except Exception as exc:
+                                        observation = (
+                                            "Fatal runtime error while preserving "
+                                            f"full tool output: {exc}"
+                                        )
+                                        observation_metadata = {
+                                            "truncated": False,
+                                            "original_chars": len(observation),
+                                            "original_lines": len(
+                                                observation.splitlines()
+                                            ),
+                                            "returned_chars": len(observation),
+                                            "full_output_path": None,
+                                        }
+                                        fatal_runtime_error = True
+                                        status = "fatal_runtime_error"
+                                    else:
+                                        view = format_tool_observation(
+                                            result.output,
+                                            status_suffix,
+                                            full_output_path,
+                                            self.config.tool_output_max_chars,
+                                            self.config.tool_output_head_chars,
+                                            self.config.tool_output_tail_chars,
+                                        )
+                                        observation = view.content
+                                        observation_metadata = {
+                                            key: value
+                                            for key, value in asdict(view).items()
+                                            if key != "content"
+                                        }
+                                        truncation_count += 1
+                                else:
+                                    view = format_tool_observation(
+                                        result.output,
+                                        status_suffix,
+                                        None,
+                                        self.config.tool_output_max_chars,
+                                        self.config.tool_output_head_chars,
+                                        self.config.tool_output_tail_chars,
+                                    )
+                                    observation = view.content
+                                    observation_metadata = {
+                                        key: value
+                                        for key, value in asdict(view).items()
+                                        if key != "content"
+                                    }
                         elif name == "submit":
                             observation = "Submission accepted."
+                            observation_metadata = {
+                                "truncated": False,
+                                "original_chars": len(observation),
+                                "original_lines": 1,
+                                "returned_chars": len(observation),
+                                "full_output_path": None,
+                            }
                             submitted = True
                             status = "submitted"
                         else:
                             observation = f"Unknown or invalid tool call: {name}"
+                            observation_metadata = {
+                                "truncated": False,
+                                "original_chars": len(observation),
+                                "original_lines": len(observation.splitlines()),
+                                "returned_chars": len(observation),
+                                "full_output_path": None,
+                            }
 
                     observations.append(
                         {
                             "tool_call_id": tool_call.id,
                             "name": name,
                             "content": observation,
+                            **observation_metadata,
                         }
                     )
                     messages.append(
@@ -395,6 +551,7 @@ class RepoFixAgent:
             steps=provider_calls,
             provider_calls=provider_calls,
             tool_calls=tool_call_count,
+            truncations=truncation_count,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
             completion_tokens=completion_tokens,

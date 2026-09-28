@@ -52,6 +52,8 @@ scripts from `get_diff`.
 | `django__django-16454` | YES | 36 | $0.010402284 |
 | `django__django-16950` | YES | 50 | $0.042569856 |
 
+- `django__django-16950`: 已修好；未 submit，50 steps 耗尽。
+
 - Date: 2026-09-29
 - Run ID: `step-1-3-minimal-baseline`
 - Git commit: `4318e33cad71d4f8a319355b85bf02e1f9b092f1`
@@ -63,3 +65,31 @@ scripts from `get_diff`.
 - Total cost: $0.069738048 maximum estimate
 - Agent total wall time: 328.45 seconds
 - Harness wall time: 136.25 seconds
+
+## Step 2.1 tool-output truncation comparison
+
+| Task | 1.3 Result | 2.1 Result | 1.3 Steps | 2.1 Steps | 1.3 Prompt Tokens | 2.1 Prompt Tokens | 1.3 Cost | 2.1 Cost | Truncations |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `django__django-16429` | RESOLVED | RESOLVED | 5 | 9 | 10,725 | 28,080 | $0.001322988 | $0.002641584 | 0 |
+| `django__django-15277` | RESOLVED | RESOLVED | 7 | 9 | 18,054 | 20,395 | $0.002455224 | $0.002038356 | 0 |
+| `django__django-13343` | RESOLVED | RESOLVED | 24 | 24 | 267,324 | 108,327 | $0.012987696 | $0.006316692 | 0 |
+| `django__django-16454` | RESOLVED | RESOLVED | 36 | 19 | 250,077 | 96,716 | $0.010402284 | $0.006277008 | 0 |
+| `django__django-16950` | RESOLVED | UNRESOLVED | 50 | 50 | 1,106,840 | 663,281 | $0.042569856 | $0.027805500 | 0 |
+
+- Date: 2026-09-29
+- Run ID: `step-2-1-output-truncation`
+- Git commit: `d7999723d1f97727070ddfc8c82fd553cdae85aa`
+- Model / config: `deepseek-flash`; thinking disabled; 50-step limit; $0.5 cost limit; SDK `max_retries=2`; output threshold 12,000 characters (head 6,000 + tail 6,000)
+- Resolved tasks: `django__django-16429`, `django__django-15277`, `django__django-13343`, `django__django-16454`
+- Resolved count for this five-task DEV comparison: 1.3 = 5 / 5; 2.1 = 4 / 5
+- Total steps: 122 -> 111 (-11)
+- Total prompt tokens: 1,653,020 -> 916,799 (-736,221)
+- Total cache-hit tokens: 1,601,408 -> 880,640 (-720,768)
+- Total completion tokens: 37,205 -> 24,123 (-13,082)
+- Total cost: $0.069738048 -> $0.045079140 (-$0.024658908), maximum estimates
+- Agent total wall time: 328.45 -> 363.69 seconds
+- Harness wall time: 136.25 -> 37.98 seconds
+- Actual truncations: 0; affected tasks: none
+- No tool output crossed the configured threshold, so the observed run-to-run metric changes cannot be attributed to truncation. The threshold was not adjusted and no task was rerun.
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0

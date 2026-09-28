@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import io
+import posixpath
 import re
+import tarfile
 import threading
 import time
 from dataclasses import dataclass
@@ -140,6 +143,25 @@ class DockerEnv:
         if result.timed_out or result.exit_code != 0:
             raise RuntimeError("Unable to collect final git diff")
         return result.output
+
+    def write_text_file(self, path: str, content: str) -> None:
+        """Write UTF-8 text inside the container without shell interpolation."""
+        if self.container is None or self.client is None:
+            raise RuntimeError("DockerEnv has not been started")
+        directory, filename = posixpath.split(path)
+        if directory != "/tmp" or not filename or posixpath.basename(filename) != filename:
+            raise ValueError("tool output files must be direct children of /tmp")
+
+        payload = content.encode("utf-8")
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w") as tar:
+            info = tarfile.TarInfo(name=filename)
+            info.size = len(payload)
+            info.mode = 0o600
+            info.mtime = int(time.time())
+            tar.addfile(info, io.BytesIO(payload))
+        if not self.container.put_archive(directory, archive.getvalue()):
+            raise RuntimeError(f"Unable to preserve full tool output at {path}")
 
     def close(self) -> None:
         container, client = self.container, self.client
