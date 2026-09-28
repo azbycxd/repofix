@@ -150,6 +150,54 @@ def check_tool_output_truncation(env: DockerEnv) -> None:
     print("TOOL_OUTPUT_FULL_FILE_READBACK=PASS")
 
 
+def check_native_file_tools(env: DockerEnv) -> None:
+    path = "/testbed/.repofix_tool_check.py"
+    created = env.execute(
+        "printf '%s\\n' 'value = 1' 'marker = \"one\"' "
+        f"> {path}"
+    )
+    assert not created.timed_out and created.exit_code == 0
+
+    viewed = env.view_file(path, 1, 2)
+    assert "     1\tvalue = 1" in viewed
+    assert '     2\tmarker = "one"' in viewed
+    try:
+        env.view_file(path, 3, 4)
+    except ValueError as exc:
+        assert "exceeds file length" in str(exc)
+    else:
+        raise AssertionError("view accepted a range beyond the file")
+    try:
+        env.view_file("/etc/passwd", 1, 1)
+    except ValueError as exc:
+        assert "inside /testbed" in str(exc)
+    else:
+        raise AssertionError("view accepted a path outside /testbed")
+
+    original = env.view_file(path, 1, 2)
+    missing = env.str_replace_file(path, "missing", "replacement")
+    assert not missing.success and not missing.syntax_rollback
+    assert env.view_file(path, 1, 2) == original
+    multiple = env.str_replace_file(path, " = ", " == ")
+    assert not multiple.success and not multiple.syntax_rollback
+    assert env.view_file(path, 1, 2) == original
+
+    success = env.str_replace_file(path, "value = 1", "value = 2")
+    assert success.success and not success.syntax_rollback
+    assert "py_compile passed" in success.output
+    assert "value = 2" in env.view_file(path, 1, 2)
+
+    rollback = env.str_replace_file(path, "value = 2", "value =")
+    assert not rollback.success and rollback.syntax_rollback
+    assert "original file restored" in rollback.output
+    assert "value = 2" in env.view_file(path, 1, 2)
+    print("VIEW_LINE_RANGE_CHECK=PASS")
+    print("VIEW_PATH_GUARD_CHECK=PASS")
+    print("STR_REPLACE_CARDINALITY_CHECK=PASS")
+    print("STR_REPLACE_SUCCESS_CHECK=PASS")
+    print("STR_REPLACE_SYNTAX_ROLLBACK_CHECK=PASS")
+
+
 def offline_check(
     selected_ids: list[str],
     instances: dict[str, dict[str, Any]],
@@ -176,6 +224,7 @@ def offline_check(
             checked_execute(env, "git status --short")
             if index == 0:
                 check_tool_output_truncation(env)
+                check_native_file_tools(env)
     print("TESTBED_DJANGO_IMPORT_CHECKS=PASS")
     print(f"DEEPSEEK_API_KEY_PRESENT={'YES' if api_key_present else 'NO'}")
     print("PROVIDER_CALLS=0")
@@ -189,6 +238,10 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
         "steps": result.steps,
         "provider_calls": result.provider_calls,
         "tool_calls": result.tool_calls,
+        "view_calls": result.view_calls,
+        "str_replace_calls": result.str_replace_calls,
+        "str_replace_failures": result.str_replace_failures,
+        "syntax_rollbacks": result.syntax_rollbacks,
         "truncations": result.truncations,
         "prompt_tokens": result.prompt_tokens,
         "cache_hit_tokens": result.cache_hit_tokens,
@@ -247,6 +300,10 @@ def run_instance(
             "steps": 0,
             "provider_calls": 0,
             "tool_calls": 0,
+            "view_calls": 0,
+            "str_replace_calls": 0,
+            "str_replace_failures": 0,
+            "syntax_rollbacks": 0,
             "truncations": 0,
             "prompt_tokens": 0,
             "cache_hit_tokens": None,

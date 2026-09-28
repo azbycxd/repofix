@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import posixpath
 import re
+import shlex
 import tarfile
 import threading
 import time
@@ -19,6 +20,13 @@ class ExecutionResult:
     exit_code: int | None
     timed_out: bool
     latency_seconds: float
+
+
+@dataclass(frozen=True)
+class StrReplaceResult:
+    output: str
+    success: bool
+    syntax_rollback: bool
 
 
 class DockerEnv:
@@ -152,16 +160,149 @@ class DockerEnv:
         if directory != "/tmp" or not filename or posixpath.basename(filename) != filename:
             raise ValueError("tool output files must be direct children of /tmp")
 
+        self._put_text_file(directory, filename, content, 0o600)
+
+    def _put_text_file(
+        self, directory: str, filename: str, content: str, mode: int
+    ) -> None:
+        if self.container is None:
+            raise RuntimeError("DockerEnv has not been started")
         payload = content.encode("utf-8")
         archive = io.BytesIO()
         with tarfile.open(fileobj=archive, mode="w") as tar:
             info = tarfile.TarInfo(name=filename)
             info.size = len(payload)
-            info.mode = 0o600
+            info.mode = mode
             info.mtime = int(time.time())
             tar.addfile(info, io.BytesIO(payload))
         if not self.container.put_archive(directory, archive.getvalue()):
-            raise RuntimeError(f"Unable to preserve full tool output at {path}")
+            raise RuntimeError(f"Unable to write {posixpath.join(directory, filename)}")
+
+    def _resolve_testbed_file(self, path: str) -> str:
+        if self.container is None or self.client is None:
+            raise RuntimeError("DockerEnv has not been started")
+        if not path or "\x00" in path:
+            raise ValueError("path must be a non-empty file path")
+        candidate = posixpath.normpath(
+            path if posixpath.isabs(path) else posixpath.join(self.workdir, path)
+        )
+        try:
+            if posixpath.commonpath([self.workdir, candidate]) != self.workdir:
+                raise ValueError("path must stay inside /testbed")
+        except ValueError as exc:
+            raise ValueError("path must stay inside /testbed") from exc
+
+        result = self.container.exec_run(
+            ["readlink", "-f", "--", candidate],
+            workdir=self.workdir,
+            user="root",
+        )
+        if result.exit_code != 0:
+            raise ValueError(f"file does not exist: {path}")
+        resolved = result.output.decode("utf-8", errors="replace").strip()
+        try:
+            if posixpath.commonpath([self.workdir, resolved]) != self.workdir:
+                raise ValueError("resolved path must stay inside /testbed")
+        except ValueError as exc:
+            raise ValueError("resolved path must stay inside /testbed") from exc
+        is_file = self.container.exec_run(
+            ["test", "-f", resolved], workdir=self.workdir, user="root"
+        )
+        if is_file.exit_code != 0:
+            raise ValueError(f"not a regular file: {path}")
+        return resolved
+
+    def _read_text_file(self, path: str) -> tuple[str, str, int]:
+        if self.container is None:
+            raise RuntimeError("DockerEnv has not been started")
+        resolved = self._resolve_testbed_file(path)
+        stream, _ = self.container.get_archive(resolved)
+        archive = io.BytesIO(b"".join(stream))
+        with tarfile.open(fileobj=archive, mode="r:*") as tar:
+            members = [member for member in tar.getmembers() if member.isfile()]
+            if len(members) != 1:
+                raise RuntimeError(f"Unable to read regular file: {path}")
+            extracted = tar.extractfile(members[0])
+            if extracted is None:
+                raise RuntimeError(f"Unable to read regular file: {path}")
+            try:
+                content = extracted.read().decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise ValueError(f"file is not valid UTF-8: {path}") from exc
+            return resolved, content, members[0].mode
+
+    @staticmethod
+    def _numbered_lines(content: str, start_line: int, end_line: int) -> str:
+        lines = content.splitlines()
+        if start_line < 1 or end_line < start_line:
+            raise ValueError("line range must satisfy 1 <= start_line <= end_line")
+        if start_line > len(lines):
+            raise ValueError(
+                f"start_line {start_line} exceeds file length {len(lines)}"
+            )
+        selected = lines[start_line - 1 : min(end_line, len(lines))]
+        return "\n".join(
+            f"{line_number:6d}\t{line}"
+            for line_number, line in enumerate(selected, start=start_line)
+        )
+
+    def view_file(self, path: str, start_line: int, end_line: int) -> str:
+        resolved, content, _ = self._read_text_file(path)
+        numbered = self._numbered_lines(content, start_line, end_line)
+        return f"{resolved}\n{numbered}"
+
+    def str_replace_file(
+        self, path: str, old_str: str, new_str: str
+    ) -> StrReplaceResult:
+        if not old_str:
+            return StrReplaceResult(
+                "str_replace error: old_str must not be empty", False, False
+            )
+        resolved, original, mode = self._read_text_file(path)
+        occurrences = original.count(old_str)
+        if occurrences == 0:
+            return StrReplaceResult(
+                "str_replace error: old_str was not found; file was not modified",
+                False,
+                False,
+            )
+        if occurrences != 1:
+            return StrReplaceResult(
+                f"str_replace error: old_str occurs {occurrences} times; "
+                "expected exactly 1; file was not modified",
+                False,
+                False,
+            )
+
+        updated = original.replace(old_str, new_str, 1)
+        directory, filename = posixpath.split(resolved)
+        self._put_text_file(directory, filename, updated, mode)
+        compile_result = self.execute(
+            f"python -m py_compile {shlex.quote(resolved)}", timeout=60
+        )
+        if compile_result.timed_out or compile_result.exit_code != 0:
+            self._put_text_file(directory, filename, original, mode)
+            details = compile_result.output.strip() or "py_compile failed without output"
+            return StrReplaceResult(
+                "str_replace syntax check failed; original file restored.\n"
+                f"{details}",
+                False,
+                True,
+            )
+
+        replacement_offset = original.index(old_str)
+        start_line = updated.count("\n", 0, replacement_offset) + 1
+        replacement_lines = max(1, new_str.count("\n") + 1)
+        total_lines = len(updated.splitlines())
+        context_start = max(1, start_line - 3)
+        context_end = min(total_lines, start_line + replacement_lines + 2)
+        context = self._numbered_lines(updated, context_start, context_end)
+        return StrReplaceResult(
+            "Replaced exactly one occurrence and py_compile passed.\n"
+            f"{resolved}\n{context}",
+            True,
+            False,
+        )
 
     def close(self) -> None:
         container, client = self.container, self.client

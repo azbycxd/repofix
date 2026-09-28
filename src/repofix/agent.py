@@ -46,6 +46,43 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "view",
+            "description": "Read a line range from a UTF-8 file in /testbed with line numbers.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "start_line": {"type": "integer", "minimum": 1},
+                    "end_line": {"type": "integer", "minimum": 1},
+                },
+                "required": ["path", "start_line", "end_line"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "str_replace",
+            "description": (
+                "Replace exactly one occurrence in a UTF-8 file in /testbed. "
+                "The edit is rolled back if python -m py_compile fails."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "old_str": {"type": "string"},
+                    "new_str": {"type": "string"},
+                },
+                "required": ["path", "old_str", "new_str"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "submit",
             "description": "Submit the current repository changes as the final answer.",
             "parameters": {
@@ -87,6 +124,10 @@ class AgentResult:
     steps: int
     provider_calls: int
     tool_calls: int
+    view_calls: int
+    str_replace_calls: int
+    str_replace_failures: int
+    syntax_rollbacks: int
     truncations: int
     prompt_tokens: int
     cache_hit_tokens: int | None
@@ -277,6 +318,10 @@ class RepoFixAgent:
 
         provider_calls = 0
         tool_call_count = 0
+        view_call_count = 0
+        str_replace_call_count = 0
+        str_replace_failure_count = 0
+        syntax_rollback_count = 0
         truncation_count = 0
         prompt_tokens = 0
         completion_tokens = 0
@@ -366,11 +411,17 @@ class RepoFixAgent:
                 for tool_call in raw_tool_calls:
                     tool_call_count += 1
                     name = tool_call.function.name
+                    if name == "view":
+                        view_call_count += 1
+                    elif name == "str_replace":
+                        str_replace_call_count += 1
                     arguments_text = tool_call.function.arguments or "{}"
                     arguments, argument_error = parse_tool_arguments(arguments_text)
                     observation_metadata: dict[str, Any]
                     if argument_error is not None:
                         observation = argument_error
+                        if name == "str_replace":
+                            str_replace_failure_count += 1
                         observation_metadata = {
                             "truncated": False,
                             "original_chars": len(observation),
@@ -461,6 +512,140 @@ class RepoFixAgent:
                                         for key, value in asdict(view).items()
                                         if key != "content"
                                     }
+                        elif name == "view":
+                            path = arguments.get("path")
+                            start_line = arguments.get("start_line")
+                            end_line = arguments.get("end_line")
+                            if not (
+                                isinstance(path, str)
+                                and isinstance(start_line, int)
+                                and not isinstance(start_line, bool)
+                                and isinstance(end_line, int)
+                                and not isinstance(end_line, bool)
+                            ):
+                                observation = (
+                                    "view error: path must be a string and line "
+                                    "bounds must be integers"
+                                )
+                                observation_metadata = {
+                                    "truncated": False,
+                                    "original_chars": len(observation),
+                                    "original_lines": 1,
+                                    "returned_chars": len(observation),
+                                    "full_output_path": None,
+                                }
+                            else:
+                                try:
+                                    view_output = self.env.view_file(
+                                        path, start_line, end_line
+                                    )
+                                    full_output_path = None
+                                    if (
+                                        len(view_output)
+                                        > self.config.tool_output_max_chars
+                                    ):
+                                        full_output_path = (
+                                            f"/tmp/repofix_out_{tool_call_count}.txt"
+                                        )
+                                        self.env.write_text_file(
+                                            full_output_path, view_output
+                                        )
+                                    view = format_tool_observation(
+                                        view_output,
+                                        "",
+                                        full_output_path,
+                                        self.config.tool_output_max_chars,
+                                        self.config.tool_output_head_chars,
+                                        self.config.tool_output_tail_chars,
+                                    )
+                                except Exception as exc:
+                                    observation = f"view error: {exc}"
+                                    observation_metadata = {
+                                        "truncated": False,
+                                        "original_chars": len(observation),
+                                        "original_lines": len(
+                                            observation.splitlines()
+                                        ),
+                                        "returned_chars": len(observation),
+                                        "full_output_path": None,
+                                    }
+                                else:
+                                    observation = view.content
+                                    observation_metadata = {
+                                        key: value
+                                        for key, value in asdict(view).items()
+                                        if key != "content"
+                                    }
+                                    truncation_count += int(view.truncated)
+                        elif name == "str_replace":
+                            path = arguments.get("path")
+                            old_str = arguments.get("old_str")
+                            new_str = arguments.get("new_str")
+                            if not all(
+                                isinstance(value, str)
+                                for value in (path, old_str, new_str)
+                            ):
+                                observation = (
+                                    "str_replace error: path, old_str, and new_str "
+                                    "must be strings"
+                                )
+                                str_replace_failure_count += 1
+                                observation_metadata = {
+                                    "truncated": False,
+                                    "original_chars": len(observation),
+                                    "original_lines": 1,
+                                    "returned_chars": len(observation),
+                                    "full_output_path": None,
+                                }
+                            else:
+                                try:
+                                    edit = self.env.str_replace_file(
+                                        path, old_str, new_str
+                                    )
+                                    if not edit.success:
+                                        str_replace_failure_count += 1
+                                    syntax_rollback_count += int(
+                                        edit.syntax_rollback
+                                    )
+                                    full_output_path = None
+                                    if (
+                                        len(edit.output)
+                                        > self.config.tool_output_max_chars
+                                    ):
+                                        full_output_path = (
+                                            f"/tmp/repofix_out_{tool_call_count}.txt"
+                                        )
+                                        self.env.write_text_file(
+                                            full_output_path, edit.output
+                                        )
+                                    view = format_tool_observation(
+                                        edit.output,
+                                        "",
+                                        full_output_path,
+                                        self.config.tool_output_max_chars,
+                                        self.config.tool_output_head_chars,
+                                        self.config.tool_output_tail_chars,
+                                    )
+                                except Exception as exc:
+                                    str_replace_failure_count += 1
+                                    observation = f"str_replace error: {exc}"
+                                    observation_metadata = {
+                                        "truncated": False,
+                                        "original_chars": len(observation),
+                                        "original_lines": len(
+                                            observation.splitlines()
+                                        ),
+                                        "returned_chars": len(observation),
+                                        "full_output_path": None,
+                                    }
+                                else:
+                                    observation = view.content
+                                    observation_metadata = {
+                                        key: value
+                                        for key, value in asdict(view).items()
+                                        if key != "content"
+                                    }
+                                    truncation_count += int(view.truncated)
                         elif name == "submit":
                             observation = "Submission accepted."
                             observation_metadata = {
@@ -553,6 +738,10 @@ class RepoFixAgent:
             steps=provider_calls,
             provider_calls=provider_calls,
             tool_calls=tool_call_count,
+            view_calls=view_call_count,
+            str_replace_calls=str_replace_call_count,
+            str_replace_failures=str_replace_failure_count,
+            syntax_rollbacks=syntax_rollback_count,
             truncations=truncation_count,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
