@@ -33,6 +33,65 @@
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
 
+## Stage 2 temperature=0 baseline
+
+| Task | Resolved | Steps | Prompt Tokens | Cost |
+| --- | --- | ---: | ---: | ---: |
+| `django__django-16429` | YES | 9 | 26,737 | $0.002790444 |
+| `django__django-15277` | YES | 7 | 16,851 | $0.002022420 |
+| `django__django-13343` | YES | 28 | 195,010 | $0.009346200 |
+| `django__django-16454` | NO (`missing_module`, ambiguous) | 27 | 218,507 | $0.009944484 |
+| `django__django-16950` | YES | 30 | 240,924 | $0.011315904 |
+
+- Date: 2026-09-29
+- Run ID: `temperature-0-baseline`
+- Code commit: `1d47a16d836cfa3017c42cb171ccbdc059d7af5b`
+- Model / config: `deepseek-flash`; temperature 0; thinking disabled; 50-step limit; $0.5 cost limit; output threshold 12,000 characters
+- Resolved count: 4 / 5
+- Total steps: 101
+- Total prompt / cache-hit / completion tokens: 698,029 / 660,992 / 16,952
+- Total cost: $0.035419452 maximum estimate
+- Agent wall time: 267.40 seconds
+- Harness wall time: 33.78 seconds
+- `django__django-16950`: 不稳定题：历史两次运行一次成功、一次失败。本次 temperature=0 baseline 为 RESOLVED。
+
+## Step 2.2 view + str_replace comparison
+
+| Task | Baseline Result | 2.2 Result | Baseline Steps | 2.2 Steps | Baseline Cost | 2.2 Cost | View Calls | StrReplace Calls | StrReplace Failures | Rollbacks |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `django__django-16429` | RESOLVED | RESOLVED | 9 | 6 | $0.002790444 | $0.001522716 | 0 | 1 | 0 | 0 |
+| `django__django-15277` | RESOLVED | RESOLVED | 7 | 15 | $0.002022420 | $0.003938292 | 1 | 1 | 0 | 0 |
+| `django__django-13343` | RESOLVED | RESOLVED | 28 | 23 | $0.009346200 | $0.008201340 | 3 | 5 | 0 | 0 |
+| `django__django-16454` | UNRESOLVED (`missing_module`, ambiguous) | RESOLVED | 27 | 18 | $0.009944484 | $0.005915856 | 0 | 3 | 0 | 0 |
+| `django__django-16950` | RESOLVED | RESOLVED | 30 | 25 | $0.011315904 | $0.010855116 | 4 | 3 | 0 | 0 |
+
+| Task | Baseline Prompt | 2.2 Prompt | Baseline Completion | 2.2 Completion |
+| --- | ---: | ---: | ---: | ---: |
+| `django__django-16429` | 26,737 | 14,161 | 1,380 | 457 |
+| `django__django-15277` | 16,851 | 51,763 | 1,079 | 1,913 |
+| `django__django-13343` | 195,010 | 170,005 | 4,508 | 3,690 |
+| `django__django-16454` | 218,507 | 95,452 | 4,244 | 2,768 |
+| `django__django-16950` | 240,924 | 228,097 | 5,741 | 4,926 |
+
+- Date: 2026-09-29
+- Run ID: `step-2-2-view-str-replace`
+- Code commit: `7cc1a68cfc2b34b587ac79f882669df60ee1dfca`
+- Model / config: `deepseek-flash`; temperature 0; thinking disabled; 50-step limit; $0.5 cost limit; output threshold 12,000 characters; native tools `bash`, `view`, `str_replace`, `submit`
+- Baseline resolved: 4 / 5; Step 2.2 resolved: 5 / 5
+- Total steps: 101 -> 87 (-14)
+- Total prompt tokens: 698,029 -> 559,478 (-138,551)
+- Total cache-hit tokens: 660,992 -> 523,520 (-137,472)
+- Total completion tokens: 16,952 -> 13,754 (-3,198)
+- Total cost: $0.035419452 -> $0.030433320 (-$0.004986132), maximum estimates
+- Agent wall time: 267.40 -> 334.85 seconds
+- Harness wall time: 33.78 -> 34.11 seconds
+- Tool calls in Step 2.2: bash 74; view 8; str_replace 13; submit 5
+- Of the 74 bash calls, 7 invoked `sed` and 43 invoked `python`; the model adopted the native tools but still relied heavily on bash and Python scripts.
+- StrReplace failures: 0; syntax rollbacks: 0
+- `django__django-16950`: RESOLVED in 25 steps; it did not reach the 50-step limit in either temperature=0 run.
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0
+
 ## Step 1.2 experiments
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
