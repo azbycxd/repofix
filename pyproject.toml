@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repofix"
+version = "0.1.0"
+description = "Minimal tool-calling agent for isolated Python repository repair"
+requires-python = ">=3.12"
+dependencies = [
+    "docker==7.2.0",
+    "openai==3.19.2",
+    "python-dotenv==1.2.3",
+]
+
+[project.scripts]
+repofix = "repofix.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

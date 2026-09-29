@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from repofix.evaluation import build_evaluation_patch
+from repofix.evaluation import build_evaluation_patch, changed_paths
 
 
 PRODUCTION_DIFF = """diff --git a/django/forms/models.py b/django/forms/models.py
@@ -47,6 +47,16 @@ class EvaluationPatchTests(unittest.TestCase):
         result = build_evaluation_patch("")
         self.assertEqual(result.patch, "")
         self.assertEqual(result.filtered_test_paths, ())
+
+    def test_changed_paths_preserve_diff_order(self) -> None:
+        self.assertEqual(
+            changed_paths(PRODUCTION_DIFF + TEST_DIFF + NEW_TEST_DIFF),
+            (
+                "django/forms/models.py",
+                "tests/forms_tests/test_models.py",
+                "test_regression.py",
+            ),
+        )
 
 
 if __name__ == "__main__":

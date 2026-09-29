@@ -6,6 +6,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+*.egg-info/
+build/
+dist/
 
 # RepoFix runtime artifacts
 runs/

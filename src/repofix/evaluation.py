@@ -56,3 +56,15 @@ def build_evaluation_patch(full_patch: str) -> EvaluationPatch:
         patch="".join(kept),
         filtered_test_paths=tuple(dict.fromkeys(filtered)),
     )
+
+
+def changed_paths(patch: str) -> tuple[str, ...]:
+    """Return changed paths in diff order."""
+    paths: list[str] = []
+    for section in _DIFF_START_RE.split(patch):
+        if not section:
+            continue
+        section_paths = _section_paths(section)
+        if section_paths:
+            paths.append(section_paths[-1])
+    return tuple(dict.fromkeys(paths))
