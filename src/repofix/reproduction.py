@@ -64,6 +64,17 @@ def reproduction_failed(exit_code: int | None, output: str) -> bool:
     return exit_code not in (0, None) or bool(_FAILURE_OUTPUT_RE.search(output))
 
 
+def usable_validation_evidence(
+    command: str, output: str, timed_out: bool
+) -> bool:
+    """Return whether a reproduction/test observation is usable by Reviewer."""
+    return (
+        not timed_out
+        and reproduction_key(command) is not None
+        and not _IMPORT_FAILURE_RE.search(output)
+    )
+
+
 @dataclass
 class ReproductionTelemetry:
     pre_fix_reproduced: bool = False

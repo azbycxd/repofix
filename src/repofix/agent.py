@@ -12,7 +12,8 @@ from typing import Any
 from openai import OpenAI
 
 from .env import DockerEnv
-from .reproduction import ReproductionTelemetry
+from .reproduction import ReproductionTelemetry, usable_validation_evidence
+from .reviewer import review_patch
 from .search import (
     BM25Index,
     SEARCH_DEFAULT_TOP_K,
@@ -141,6 +142,7 @@ class AgentConfig:
     thinking: str = "disabled"
     temperature: float = 0.0
     retrieval_mode: str = "bm25"
+    reviewer_enabled: bool = False
     max_steps: int = 50
     max_cost_usd: float = 0.5
     tool_timeout_seconds: int = 60
@@ -184,6 +186,17 @@ class AgentResult:
     existing_test_modified: bool
     git_history_search_count: int
     network_attempt_count: int
+    reviewer_verdict: str | None
+    reviewer_reject_reason: str | None
+    reviewer_returned: bool
+    patch_changed_after_reject: bool
+    reviewer_calls: int
+    reviewer_prompt_tokens: int
+    reviewer_cache_hit_tokens: int | None
+    reviewer_completion_tokens: int
+    reviewer_cost_usd: float
+    reviewer_latency_seconds: float
+    reviewer_initial_patch: str
     prompt_tokens: int
     cache_hit_tokens: int | None
     completion_tokens: int
@@ -420,6 +433,18 @@ class RepoFixAgent:
         cache_hit_available = True
         max_cost = 0.0
         behavior = ReproductionTelemetry()
+        last_validation_command: str | None = None
+        last_validation_output: str | None = None
+        reviewer_verdict: str | None = None
+        reviewer_reject_reason: str | None = None
+        reviewer_returned = False
+        reviewer_calls = 0
+        reviewer_prompt_tokens = 0
+        reviewer_cache_hit_tokens: int | None = None
+        reviewer_completion_tokens = 0
+        reviewer_cost = 0.0
+        reviewer_latency = 0.0
+        reviewer_initial_patch = ""
         submitted = False
         status = "max_steps"
         no_tool_nudge_used = False
@@ -555,6 +580,16 @@ class RepoFixAgent:
                                     result.exit_code,
                                     result.output,
                                 )
+                                if usable_validation_evidence(
+                                    arguments["command"],
+                                    result.output,
+                                    result.timed_out,
+                                ):
+                                    last_validation_command = arguments["command"]
+                                    last_validation_output = (
+                                        result.output
+                                        + f"\n[exit_code={result.exit_code}]"
+                                    )
                                 if result.timed_out:
                                     status_suffix = "\n[command timed out]"
                                 else:
@@ -823,7 +858,94 @@ class RepoFixAgent:
                                     }
                                     truncation_count += int(view.truncated)
                         elif name == "submit":
-                            observation = "Submission accepted."
+                            if self.config.reviewer_enabled and reviewer_calls == 0:
+                                reviewer_calls = 1
+                                try:
+                                    reviewer_initial_patch = self.env.get_diff()
+                                    review = review_patch(
+                                        self.client,
+                                        self.config,
+                                        self.issue,
+                                        reviewer_initial_patch,
+                                        last_validation_command,
+                                        last_validation_output,
+                                    )
+                                except Exception as exc:
+                                    reviewer_verdict = "ERROR"
+                                    reviewer_reject_reason = str(exc)
+                                    observation = (
+                                        "Reviewer unavailable; submission accepted "
+                                        "without a verdict."
+                                    )
+                                    submitted = True
+                                    status = "submitted"
+                                    self.trace.write(
+                                        {
+                                            "type": "reviewer",
+                                            "step": step,
+                                            "verdict": reviewer_verdict,
+                                            "error": str(exc),
+                                            "input_fields": [
+                                                "issue",
+                                                "full_diff",
+                                                "last_validation_command",
+                                                "last_validation_output",
+                                            ],
+                                        }
+                                    )
+                                else:
+                                    reviewer_verdict = review.verdict
+                                    reviewer_reject_reason = review.reject_reason
+                                    reviewer_prompt_tokens = review.prompt_tokens
+                                    reviewer_cache_hit_tokens = (
+                                        review.cache_hit_tokens
+                                    )
+                                    reviewer_completion_tokens = (
+                                        review.completion_tokens
+                                    )
+                                    reviewer_cost = review.estimated_cost_usd
+                                    reviewer_latency = review.latency_seconds
+                                    self.trace.write(
+                                        {
+                                            "type": "reviewer",
+                                            "step": step,
+                                            "model": self.config.model,
+                                            "verdict": review.verdict,
+                                            "reject_reason": review.reject_reason,
+                                            "raw_output": review.raw_output,
+                                            "finish_reason": review.finish_reason,
+                                            "prompt_tokens": review.prompt_tokens,
+                                            "cache_hit_tokens": review.cache_hit_tokens,
+                                            "completion_tokens": review.completion_tokens,
+                                            "estimated_cost_usd": review.estimated_cost_usd,
+                                            "latency_seconds": review.latency_seconds,
+                                            "input": {
+                                                "issue": self.issue,
+                                                "full_diff": reviewer_initial_patch,
+                                                "last_validation_command": (
+                                                    last_validation_command
+                                                ),
+                                                "last_validation_output": (
+                                                    last_validation_output
+                                                ),
+                                            },
+                                        }
+                                    )
+                                    if review.verdict == "REJECT":
+                                        reviewer_returned = True
+                                        observation = (
+                                            "Reviewer rejected the first submission: "
+                                            f"{review.reject_reason}\n"
+                                            "Address this reason, then call submit again."
+                                        )
+                                    else:
+                                        observation = "Submission accepted."
+                                        submitted = True
+                                        status = "submitted"
+                            else:
+                                observation = "Submission accepted."
+                                submitted = True
+                                status = "submitted"
                             observation_metadata = {
                                 "truncated": False,
                                 "original_chars": len(observation),
@@ -831,8 +953,6 @@ class RepoFixAgent:
                                 "returned_chars": len(observation),
                                 "full_output_path": None,
                             }
-                            submitted = True
-                            status = "submitted"
                         else:
                             observation = f"Unknown or invalid tool call: {name}"
                             observation_metadata = {
@@ -908,6 +1028,9 @@ class RepoFixAgent:
                 }
             )
         wall_time = time.monotonic() - started
+        patch_changed_after_reject = bool(
+            reviewer_returned and patch != reviewer_initial_patch
+        )
         result = AgentResult(
             status=status,
             submitted=submitted,
@@ -935,6 +1058,17 @@ class RepoFixAgent:
             existing_test_modified=behavior.existing_test_modified,
             git_history_search_count=behavior.git_history_search_count,
             network_attempt_count=behavior.network_attempt_count,
+            reviewer_verdict=reviewer_verdict,
+            reviewer_reject_reason=reviewer_reject_reason,
+            reviewer_returned=reviewer_returned,
+            patch_changed_after_reject=patch_changed_after_reject,
+            reviewer_calls=reviewer_calls,
+            reviewer_prompt_tokens=reviewer_prompt_tokens,
+            reviewer_cache_hit_tokens=reviewer_cache_hit_tokens,
+            reviewer_completion_tokens=reviewer_completion_tokens,
+            reviewer_cost_usd=reviewer_cost,
+            reviewer_latency_seconds=reviewer_latency,
+            reviewer_initial_patch=reviewer_initial_patch,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
             completion_tokens=completion_tokens,
@@ -945,7 +1079,11 @@ class RepoFixAgent:
         self.trace.write(
             {
                 "type": "summary",
-                **{key: value for key, value in asdict(result).items() if key != "patch"},
+                **{
+                    key: value
+                    for key, value in asdict(result).items()
+                    if key not in {"patch", "reviewer_initial_patch"}
+                },
                 "patch_nonempty": bool(patch.strip()),
                 "patch": patch,
                 "behavior": behavior.metrics(),

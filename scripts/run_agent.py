@@ -322,6 +322,16 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
         "EXISTING_TEST_MODIFIED": result.existing_test_modified,
         "GIT_HISTORY_SEARCH_COUNT": result.git_history_search_count,
         "NETWORK_ATTEMPT_COUNT": result.network_attempt_count,
+        "reviewer_verdict": result.reviewer_verdict,
+        "reviewer_reject_reason": result.reviewer_reject_reason,
+        "reviewer_returned": result.reviewer_returned,
+        "patch_changed_after_reject": result.patch_changed_after_reject,
+        "reviewer_calls": result.reviewer_calls,
+        "reviewer_prompt_tokens": result.reviewer_prompt_tokens,
+        "reviewer_cache_hit_tokens": result.reviewer_cache_hit_tokens,
+        "reviewer_completion_tokens": result.reviewer_completion_tokens,
+        "reviewer_cost_usd": result.reviewer_cost_usd,
+        "reviewer_latency_seconds": result.reviewer_latency_seconds,
         "prompt_tokens": result.prompt_tokens,
         "cache_hit_tokens": result.cache_hit_tokens,
         "completion_tokens": result.completion_tokens,
@@ -340,11 +350,12 @@ def run_instance(
     api_key: str,
     git_commit: str,
     config: AgentConfig,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any] | None]:
     spec = make_test_spec(instance)
     instance_id = spec.instance_id
     trajectory_path = trajectory_dir / f"{instance_id}.jsonl"
     patch = ""
+    reviewer_initial_patch = ""
     try:
         with DockerEnv(instance_id, spec.image, run_id) as env:
             result = RepoFixAgent(
@@ -356,6 +367,7 @@ def run_instance(
                 config=config,
             ).run()
         patch = result.patch
+        reviewer_initial_patch = result.reviewer_initial_patch
         summary = result_summary(instance_id, result, trajectory_path)
     except Exception as exc:
         safe_error = str(exc).replace(api_key, "[REDACTED]")
@@ -399,6 +411,16 @@ def run_instance(
             "EXISTING_TEST_MODIFIED": False,
             "GIT_HISTORY_SEARCH_COUNT": 0,
             "NETWORK_ATTEMPT_COUNT": 0,
+            "reviewer_verdict": None,
+            "reviewer_reject_reason": None,
+            "reviewer_returned": False,
+            "patch_changed_after_reject": False,
+            "reviewer_calls": 0,
+            "reviewer_prompt_tokens": 0,
+            "reviewer_cache_hit_tokens": None,
+            "reviewer_completion_tokens": 0,
+            "reviewer_cost_usd": 0.0,
+            "reviewer_latency_seconds": 0.0,
             "prompt_tokens": 0,
             "cache_hit_tokens": None,
             "completion_tokens": 0,
@@ -430,7 +452,36 @@ def run_instance(
         "model_patch": evaluation.patch,
         "model_name_or_path": config.model,
     }
-    return summary, prediction
+    reviewer_prediction = None
+    if summary["reviewer_verdict"] == "REJECT":
+        reviewer_patch_path = run_dir / f"{instance_id}.reviewer-initial.patch"
+        reviewer_patch_path.write_text(reviewer_initial_patch, encoding="utf-8")
+        reviewer_evaluation = build_evaluation_patch(reviewer_initial_patch)
+        reviewer_evaluation_path = (
+            run_dir / f"{instance_id}.reviewer-initial.evaluation.patch"
+        )
+        reviewer_evaluation_path.write_text(
+            reviewer_evaluation.patch, encoding="utf-8"
+        )
+        summary["reviewer_initial_patch_path"] = str(
+            reviewer_patch_path.relative_to(PROJECT_ROOT)
+        )
+        summary["reviewer_initial_evaluation_patch_path"] = str(
+            reviewer_evaluation_path.relative_to(PROJECT_ROOT)
+        )
+        summary["reviewer_initial_filtered_test_paths"] = list(
+            reviewer_evaluation.filtered_test_paths
+        )
+        reviewer_prediction = {
+            "instance_id": instance_id,
+            "model_patch": reviewer_evaluation.patch,
+            "model_name_or_path": config.model,
+        }
+        result_path.write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    return summary, prediction, reviewer_prediction
 
 
 def main() -> int:
@@ -442,6 +493,11 @@ def main() -> int:
     parser.add_argument(
         "--output-dir",
         help="Experiment output directory; defaults to runs/<run-id>.",
+    )
+    parser.add_argument(
+        "--reviewer",
+        action="store_true",
+        help="Enable one independent review on the first submit call.",
     )
     parser.add_argument(
         "--trajectory-dir",
@@ -513,11 +569,15 @@ def main() -> int:
     trajectory_dir.mkdir(parents=True, exist_ok=True)
 
     git_commit = current_git_commit()
-    config = AgentConfig(retrieval_mode=args.retrieval_mode)
+    config = AgentConfig(
+        retrieval_mode=args.retrieval_mode,
+        reviewer_enabled=args.reviewer,
+    )
     summaries: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
+    reviewer_initial_predictions: list[dict[str, Any]] = []
     for instance_id in selected_ids:
-        summary, prediction = run_instance(
+        summary, prediction, reviewer_prediction = run_instance(
             instances[instance_id],
             run_dir,
             trajectory_dir,
@@ -528,11 +588,19 @@ def main() -> int:
         )
         summaries.append(summary)
         predictions.append(prediction)
+        if reviewer_prediction is not None:
+            reviewer_initial_predictions.append(reviewer_prediction)
         print(json.dumps(summary, ensure_ascii=False))
 
     predictions_path = run_dir / "predictions.json"
     predictions_path.write_text(
         json.dumps(predictions, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    reviewer_predictions_path = run_dir / "reviewer_initial_predictions.json"
+    reviewer_predictions_path.write_text(
+        json.dumps(reviewer_initial_predictions, ensure_ascii=False, indent=2)
+        + "\n",
         encoding="utf-8",
     )
     batch_result = {
@@ -543,6 +611,9 @@ def main() -> int:
         "results": summaries,
         "trajectory_dir": str(trajectory_dir.relative_to(PROJECT_ROOT)),
         "predictions_path": str(predictions_path.relative_to(PROJECT_ROOT)),
+        "reviewer_initial_predictions_path": str(
+            reviewer_predictions_path.relative_to(PROJECT_ROOT)
+        ),
     }
     (run_dir / "batch_results.json").write_text(
         json.dumps(batch_result, ensure_ascii=False, indent=2) + "\n",

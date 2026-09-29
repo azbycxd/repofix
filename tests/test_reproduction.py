@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import unittest
 
-from repofix.reproduction import ReproductionTelemetry, reproduction_key
+from repofix.reproduction import (
+    ReproductionTelemetry,
+    reproduction_key,
+    usable_validation_evidence,
+)
 
 
 class ReproductionTelemetryTests(unittest.TestCase):
@@ -50,6 +54,14 @@ class ReproductionTelemetryTests(unittest.TestCase):
         first = "python tests/runtests.py app.Test.test_bug -v2 2>&1 | tail -20"
         second = "python tests/runtests.py app.Test.test_bug -v2"
         self.assertEqual(reproduction_key(first), reproduction_key(second))
+
+    def test_reviewer_evidence_rejects_import_and_timeout_failures(self) -> None:
+        command = "python /tmp/repofix_repro.py"
+        self.assertFalse(
+            usable_validation_evidence(command, "ImportError: broken", False)
+        )
+        self.assertFalse(usable_validation_evidence(command, "failed", True))
+        self.assertTrue(usable_validation_evidence(command, "AssertionError", False))
 
 
 if __name__ == "__main__":

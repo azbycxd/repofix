@@ -16,3 +16,9 @@
 Agent 完整 diff 保存在 trajectory 和 run artifact 中。提交给 SWE-bench
 Harness 的 evaluation patch 会排除 `is_test_path()` 识别出的测试文件修改；
 官方判分只评估生产修改，Agent 自己编写的测试单独保存在轨迹中。
+
+## 独立 Reviewer 实验
+
+Reviewer 默认关闭；实验时使用 `--reviewer` 显式开启。它只在首次
+`submit` 时独立调用一次，只接收 issue、完整 diff、最后一次有效复现/测试
+命令及其输出，并且只返回 `APPROVE` 或 `REJECT: <一句原因>`。
