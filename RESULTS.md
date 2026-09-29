@@ -167,6 +167,72 @@ source files from the current `/testbed` Git revision are indexed.
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
 
+## Step 2.4 full-dense indexing cost limit
+
+- Date: 2026-09-29
+- Code commits: `707bff9` (Dense + RRF), `2d6307a` (chunk-level cache)
+- Embedding: `fastembed==0.8.1`; `BAAI/bge-small-en-v1.5`; 384 dimensions;
+  path/symbol/type plus the first 512 source characters per chunk
+- BM25 and RRF remained unchanged (`RRF_K=60`, rank window 60). No Recall-based
+  tuning was performed.
+- `STEP_2_4_FULL_DENSE = ABORTED_FOR_ENGINEERING_COST`
+
+### Observed indexing cost and cache reuse
+
+| Measurement | Value |
+| --- | ---: |
+| DEV1 chunks / unique embedding inputs | 34,482 / 34,482 |
+| DEV1 first-cold embeddings | 34,482 |
+| DEV1 observed cold boundary | about 36m25s |
+| DEV1 same-revision cache hits / new embeddings | 34,482 / 0 |
+| DEV1 same-revision cache load | 61.747s |
+| DEV2 chunks / unique embedding inputs | 33,376 / 33,376 |
+| DEV2 inputs reused directly from DEV1 | 10,012 |
+| DEV2 new inputs required | 23,364 |
+| DEV2 new embeddings completed before abort | 4,864 |
+| DEV2 new embeddings remaining at abort | 18,500 |
+| Cache unique embeddings at abort | 39,346 |
+| Cache file size at abort | 184,487,936 bytes (175.94 MiB) |
+| Current chunk-cache run, cache-active interval | about 42m56s |
+
+The DEV1 cold boundary is reconstructed from creation of the empty chunk-cache
+database at 12:16:37 to creation of the DEV2 container at 12:53:02. It is an
+upper bound that also includes the final DEV1 ranking and container transition.
+The cache-active interval ends at the final committed cache write at 12:59:33.
+Earlier full-matrix cold attempts consumed more than another 63 minutes,
+so the full-Dense implementation investigation consumed more than 1h45m in
+cold CPU work before it was stopped. The SQLite cache passed `integrity_check`.
+
+### Chunking redundancy diagnosis
+
+| Task | Functions | Classes | Methods | Line Blocks | Total | Mean Chars | P50 | P95 | Max | Full-source Duplicate | Embedding-input Duplicate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `django__django-16429` | 1,641 | 6,876 | 24,772 | 1,193 | 34,482 | 878.247 | 355 | 2,585 | 224,016 | 43.83% | 8.57% |
+| `django__django-15277` | 1,613 | 6,748 | 23,854 | 1,161 | 33,376 | 834.921 | 339 | 2,473 | 185,862 | 43.55% | 8.76% |
+| `django__django-13343` | 1,528 | 6,490 | 22,310 | 1,107 | 31,435 | 829.952 | 337 | 2,471.6 | 171,889 | 43.30% | 8.99% |
+| `django__django-16454` | 1,628 | 6,865 | 24,719 | 1,182 | 34,394 | 876.227 | 354 | 2,580 | 224,016 | 43.84% | 8.56% |
+| `django__django-16950` | 1,657 | 6,928 | 25,131 | 1,225 | 34,941 | 882.474 | 356 | 2,583 | 241,838 | 43.72% | 8.50% |
+
+Every direct class-method chunk was found verbatim inside its corresponding
+top-level-class chunk. Across the five revisions, full-source duplication
+averaged 43.65%; after the fixed 512-character representation and metadata are
+accounted for, duplicated method source was about 8.68% of embedding input.
+This is recorded as a later candidate optimization; chunk definitions were not
+changed during Step 2.4.
+
+- `CHUNKING_REDUNDANCY_DIAGNOSIS = CLASS_AND_METHOD_OVERLAP_CONFIRMED`
+- `DENSE_COLD_BUILD_COST = TOO_HIGH_FOR_CURRENT_CPU_IMPLEMENTATION`
+- `CACHE_REUSE_EFFECT = 10,012 DEV2 inputs reused; 23,364 still required new embeddings`
+- The five-DEV offline evaluation was stopped during DEV2. No complete Dense or
+  RRF Recall metrics are reported, and DEV3 through DEV5 were not built.
+- Provider calls: 0; Agent runs: 0
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0
+
+当前 full-repository chunk-level Dense embedding 在 CPU 环境下冷构建成本过高，
+因此停止该实现路线。该结果只否定当前工程实现方式，不证明 Dense retrieval 的
+检索质量无效。
+
 ## Step 1.2 experiments
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
