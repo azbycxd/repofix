@@ -266,6 +266,60 @@ the reproduction-first prompt or telemetry. Dense/RRF is disabled.
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
 
+## Step 2.8 reproduction-first comparison
+
+This run adds only the lightweight reproduction-first instructions and behavior
+telemetry to the corrected BM25 control. It does not add a planner, stage
+machine, evidence gate, context strategy, or reviewer.
+
+| Task | Control Result | 2.8 Result | Control Steps | 2.8 Steps | Pre-fix Repro | Repro Flipped | Existing Test Modified | Git-History Searches | Network Attempts | Cost |
+| --- | --- | --- | ---: | ---: | --- | --- | --- | ---: | ---: | ---: |
+| `django__django-16429` | RESOLVED | RESOLVED | 10 | 10 | YES | YES | NO | 1 -> 1 | 0 -> 0 | $0.002726268 -> $0.003056796 |
+| `django__django-15277` | RESOLVED | RESOLVED | 8 | 14 | NO | NO | NO | 1 -> 1 | 0 -> 0 | $0.002635248 -> $0.004026876 |
+| `django__django-13343` | RESOLVED | RESOLVED | 19 | 30 | YES | YES | YES | 1 -> 1 | 0 -> 0 | $0.005581212 -> $0.010154004 |
+| `django__django-16454` | RESOLVED | UNRESOLVED (ambiguous: missing module) | 19 | 41 | YES | YES | YES | 1 -> 1 | 0 -> 0 | $0.005276484 -> $0.013859304 |
+| `django__django-16950` | UNRESOLVED | RESOLVED | 50 | 32 | YES | YES | YES | 5 -> 3 | 1 -> 0 | $0.031352208 -> $0.013380744 |
+
+- Date: 2026-09-29
+- Run ID: `step-2-8-reproduction-first`
+- Code commit: `491e0bd3438c211757146b621927180c81ccfc82`
+- Model / config: `deepseek-flash`; temperature 0; thinking disabled;
+  50-step limit; $0.5 cost limit; default BM25
+- Harness result: 4 / 5. Resolved: `django__django-16429`,
+  `django__django-15277`, `django__django-13343`, and
+  `django__django-16950`.
+- Total steps: 106 -> 127 (+21). Prompt/cache-hit/completion tokens:
+  1,163,609 / 1,118,720 / 22,827 ->
+  1,068,213 / 1,019,904 / 19,888.
+- Total cost: $0.047571420 -> $0.044477724 (-$0.003093696), maximum
+  estimates. Agent wall time: 253.81 -> 591.16 seconds. Harness wall time:
+  about 108 seconds.
+- Pre-fix reproduction: 1 / 5 -> 4 / 5. Same-criterion
+  failure-to-pass flips: 0 / 5 -> 4 / 5.
+- First production edit steps in task order: 3, 4, 8, 19, 18.
+- Git-history searches: 9 -> 7. Network attempts: 1 -> 0. In particular,
+  16950 changed from five history searches plus one download attempt to three
+  history searches and no network attempt, then submitted at step 32 instead
+  of exhausting all 50 steps.
+- Existing test files appeared in 4 / 5 control patches and 3 / 5 2.8
+  patches. The 2.8 edits add regression coverage for 13343 and 16454; the
+  16950 assertion is changed alongside the production fix to express the new
+  required behavior. No 2.8 patch merely weakens an assertion to hide a
+  failing implementation.
+- 16454 is recorded as official UNRESOLVED. Its intended fail-to-pass test and
+  the Agent-added regression test passed, but editing the same existing test
+  file made the Harness gold-test patch fail to apply. The missing injected
+  `subparser_vanilla.py` then produced the reported `missing_module` ambiguous
+  failure. The task was not rerun.
+- Aggregate Harness count did not regress (4 / 5 -> 4 / 5), but the unresolved
+  task changed from 16950 to the ambiguous 16454 result. Behavior improved on
+  reproduction, history searching, network use, and the prior 16950 failure;
+  steps and wall time increased.
+- Offline tests: 13 passed; fixed five-DEV Docker/offline check passed.
+- Trajectory secret/HOLDOUT audit: PASS
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0
+
 ## Step 1.2 experiments
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
