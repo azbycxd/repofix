@@ -332,6 +332,54 @@ machine, evidence gate, context strategy, or reviewer.
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
 
+## Step 2.9 single-pass independent Reviewer
+
+The corrected Step 2.8 comparison uses production-only evaluation patches;
+16454 is RESOLVED by the recorded filtered-patch rejudge. Step 2.9 keeps
+reproduction-first, default BM25, temperature 0, thinking disabled, and the
+same Agent tools and limits. Reviewer is explicitly enabled for this experiment.
+
+| Task | 2.8 Result | 2.9 Result | Reviewer | Reject Reason | Patch Changed After Reject | Final Harness |
+| --- | --- | --- | --- | --- | --- | --- |
+| `django__django-16429` | RESOLVED | RESOLVED | APPROVE | — | N/A | RESOLVED |
+| `django__django-15277` | RESOLVED | RESOLVED | APPROVE | — | N/A | RESOLVED |
+| `django__django-13343` | RESOLVED | RESOLVED | APPROVE | — | N/A | RESOLVED |
+| `django__django-16454` | RESOLVED (filtered rejudge) | RESOLVED | APPROVE | — | N/A | RESOLVED |
+| `django__django-16950` | RESOLVED | UNRESOLVED | APPROVE | — | N/A | UNRESOLVED |
+
+- Date: 2026-09-29
+- Run ID: `step-2-9-independent-reviewer`
+- Code commit: `5cd6d92ff9a99b64075370188103309e9f7d3b79`
+- Reviewer context: a new single-turn context containing only the public issue,
+  complete Agent diff, last usable reproduction/test command, and its output.
+  It receives no Agent history, tools, gold patch, official fix, or HOLDOUT data.
+- Reviewer protocol: exactly `APPROVE` or `REJECT: <one-sentence reason>`.
+- Reviewer verdicts: 5 APPROVE / 0 REJECT / 0 errors. No patch was returned to
+  the Agent, so improvements after REJECT = 0 and false rejections = 0.
+- Reviewer usage: prompt/cache-hit/completion tokens = 6,801 / 0 / 15;
+  total tokens = 6,816; cost = $0.002058300 maximum estimate; measured added
+  latency = 4.498 seconds across five calls.
+- Agent steps: 127 -> 126. Agent-only cost: $0.044477724 -> $0.042787680.
+  Step 2.9 Agent + Reviewer cost = $0.044845980 maximum estimate. Agent wall
+  time = 436.25 seconds; Harness wall time = 116.70 seconds.
+- Corrected production-only Harness comparison: 5 / 5 -> 4 / 5. The Reviewer
+  never changed an Agent patch, so the result difference is not an effect of a
+  Reviewer return; it is run-to-run Agent behavior, with 16950 producing a new
+  incorrect implementation.
+- 16950 is a false approval. Reviewer saw a broad command reporting 1,708 tests
+  passed, but that command omitted `model_formsets.test_uuid`. The submitted
+  `AutoField` condition broke five existing UUID formset behaviors in the
+  official Harness. Reviewer did not detect the insufficient validation or
+  incorrect condition.
+- Reviewer did not catch assertion weakening or another real defect on this
+  DEV set. No 2.9 patch merely weakened an existing assertion, but test-file
+  changes in 13343, 16454, and 16950 were all approved without comment.
+- Conclusion: current DEV set shows no clear Reviewer benefit and one important
+  false approval. Reviewer remains implemented but disabled by default.
+- Trajectory secret/HOLDOUT audit: PASS; exactly one Reviewer event per task.
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0
+
 ## Step 1.2 experiments
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
