@@ -1,0 +1,13 @@
+diff --git a/colorama/ansi.py b/colorama/ansi.py
+index 290f07a..11ec695 100644
+--- a/colorama/ansi.py
++++ b/colorama/ansi.py
+@@ -43,7 +43,7 @@ class AnsiCursor(object):
+     def BACK(self, n=1):
+         return CSI + str(n) + 'D'
+     def POS(self, x=1, y=1):
+-        return CSI + str(x) + ';' + str(y) + 'H'
++        return CSI + str(y) + ';' + str(x) + 'H'
+ 
+ 
+ class AnsiFore(AnsiCodes):

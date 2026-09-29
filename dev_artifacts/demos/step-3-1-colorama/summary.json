@@ -1,0 +1,42 @@
+{
+  "run_id": "step-3-1-colorama-demo",
+  "repository": "/mnt/d/workspace/repo-agent-project/repofix/runs/step-3-1-demo-source/colorama",
+  "source_head_before": "5dedf963021fe539f1194db91de1b44779b8ae0d",
+  "source_head_after": "5dedf963021fe539f1194db91de1b44779b8ae0d",
+  "source_status_before": "",
+  "source_status_after": "",
+  "source_repository_unchanged": true,
+  "isolated_patch_materialized": true,
+  "runtime_network_mode": "none",
+  "sandbox_build_seconds": 31.49644684800296,
+  "sandbox_install_commands": [
+    "python -m pip install --no-cache-dir pytest==8.3.5",
+    "python -m pip install --no-cache-dir -r requirements.txt",
+    "python -m pip install --no-cache-dir ."
+  ],
+  "terminal_status": "submitted",
+  "submitted": true,
+  "steps": 42,
+  "provider_calls": 42,
+  "tool_calls": 53,
+  "prompt_tokens": 562262,
+  "cache_hit_tokens": 544896,
+  "completion_tokens": 8026,
+  "estimated_cost_usd": 0.018110375999999997,
+  "pre_fix_reproduction_telemetry": true,
+  "reproduction_flipped_telemetry": true,
+  "modified_production_files": [
+    "colorama/ansi.py"
+  ],
+  "modified_test_files": [],
+  "filtered_test_paths": [],
+  "search_calls": 1,
+  "reviewer_enabled": false,
+  "reviewer_calls": 0,
+  "dense_loaded": false,
+  "full_diff_path": "/mnt/d/workspace/repo-agent-project/repofix/dev_artifacts/demos/step-3-1-colorama/full.patch",
+  "production_diff_path": "/mnt/d/workspace/repo-agent-project/repofix/dev_artifacts/demos/step-3-1-colorama/production.patch",
+  "trajectory_path": "/mnt/d/workspace/repo-agent-project/repofix/dev_artifacts/demos/step-3-1-colorama/trajectory.jsonl",
+  "wall_time_seconds": 117.58684239300783,
+  "error": null
+}
