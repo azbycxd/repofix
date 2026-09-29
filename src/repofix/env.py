@@ -150,6 +150,21 @@ class DockerEnv:
             raise RuntimeError("Unable to collect final git diff")
         return result.output
 
+    def get_tracked_changes(self) -> list[tuple[str, str]]:
+        """Return modified/staged tracked paths without including untracked files."""
+        result = self.execute("git diff --name-status HEAD --", timeout=60)
+        if result.timed_out or result.exit_code != 0:
+            raise RuntimeError("Unable to inspect tracked repository changes")
+        changes: list[tuple[str, str]] = []
+        for line in result.output.splitlines():
+            fields = line.split("\t")
+            if len(fields) < 2:
+                continue
+            status = fields[0]
+            path = fields[-1]
+            changes.append((status, path))
+        return changes
+
     def read_repository_text_files(
         self, max_file_bytes: int = 1_000_000
     ) -> dict[str, str]:

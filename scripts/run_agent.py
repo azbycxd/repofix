@@ -244,6 +244,8 @@ def check_patch_collection(env: DockerEnv) -> None:
         "git add .repofix_staged_check.txt"
     )
     assert not created.timed_out and created.exit_code == 0
+    changes = env.get_tracked_changes()
+    assert ("A", ".repofix_staged_check.txt") in changes
     patch = env.get_diff()
     assert ".repofix_untracked_check.txt" not in patch
     assert ".repofix_staged_check.txt" in patch
@@ -254,6 +256,7 @@ def check_patch_collection(env: DockerEnv) -> None:
     assert not cleanup.timed_out and cleanup.exit_code == 0
     print("PATCH_EXCLUDES_UNTRACKED=PASS")
     print("PATCH_INCLUDES_STAGED_NEW_FILE=PASS")
+    print("TRACKED_CHANGE_TELEMETRY_CHECK=PASS")
 
 
 def offline_check(
@@ -311,6 +314,13 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
         "dense_cache_hit": result.dense_cache_hit,
         "dense_cache_hit_count": result.dense_cache_hit_count,
         "dense_embedded_count": result.dense_embedded_count,
+        "PRE_FIX_REPRODUCED": result.pre_fix_reproduced,
+        "POST_FIX_REPRO_PASSED": result.post_fix_repro_passed,
+        "REPRO_FLIPPED": result.repro_flipped,
+        "FIRST_PRODUCTION_EDIT_STEP": result.first_production_edit_step,
+        "EXISTING_TEST_MODIFIED": result.existing_test_modified,
+        "GIT_HISTORY_SEARCH_COUNT": result.git_history_search_count,
+        "NETWORK_ATTEMPT_COUNT": result.network_attempt_count,
         "prompt_tokens": result.prompt_tokens,
         "cache_hit_tokens": result.cache_hit_tokens,
         "completion_tokens": result.completion_tokens,
@@ -381,6 +391,13 @@ def run_instance(
             "dense_cache_hit": False,
             "dense_cache_hit_count": 0,
             "dense_embedded_count": 0,
+            "PRE_FIX_REPRODUCED": False,
+            "POST_FIX_REPRO_PASSED": False,
+            "REPRO_FLIPPED": False,
+            "FIRST_PRODUCTION_EDIT_STEP": None,
+            "EXISTING_TEST_MODIFIED": False,
+            "GIT_HISTORY_SEARCH_COUNT": 0,
+            "NETWORK_ATTEMPT_COUNT": 0,
             "prompt_tokens": 0,
             "cache_hit_tokens": None,
             "completion_tokens": 0,

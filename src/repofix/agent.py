@@ -12,6 +12,7 @@ from typing import Any
 from openai import OpenAI
 
 from .env import DockerEnv
+from .reproduction import ReproductionTelemetry
 from .search import (
     BM25Index,
     SEARCH_DEFAULT_TOP_K,
@@ -28,7 +29,15 @@ TOOL_OUTPUT_TAIL_CHARS = 6_000
 SYSTEM_PROMPT = """You are a coding agent working on one public SWE-bench issue.
 The repository is at /testbed. Use bash to inspect, edit, and test the repository.
 The container has no network access. Keep working until the issue is fixed, then call
-submit. Do not merely describe a patch and do not ask the user questions."""
+submit. Do not merely describe a patch and do not ask the user questions.
+
+Before modifying implementation code, first create the smallest executable
+reproduction you can and observe the issue fail. Prefer a temporary script such as
+/tmp/repofix_repro.py or a focused existing test command. After the implementation
+change, run the same reproduction command again and confirm it passes. Keep temporary
+reproduction files outside the final patch. Do not search the network or Git history
+for an official fix. Do not modify existing tests merely to make your implementation
+pass."""
 
 TOOLS = [
     {
@@ -168,6 +177,13 @@ class AgentResult:
     dense_cache_hit: bool
     dense_cache_hit_count: int
     dense_embedded_count: int
+    pre_fix_reproduced: bool
+    post_fix_repro_passed: bool
+    repro_flipped: bool
+    first_production_edit_step: int | None
+    existing_test_modified: bool
+    git_history_search_count: int
+    network_attempt_count: int
     prompt_tokens: int
     cache_hit_tokens: int | None
     completion_tokens: int
@@ -403,6 +419,7 @@ class RepoFixAgent:
         cache_hit_total = 0
         cache_hit_available = True
         max_cost = 0.0
+        behavior = ReproductionTelemetry()
         submitted = False
         status = "max_steps"
         no_tool_nudge_used = False
@@ -526,6 +543,18 @@ class RepoFixAgent:
                                 fatal_runtime_error = True
                                 status = "fatal_runtime_error"
                             else:
+                                try:
+                                    behavior.observe_changes(
+                                        step, self.env.get_tracked_changes()
+                                    )
+                                except Exception:
+                                    behavior.telemetry_errors += 1
+                                behavior.observe_shell(
+                                    step,
+                                    arguments["command"],
+                                    result.exit_code,
+                                    result.output,
+                                )
                                 if result.timed_out:
                                     status_suffix = "\n[command timed out]"
                                 else:
@@ -679,6 +708,12 @@ class RepoFixAgent:
                                     edit = self.env.str_replace_file(
                                         path, old_str, new_str
                                     )
+                                    try:
+                                        behavior.observe_changes(
+                                            step, self.env.get_tracked_changes()
+                                        )
+                                    except Exception:
+                                        behavior.telemetry_errors += 1
                                     if not edit.success:
                                         str_replace_failure_count += 1
                                     syntax_rollback_count += int(
@@ -841,6 +876,7 @@ class RepoFixAgent:
                     "finish_reason": choice.finish_reason,
                     "latency_seconds": time.monotonic() - call_started,
                     "max_estimated_cost_usd": max_cost,
+                    "behavior": behavior.metrics(),
                 }
             )
 
@@ -892,6 +928,13 @@ class RepoFixAgent:
             dense_cache_hit=dense_cache_hit,
             dense_cache_hit_count=dense_cache_hit_count,
             dense_embedded_count=dense_embedded_count,
+            pre_fix_reproduced=behavior.pre_fix_reproduced,
+            post_fix_repro_passed=behavior.post_fix_repro_passed,
+            repro_flipped=behavior.repro_flipped,
+            first_production_edit_step=behavior.first_production_edit_step,
+            existing_test_modified=behavior.existing_test_modified,
+            git_history_search_count=behavior.git_history_search_count,
+            network_attempt_count=behavior.network_attempt_count,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
             completion_tokens=completion_tokens,
@@ -905,6 +948,7 @@ class RepoFixAgent:
                 **{key: value for key, value in asdict(result).items() if key != "patch"},
                 "patch_nonempty": bool(patch.strip()),
                 "patch": patch,
+                "behavior": behavior.metrics(),
             }
         )
         return result
