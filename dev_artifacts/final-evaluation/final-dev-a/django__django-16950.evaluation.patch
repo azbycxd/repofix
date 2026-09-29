@@ -1,0 +1,25 @@
+diff --git a/django/forms/models.py b/django/forms/models.py
+index 3fa04b821f..0bc496565b 100644
+--- a/django/forms/models.py
++++ b/django/forms/models.py
+@@ -1177,7 +1177,7 @@ class BaseInlineFormSet(BaseModelFormSet):
+                 to_field = self.instance._meta.get_field(kwargs["to_field"])
+             else:
+                 to_field = self.instance._meta.pk
+-            if to_field.has_default():
++            if to_field.has_default() and to_field.primary_key:
+                 setattr(self.instance, to_field.attname, None)
+ 
+         form.fields[name] = InlineForeignKeyField(self.instance, **kwargs)
+diff --git a/docs/releases/4.0.1.txt b/docs/releases/4.0.1.txt
+index dba3f1783f..76cd2b949a 100644
+--- a/docs/releases/4.0.1.txt
++++ b/docs/releases/4.0.1.txt
+@@ -67,3 +67,7 @@ Bugfixes
+   :class:`~django.contrib.gis.geos.Polygon` that caused a crash on some
+   platforms (reported on macOS based on the ``ARM64`` architecture)
+   (:ticket:`32600`).
++
++* Fixed a bug where inline formsets with a parent model that uses a
++  ``UUIDField`` with a default as a ``to_field`` would set the parent's
++  alternate key to ``None`` (:ticket:`32186`).

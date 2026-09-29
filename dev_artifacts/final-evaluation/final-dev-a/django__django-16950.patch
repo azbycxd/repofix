@@ -1,0 +1,75 @@
+diff --git a/django/forms/models.py b/django/forms/models.py
+index 3fa04b821f..0bc496565b 100644
+--- a/django/forms/models.py
++++ b/django/forms/models.py
+@@ -1177,7 +1177,7 @@ class BaseInlineFormSet(BaseModelFormSet):
+                 to_field = self.instance._meta.get_field(kwargs["to_field"])
+             else:
+                 to_field = self.instance._meta.pk
+-            if to_field.has_default():
++            if to_field.has_default() and to_field.primary_key:
+                 setattr(self.instance, to_field.attname, None)
+ 
+         form.fields[name] = InlineForeignKeyField(self.instance, **kwargs)
+diff --git a/docs/releases/4.0.1.txt b/docs/releases/4.0.1.txt
+index dba3f1783f..76cd2b949a 100644
+--- a/docs/releases/4.0.1.txt
++++ b/docs/releases/4.0.1.txt
+@@ -67,3 +67,7 @@ Bugfixes
+   :class:`~django.contrib.gis.geos.Polygon` that caused a crash on some
+   platforms (reported on macOS based on the ``ARM64`` architecture)
+   (:ticket:`32600`).
++
++* Fixed a bug where inline formsets with a parent model that uses a
++  ``UUIDField`` with a default as a ``to_field`` would set the parent's
++  alternate key to ``None`` (:ticket:`32186`).
+diff --git a/tests/model_formsets/test_uuid.py b/tests/model_formsets/test_uuid.py
+index 2097bde82b..b3bf047380 100644
+--- a/tests/model_formsets/test_uuid.py
++++ b/tests/model_formsets/test_uuid.py
+@@ -80,14 +80,40 @@ class InlineFormsetTests(TestCase):
+         formset = FormSet()
+         self.assertIsNone(formset.forms[0].fields["parent"].initial)
+ 
+-    def test_inlineformset_factory_nulls_default_pks_alternate_key_relation(self):
++    def test_inlineformset_factory_preserves_default_alternate_key(self):
+         """
+-        #24958 - Variant of test_inlineformset_factory_nulls_default_pks for
+-        the case of a parent object with a UUID alternate key and a child
+-        object that relates to that alternate key.
++        #32186 - A parent's alternate key with a default (e.g. a UUIDField
++        used as a to_field) is a real value that must be preserved, not
++        ignored like an auto-generated primary key.
+         """
+         FormSet = inlineformset_factory(
+             ParentWithUUIDAlternateKey, ChildRelatedViaAK, fields="__all__"
+         )
+         formset = FormSet()
+-        self.assertIsNone(formset.forms[0].fields["parent"].initial)
++        self.assertIsNotNone(formset.forms[0].fields["parent"].initial)
++
++    def test_inlineformset_factory_saves_default_alternate_key(self):
++        """
++        #32186 - Saving an inline whose parent uses a UUIDField with a default
++        as a to_field must not null out the parent's alternate key.
++        """
++        FormSet = inlineformset_factory(
++            ParentWithUUIDAlternateKey, ChildRelatedViaAK, fields="__all__"
++        )
++        parent = ParentWithUUIDAlternateKey(name="parent")
++        alternate_key = parent.uuid
++        formset = FormSet(
++            {
++                "childrelatedviaak_set-TOTAL_FORMS": 1,
++                "childrelatedviaak_set-INITIAL_FORMS": 0,
++                "childrelatedviaak_set-MAX_NUM_FORMS": "",
++                "childrelatedviaak_set-0-name": "child",
++                "name": "parent",
++            },
++            instance=parent,
++        )
++        self.assertTrue(formset.is_valid(), formset.errors)
++        parent.save()
++        formset.save()
++        self.assertEqual(parent.uuid, alternate_key)
++        self.assertEqual(ChildRelatedViaAK.objects.get().parent_id, alternate_key)

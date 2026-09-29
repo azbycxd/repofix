@@ -479,3 +479,51 @@ scripts from `get_diff`.
 - Secret/HOLDOUT audit: PASS
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
+
+## Step 3.2 final frozen evaluation
+
+- Final freeze commit: `42db5504f8a86b951ad02950db67a67e47c3d6cd`
+- Config: single Agent; `deepseek-flash`; temperature 0; thinking disabled;
+  50 steps; $0.5 cap; bash/view/str_replace/BM25 search/submit;
+  reproduction-first and output truncation enabled; Dense/RRF and Reviewer off;
+  production-only official evaluation patch
+- Every scheduled task/run was executed once; no tuning or reruns
+
+| Task | Run A | Run B | Stable | Steps A/B | Cost A/B | Genuine pre-fix repro A/B |
+| --- | --- | --- | --- | --- | --- | --- |
+| `django__django-16429` | RESOLVED | RESOLVED | YES | 10 / 10 | $0.002471088 / $0.002483652 | YES / YES |
+| `django__django-15277` | RESOLVED | RESOLVED | YES | 14 / 13 | $0.003568692 / $0.003454956 | YES / YES |
+| `django__django-13343` | RESOLVED | RESOLVED | YES | 20 / 19 | $0.005834256 / $0.006099312 | YES / YES |
+| `django__django-16454` | RESOLVED | RESOLVED | YES | 32 / 38 | $0.011487756 / $0.013917852 | YES / YES |
+| `django__django-16950` | RESOLVED | RESOLVED | YES | 50 / 50 | $0.024510720 / $0.028523064 | YES / YES |
+
+- FINAL_DEV_A: 5/5 resolved; 126 Provider / 143 tool calls; cost
+  $0.047872512; Agent/Harness wall 629.187s / 116.12s
+- FINAL_DEV_B: 5/5 resolved; 130 Provider / 140 tool calls; cost
+  $0.054478836; Agent/Harness wall 314.042s / 120.97s
+- Both resolved: 5; unstable task count: 0
+- Human trajectory review: 10/10 genuine pre-fix reproductions. Automatic
+  telemetry was 9/10 and missed Run B 16454's exit-zero bad-behavior output.
+- Both 16950 runs reached `max_steps` without submit, but their saved
+  production-only patches were officially RESOLVED.
+
+Three sealed final holdout tasks:
+
+| Task | Result | Steps | Cost | Genuine pre-fix repro | Submitted | Failure type |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| `django__django-11099` | RESOLVED | 8 | $0.001759776 | YES | YES | — |
+| `django__django-12713` | RESOLVED | 16 | $0.005784336 | YES | YES | — |
+| `django__django-11477` | UNRESOLVED | 30 | $0.011382516 | YES | YES | implementation reasoning |
+
+- Holdout result: 2/3 resolved; 54 Provider / 57 tool calls; cost
+  $0.018926628; Agent/Harness wall 597.231s / 71.49s
+- Holdout failure: the Agent localized and reproduced the optional URL-parameter
+  symptom, but filtered `None` kwargs in `translate_url()` rather than fixing the
+  underlying resolver behavior. Two required resolver tests remained failing;
+  focused validation missed that abstraction boundary. No fix or rerun followed.
+- Final evaluation totals: prompt/cache-hit/completion tokens
+  3,064,722 / 2,967,296 / 61,872; prompt + completion 3,126,594;
+  estimated cost $0.121277976; Agent wall 1,540.460s; Harness wall 308.58s
+- Trajectory and secret audit: PASS
+- HOLDOUT_STATUS = UNSEALED_FOR_FINAL_EVALUATION
+- HOLDOUT_AGENT_RUNS = 3

@@ -1,0 +1,41 @@
+diff --git a/django/urls/base.py b/django/urls/base.py
+index 0e1c3d909c..fb4a4b7e54 100644
+--- a/django/urls/base.py
++++ b/django/urls/base.py
+@@ -172,7 +172,9 @@ def translate_url(url, lang_code):
+         to_be_reversed = "%s:%s" % (match.namespace, match.url_name) if match.namespace else match.url_name
+         with override(lang_code):
+             try:
+-                url = reverse(to_be_reversed, args=match.args, kwargs=match.kwargs)
++                url = reverse(to_be_reversed, args=match.args, kwargs={
++                    k: v for k, v in match.kwargs.items() if v is not None
++                })
+             except NoReverseMatch:
+                 pass
+             else:
+diff --git a/tests/i18n/patterns/tests.py b/tests/i18n/patterns/tests.py
+index 6ed2c4ffeb..6b5663549b 100644
+--- a/tests/i18n/patterns/tests.py
++++ b/tests/i18n/patterns/tests.py
+@@ -163,6 +163,11 @@ class URLTranslationTests(URLTestCaseBase):
+             self.assertEqual(translate_url('/nl/gebruikers/', 'en'), '/en/users/')
+             self.assertEqual(translation.get_language(), 'nl')
+ 
++    def test_translate_url_utility_optional_named_group(self):
++        with translation.override('en'):
++            self.assertEqual(translate_url('/en/optional/', 'nl'), '/nl/optional/')
++            self.assertEqual(translate_url('/en/optional/foo', 'nl'), '/nl/optional/foo')
++
+ 
+ class URLNamespaceTests(URLTestCaseBase):
+     """
+diff --git a/tests/i18n/patterns/urls/default.py b/tests/i18n/patterns/urls/default.py
+index b0c2f2585e..e4dcf3c5bc 100644
+--- a/tests/i18n/patterns/urls/default.py
++++ b/tests/i18n/patterns/urls/default.py
+@@ -17,4 +17,5 @@ urlpatterns += i18n_patterns(
+     path('prefixed.xml', view, name='prefixed_xml'),
+     re_path(_(r'^users/$'), view, name='users'),
+     re_path(_(r'^account/'), include('i18n.patterns.urls.namespace', namespace='account')),
++    re_path(_(r'^optional/(?P<foo>[\w-]+)?$'), view, name='optional'),
+ )
