@@ -32,14 +32,19 @@ class ReproductionTelemetryTests(unittest.TestCase):
         self.assertEqual(telemetry.network_attempt_count, 1)
 
     def test_setup_failure_is_not_issue_reproduction(self) -> None:
-        telemetry = ReproductionTelemetry()
-        telemetry.observe_shell(
-            1,
-            "python /tmp/repofix_repro.py",
-            1,
-            "ModuleNotFoundError: No module named 'test_sqlite'",
-        )
-        self.assertFalse(telemetry.pre_fix_reproduced)
+        for output in (
+            "ModuleNotFoundError: No module named 'anything'",
+            "ImportError: cannot import name 'Thing' from 'example'",
+        ):
+            with self.subTest(output=output):
+                telemetry = ReproductionTelemetry()
+                telemetry.observe_shell(
+                    1,
+                    "python /tmp/repofix_repro.py",
+                    1,
+                    output,
+                )
+                self.assertFalse(telemetry.pre_fix_reproduced)
 
     def test_test_command_has_stable_key_across_output_pipes(self) -> None:
         first = "python tests/runtests.py app.Test.test_bug -v2 2>&1 | tail -20"

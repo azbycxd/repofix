@@ -10,3 +10,9 @@
 
 默认检索为 BM25，只需安装 `requirements.txt`。已停止的 Dense/RRF 实验需
 额外安装 `requirements-dense.txt`，并显式传入 `--retrieval-mode dense_rrf`。
+
+## 判分 patch
+
+Agent 完整 diff 保存在 trajectory 和 run artifact 中。提交给 SWE-bench
+Harness 的 evaluation patch 会排除 `is_test_path()` 识别出的测试文件修改；
+官方判分只评估生产修改，Agent 自己编写的测试单独保存在轨迹中。

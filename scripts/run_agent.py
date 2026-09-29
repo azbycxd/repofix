@@ -30,6 +30,7 @@ from repofix.agent import (  # noqa: E402
     parse_tool_arguments,
 )
 from repofix.env import DockerEnv  # noqa: E402
+from repofix.evaluation import build_evaluation_patch  # noqa: E402
 from repofix.search import BM25Index, format_search_results  # noqa: E402
 
 
@@ -411,14 +412,22 @@ def run_instance(
 
     patch_path = run_dir / f"{instance_id}.patch"
     patch_path.write_text(patch, encoding="utf-8")
+    evaluation = build_evaluation_patch(patch)
+    evaluation_patch_path = run_dir / f"{instance_id}.evaluation.patch"
+    evaluation_patch_path.write_text(evaluation.patch, encoding="utf-8")
     summary["patch_path"] = str(patch_path.relative_to(PROJECT_ROOT))
+    summary["evaluation_patch_path"] = str(
+        evaluation_patch_path.relative_to(PROJECT_ROOT)
+    )
+    summary["evaluation_patch_nonempty"] = bool(evaluation.patch.strip())
+    summary["filtered_test_paths"] = list(evaluation.filtered_test_paths)
     result_path = run_dir / f"{instance_id}.result.json"
     result_path.write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     prediction = {
         "instance_id": instance_id,
-        "model_patch": patch,
+        "model_patch": evaluation.patch,
         "model_name_or_path": config.model,
     }
     return summary, prediction

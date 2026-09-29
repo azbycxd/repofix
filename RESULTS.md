@@ -294,8 +294,12 @@ machine, evidence gate, context strategy, or reviewer.
 - Total cost: $0.047571420 -> $0.044477724 (-$0.003093696), maximum
   estimates. Agent wall time: 253.81 -> 591.16 seconds. Harness wall time:
   about 108 seconds.
-- Pre-fix reproduction: 1 / 5 -> 4 / 5. Same-criterion
-  failure-to-pass flips: 0 / 5 -> 4 / 5.
+- Automatic pre-fix reproduction telemetry: 1 / 5 -> 4 / 5.
+  Same-criterion automatic failure-to-pass flips: 0 / 5 -> 4 / 5.
+- 人工轨迹核查：5/5 在生产修改前真实复现；自动 telemetry 仅作辅助统计。
+  From Step 2.9 onward, any `ModuleNotFoundError` or `ImportError` is treated
+  as an environment/reproduction-script error and cannot set
+  `PRE_FIX_REPRODUCED`.
 - First production edit steps in task order: 3, 4, 8, 19, 18.
 - Git-history searches: 9 -> 7. Network attempts: 1 -> 0. In particular,
   16950 changed from five history searches plus one download attempt to three
@@ -311,6 +315,14 @@ machine, evidence gate, context strategy, or reviewer.
   file made the Harness gold-test patch fail to apply. The missing injected
   `subparser_vanilla.py` then produced the reported `missing_module` ambiguous
   failure. The task was not rerun.
+- Step 2.9 patch-policy rejudge, using the exact same 2.8 Agent patch and no
+  Agent rerun: original full-patch Harness result = UNRESOLVED/ambiguous;
+  production-only filtered-patch result = RESOLVED. The filtered path was
+  `tests/user_commands/tests.py`; Harness wall time was 35.81 seconds.
+- Agent full diffs remain in trajectory/run artifacts. Official Harness
+  predictions exclude paths recognized by `is_test_path()`: official scoring
+  evaluates production changes only, while Agent-authored tests remain
+  separately reviewable in the trajectory.
 - Aggregate Harness count did not regress (4 / 5 -> 4 / 5), but the unresolved
   task changed from 16950 to the ambiguous 16454 result. Behavior improved on
   reproduction, history searching, network use, and the prior 16950 failure;

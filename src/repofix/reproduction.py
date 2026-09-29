@@ -32,9 +32,7 @@ _FAILURE_OUTPUT_RE = re.compile(
     r"(?m)^(?:FAILED(?:\s|\()|FAIL:|ERROR:|Traceback \(most recent call last\):)"
     r"|\bAssertionError\b"
 )
-_SETUP_FAILURE_RE = re.compile(
-    r"ModuleNotFoundError: No module named ['\"](?:test_sqlite|tests)['\"]"
-)
+_IMPORT_FAILURE_RE = re.compile(r"\b(?:ModuleNotFoundError|ImportError)\b")
 
 
 def is_test_path(path: str) -> bool:
@@ -59,7 +57,9 @@ def reproduction_key(command: str) -> str | None:
 
 
 def reproduction_failed(exit_code: int | None, output: str) -> bool:
-    if _SETUP_FAILURE_RE.search(output):
+    # Import failures indicate a broken environment or reproduction script, not
+    # evidence that the reported product behavior was reproduced.
+    if _IMPORT_FAILURE_RE.search(output):
         return False
     return exit_code not in (0, None) or bool(_FAILURE_OUTPUT_RE.search(output))
 
