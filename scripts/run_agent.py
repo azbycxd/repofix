@@ -192,11 +192,20 @@ def check_native_file_tools(env: DockerEnv) -> None:
     assert not rollback.success and rollback.syntax_rollback
     assert "original file restored" in rollback.output
     assert "value = 2" in env.view_file(path, 1, 2)
+
+    text_path = "/testbed/.repofix_tool_check.txt"
+    text_created = env.execute(f"printf 'plain text\\n' > {text_path}")
+    assert not text_created.timed_out and text_created.exit_code == 0
+    text_edit = env.str_replace_file(text_path, "plain text", "not python: [")
+    assert text_edit.success and not text_edit.syntax_rollback
+    assert "Syntax check skipped for non-Python file" in text_edit.output
+    assert "not python: [" in env.view_file(text_path, 1, 1)
     print("VIEW_LINE_RANGE_CHECK=PASS")
     print("VIEW_PATH_GUARD_CHECK=PASS")
     print("STR_REPLACE_CARDINALITY_CHECK=PASS")
     print("STR_REPLACE_SUCCESS_CHECK=PASS")
     print("STR_REPLACE_SYNTAX_ROLLBACK_CHECK=PASS")
+    print("STR_REPLACE_NON_PYTHON_CHECK=PASS")
 
 
 def check_bm25_code_search(env: DockerEnv) -> None:
@@ -206,16 +215,45 @@ def check_bm25_code_search(env: DockerEnv) -> None:
     results = index.search("django model field", top_k=5)
     assert results
     rendered = format_search_results(results)
-    assert "file=" in rendered
-    assert "symbol=" in rendered
-    assert "chunk_type=" in rendered
-    assert "lines=" in rendered
+    assert ":" in rendered
+    assert "type=" in rendered
     assert "score=" in rendered
-    assert "--- source ---" in rendered
+    assert "--- source ---" not in rendered
+    config = AgentConfig()
+    search_view = format_tool_observation(
+        rendered,
+        "",
+        None,
+        config.tool_output_max_chars,
+        config.tool_output_head_chars,
+        config.tool_output_tail_chars,
+    )
+    assert not search_view.truncated
     print(f"BM25_INDEX_FILES={stats.file_count}")
     print(f"BM25_INDEX_CHUNKS={stats.chunk_count}")
     print(f"BM25_INDEX_BUILD_SECONDS={stats.build_seconds:.6f}")
+    print("BM25_SEARCH_POSITION_ONLY=PASS")
+    print("BM25_SEARCH_NO_TRUNCATION=PASS")
     print("BM25_SEARCH_CHECK=PASS")
+
+
+def check_patch_collection(env: DockerEnv) -> None:
+    created = env.execute(
+        "printf 'temporary untracked\\n' > .repofix_untracked_check.txt; "
+        "printf 'intentional staged\\n' > .repofix_staged_check.txt; "
+        "git add .repofix_staged_check.txt"
+    )
+    assert not created.timed_out and created.exit_code == 0
+    patch = env.get_diff()
+    assert ".repofix_untracked_check.txt" not in patch
+    assert ".repofix_staged_check.txt" in patch
+    cleanup = env.execute(
+        "git reset -- .repofix_staged_check.txt; "
+        "rm -f .repofix_untracked_check.txt .repofix_staged_check.txt"
+    )
+    assert not cleanup.timed_out and cleanup.exit_code == 0
+    print("PATCH_EXCLUDES_UNTRACKED=PASS")
+    print("PATCH_INCLUDES_STAGED_NEW_FILE=PASS")
 
 
 def offline_check(
@@ -246,6 +284,7 @@ def offline_check(
                 check_tool_output_truncation(env)
                 check_native_file_tools(env)
                 check_bm25_code_search(env)
+                check_patch_collection(env)
     print("TESTBED_DJANGO_IMPORT_CHECKS=PASS")
     print(f"DEEPSEEK_API_KEY_PRESENT={'YES' if api_key_present else 'NO'}")
     print("PROVIDER_CALLS=0")

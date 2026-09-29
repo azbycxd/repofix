@@ -156,6 +156,14 @@ source files from the current `/testbed` Git revision are indexed.
   gold-test patch could not apply cleanly and its expected
   `subparser_vanilla.py` module was absent; Harness classified the failure as
   `missing_module` and ambiguous.
+- BM25 Full-Issue Recall@5 = 5 / 5, but the Agent actually called
+  `search_code` only once. Most of these five DEV issues expose enough file or
+  function information for direct grep-based localization. On 16950 the old
+  source-bearing search response exceeded the 12,000-character observation
+  limit and was truncated; Step 2.4 changes search output to locations only.
+  The 16454 result difference came from extra untracked test files entering the
+  prediction patch, not from BM25. Step 2.3 is therefore qualitative evidence
+  that retrieval works, but not evidence that it improves Agent success.
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
 

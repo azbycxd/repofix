@@ -145,9 +145,7 @@ class DockerEnv:
         return ExecutionResult(output, exit_code, timed_out, latency)
 
     def get_diff(self) -> str:
-        result = self.execute(
-            "git add --intent-to-add -- . && git diff --binary HEAD --", timeout=60
-        )
+        result = self.execute("git diff --binary HEAD --", timeout=60)
         if result.timed_out or result.exit_code != 0:
             raise RuntimeError("Unable to collect final git diff")
         return result.output
@@ -315,18 +313,24 @@ class DockerEnv:
         updated = original.replace(old_str, new_str, 1)
         directory, filename = posixpath.split(resolved)
         self._put_text_file(directory, filename, updated, mode)
-        compile_result = self.execute(
-            f"python -m py_compile {shlex.quote(resolved)}", timeout=60
-        )
-        if compile_result.timed_out or compile_result.exit_code != 0:
-            self._put_text_file(directory, filename, original, mode)
-            details = compile_result.output.strip() or "py_compile failed without output"
-            return StrReplaceResult(
-                "str_replace syntax check failed; original file restored.\n"
-                f"{details}",
-                False,
-                True,
+        syntax_message = "Syntax check skipped for non-Python file."
+        if resolved.endswith(".py"):
+            compile_result = self.execute(
+                f"python -m py_compile {shlex.quote(resolved)}", timeout=60
             )
+            if compile_result.timed_out or compile_result.exit_code != 0:
+                self._put_text_file(directory, filename, original, mode)
+                details = (
+                    compile_result.output.strip()
+                    or "py_compile failed without output"
+                )
+                return StrReplaceResult(
+                    "str_replace syntax check failed; original file restored.\n"
+                    f"{details}",
+                    False,
+                    True,
+                )
+            syntax_message = "py_compile passed."
 
         replacement_offset = original.index(old_str)
         start_line = updated.count("\n", 0, replacement_offset) + 1
@@ -336,7 +340,7 @@ class DockerEnv:
         context_end = min(total_lines, start_line + replacement_lines + 2)
         context = self._numbered_lines(updated, context_start, context_end)
         return StrReplaceResult(
-            "Replaced exactly one occurrence and py_compile passed.\n"
+            f"Replaced exactly one occurrence. {syntax_message}\n"
             f"{resolved}\n{context}",
             True,
             False,

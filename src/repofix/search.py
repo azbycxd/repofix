@@ -208,16 +208,11 @@ class BM25Index:
 def format_search_results(results: Sequence[SearchResult]) -> str:
     if not results:
         return "No matching code chunks found."
-    sections: list[str] = []
+    lines: list[str] = []
     for rank, result in enumerate(results, start=1):
         chunk = result.chunk
-        sections.append(
-            f"[{rank}] score={result.score:.6f}\n"
-            f"file={chunk.file_path}\n"
-            f"symbol={chunk.symbol}\n"
-            f"chunk_type={chunk.chunk_type}\n"
-            f"lines={chunk.start_line}-{chunk.end_line}\n"
-            "--- source ---\n"
-            f"{chunk.source_text}"
+        lines.append(
+            f"[{rank}] {chunk.file_path}:{chunk.start_line}-{chunk.end_line}  "
+            f"{chunk.symbol}  type={chunk.chunk_type}  score={result.score:.6f}"
         )
-    return "\n\n".join(sections)
+    return "\n".join(lines)

@@ -44,9 +44,11 @@ class BM25SearchTests(unittest.TestCase):
 
         formatted = format_search_results(results)
         self.assertIn("score=", formatted)
-        self.assertIn("file=pkg/query.py", formatted)
-        self.assertIn("symbol=QueryCompiler.resolve_lookup", formatted)
-        self.assertIn("lines=2-3", formatted)
+        self.assertIn("pkg/query.py:2-3", formatted)
+        self.assertIn("QueryCompiler.resolve_lookup", formatted)
+        self.assertNotIn("return lookup.resolve()", formatted)
+        self.assertNotIn("--- source ---", formatted)
+        self.assertEqual(len(formatted.splitlines()), 2)
 
     def test_tokenizer_splits_snake_case_and_camel_case(self) -> None:
         tokens = tokenize("QueryCompiler resolve_lookup")
