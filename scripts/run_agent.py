@@ -30,7 +30,7 @@ from repofix.agent import (  # noqa: E402
     parse_tool_arguments,
 )
 from repofix.env import DockerEnv  # noqa: E402
-from repofix.search import BM25Index, format_search_results  # noqa: E402
+from repofix.retrieval import HybridCodeIndex, format_fused_results  # noqa: E402
 
 
 DATASET = "SWE-bench/SWE-bench_Verified"
@@ -208,16 +208,16 @@ def check_native_file_tools(env: DockerEnv) -> None:
     print("STR_REPLACE_NON_PYTHON_CHECK=PASS")
 
 
-def check_bm25_code_search(env: DockerEnv) -> None:
-    index, stats = BM25Index.from_repository(env)
+def check_hybrid_code_search(env: DockerEnv) -> None:
+    index, stats = HybridCodeIndex.from_repository(env)
     assert stats.file_count > 0
     assert stats.chunk_count > 0
     results = index.search("django model field", top_k=5)
     assert results
-    rendered = format_search_results(results)
+    rendered = format_fused_results(results)
     assert ":" in rendered
     assert "type=" in rendered
-    assert "score=" in rendered
+    assert "rrf=" in rendered
     assert "--- source ---" not in rendered
     config = AgentConfig()
     search_view = format_tool_observation(
@@ -231,7 +231,9 @@ def check_bm25_code_search(env: DockerEnv) -> None:
     assert not search_view.truncated
     print(f"BM25_INDEX_FILES={stats.file_count}")
     print(f"BM25_INDEX_CHUNKS={stats.chunk_count}")
-    print(f"BM25_INDEX_BUILD_SECONDS={stats.build_seconds:.6f}")
+    print(f"HYBRID_INDEX_BUILD_SECONDS={stats.total_build_seconds:.6f}")
+    print(f"DENSE_INDEX_BUILD_SECONDS={stats.dense_build_seconds:.6f}")
+    print(f"DENSE_CACHE_HIT={stats.dense_cache_hit}")
     print("BM25_SEARCH_POSITION_ONLY=PASS")
     print("BM25_SEARCH_NO_TRUNCATION=PASS")
     print("BM25_SEARCH_CHECK=PASS")
@@ -283,7 +285,7 @@ def offline_check(
             if index == 0:
                 check_tool_output_truncation(env)
                 check_native_file_tools(env)
-                check_bm25_code_search(env)
+                check_hybrid_code_search(env)
                 check_patch_collection(env)
     print("TESTBED_DJANGO_IMPORT_CHECKS=PASS")
     print(f"DEEPSEEK_API_KEY_PRESENT={'YES' if api_key_present else 'NO'}")
@@ -307,6 +309,8 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
         "index_file_count": result.index_file_count,
         "index_chunk_count": result.index_chunk_count,
         "index_build_seconds": result.index_build_seconds,
+        "dense_build_seconds": result.dense_build_seconds,
+        "dense_cache_hit": result.dense_cache_hit,
         "prompt_tokens": result.prompt_tokens,
         "cache_hit_tokens": result.cache_hit_tokens,
         "completion_tokens": result.completion_tokens,
@@ -373,6 +377,8 @@ def run_instance(
             "index_file_count": 0,
             "index_chunk_count": 0,
             "index_build_seconds": 0.0,
+            "dense_build_seconds": 0.0,
+            "dense_cache_hit": False,
             "prompt_tokens": 0,
             "cache_hit_tokens": None,
             "completion_tokens": 0,

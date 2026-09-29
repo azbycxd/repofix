@@ -12,11 +12,10 @@ from typing import Any
 from openai import OpenAI
 
 from .env import DockerEnv
+from .retrieval import HybridCodeIndex, format_fused_results
 from .search import (
     SEARCH_DEFAULT_TOP_K,
     SEARCH_MAX_TOP_K,
-    BM25Index,
-    format_search_results,
 )
 
 
@@ -91,8 +90,8 @@ TOOLS = [
         "function": {
             "name": "search_code",
             "description": (
-                "Search the current /testbed repository with BM25 and return "
-                "ranked source chunks with file, symbol, line, and score metadata."
+                "Search the current /testbed repository with BM25+dense RRF and "
+                "return ranked file, symbol, line, and rank metadata."
             ),
             "parameters": {
                 "type": "object",
@@ -163,6 +162,8 @@ class AgentResult:
     index_file_count: int
     index_chunk_count: int
     index_build_seconds: float
+    dense_build_seconds: float
+    dense_cache_hit: bool
     prompt_tokens: int
     cache_hit_tokens: int | None
     completion_tokens: int
@@ -331,7 +332,7 @@ class RepoFixAgent:
 
     def run(self) -> AgentResult:
         started = time.monotonic()
-        code_index, index_stats = BM25Index.from_repository(self.env)
+        code_index, index_stats = HybridCodeIndex.from_repository(self.env)
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
@@ -708,7 +709,7 @@ class RepoFixAgent:
                                 }
                             else:
                                 try:
-                                    search_output = format_search_results(
+                                    search_output = format_fused_results(
                                         code_index.search(query, top_k=top_k)
                                     )
                                     full_output_path = None
@@ -849,7 +850,9 @@ class RepoFixAgent:
             truncations=truncation_count,
             index_file_count=index_stats.file_count,
             index_chunk_count=index_stats.chunk_count,
-            index_build_seconds=index_stats.build_seconds,
+            index_build_seconds=index_stats.total_build_seconds,
+            dense_build_seconds=index_stats.dense_build_seconds,
+            dense_cache_hit=index_stats.dense_cache_hit,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
             completion_tokens=completion_tokens,
