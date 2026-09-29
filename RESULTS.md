@@ -440,3 +440,23 @@ scripts from `get_diff`.
 - No tool output crossed the configured threshold, so the observed run-to-run metric changes cannot be attributed to truncation. The threshold was not adjusted and no task was rerun.
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
+
+## Step 3.1 local Python repository CLI demo
+
+- Date: 2026-09-29
+- Repository: Colorama `0.4.6`
+- Upstream commit: `3de9f013df4b470069d03d250224062e8cf15c49`
+- Planted-bug commit: `5dedf963021fe539f1194db91de1b44779b8ae0d`
+- Agent runs: 1; terminal: submitted; steps/provider calls/tool calls: 42/42/53
+- Tokens: prompt 562,262 / cache hit 544,896 / completion 8,026
+- Estimated cost: $0.018110376; total CLI wall time: 117.587 seconds
+- PRE_FIX_REPRODUCED = true; REPRO_FLIPPED = true
+- Final change: `colorama/ansi.py`; full diff equals production-only diff
+- Agent tests: 38 passed / 14 skipped; independent verification: focused
+  reproduction passed and 52 unittest cases ran with 14 platform skips
+- Source repository HEAD/status unchanged; temporary worktree/container/image
+  cleaned; runtime Docker network mode was `none`
+- Default retrieval: BM25 (1 search); Dense loaded: false; Reviewer calls: 0
+- Trajectory secret/HOLDOUT audit: PASS
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0
