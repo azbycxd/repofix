@@ -460,3 +460,22 @@ scripts from `get_diff`.
 - Trajectory secret/HOLDOUT audit: PASS
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
+
+## Step 3.1 editable-sandbox fixed rerun
+
+- Sandbox fix commit: `be9431f6f8568c15fa09a3c28a067d4515e07af5`
+- Same Colorama upstream/planted commits and exact same issue/config as first run
+- Agent runs after fix: exactly 1; terminal: submitted
+- Steps/provider calls/tool calls: 28/28/38
+- Tokens: prompt 319,366 / cache hit 306,048 / completion 7,291
+- Estimated cost: $0.014580888; total CLI wall time: 99.190 seconds
+- Genuine pre-fix reproduction: step 21; first production edit: step 23;
+  immediate post-edit reproduction pass: step 24
+- Full tests: 38 passed / 14 skipped; modified files: `colorama/ansi.py`
+- Original repository unchanged; Dense loaded: false; Reviewer calls: 0
+- Comparison: first non-editable run needed steps 25/27/31/33 and a manual
+  `/testbed` path insertion to bypass stale site-packages; editable rerun imported
+  the changed `/testbed` source immediately on the next step
+- Secret/HOLDOUT audit: PASS
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0

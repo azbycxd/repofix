@@ -74,9 +74,21 @@ Issue 原文：
 > instead. Restore the documented coordinate semantics without changing the
 > other cursor movement helpers.
 
-唯一一次 CLI run 在 42 steps 后 submit，估算费用 `$0.018110376`。修前
-复现失败、修后同一语义判据通过，项目测试为 38 passed / 14 skipped；独立
-验证又通过了聚焦判据和全部 52 个 unittest（14 个平台 skip）。最终只修改
-`colorama/ansi.py`，full diff 与 production-only diff 相同，原 demo 仓库
-HEAD 和 working tree 前后不变。完整 trajectory 与 patch 在
-`dev_artifacts/demos/step-3-1-colorama/`。
+第一次 CLI run 在 42 steps 后 submit，估算费用 `$0.018110376`。它在第
+24 步已经修正 `/testbed`，但 non-editable install 仍从 site-packages 导入
+旧副本，导致第 25/27/31/33 步继续观察到假失败；Agent 最后通过手动插入
+`/testbed` 绕过。trajectory review 据此发现 sandbox packaging bug。
+
+将项目安装修成 `pip install -e .` 后，用完全相同的 commit、issue 和默认
+配置做了一次固定重验：第 21 步真实复现，第 23 步修改生产代码，第 24 步
+相同判据立即通过，不再发生旧副本干扰；第 25 步完整项目测试为 38 passed /
+14 skipped，第 28 步 submit。两次都只修改 `colorama/ansi.py`，full diff
+与 production-only diff 相同，原 demo 仓库 HEAD 和 working tree 前后不变。
+
+| Demo | Steps | Estimated cost | CLI wall time | Edit → first valid repro |
+| --- | ---: | ---: | ---: | --- |
+| First, non-editable | 42 | `$0.018110376` | 117.587s | 24 → 34（需手动修正 import path） |
+| Fixed, editable | 28 | `$0.014580888` | 99.190s | 23 → 24（立即通过） |
+
+第一次 artifact 保存在 `dev_artifacts/demos/step-3-1-colorama/`，修正版保存在
+`dev_artifacts/demos/step-3-1-colorama-editable/`。
