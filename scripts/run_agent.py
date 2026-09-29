@@ -234,6 +234,8 @@ def check_hybrid_code_search(env: DockerEnv) -> None:
     print(f"HYBRID_INDEX_BUILD_SECONDS={stats.total_build_seconds:.6f}")
     print(f"DENSE_INDEX_BUILD_SECONDS={stats.dense_build_seconds:.6f}")
     print(f"DENSE_CACHE_HIT={stats.dense_cache_hit}")
+    print(f"DENSE_CACHE_HIT_COUNT={stats.dense_cache_hit_count}")
+    print(f"DENSE_EMBEDDED_COUNT={stats.dense_embedded_count}")
     print("BM25_SEARCH_POSITION_ONLY=PASS")
     print("BM25_SEARCH_NO_TRUNCATION=PASS")
     print("BM25_SEARCH_CHECK=PASS")
@@ -311,6 +313,8 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
         "index_build_seconds": result.index_build_seconds,
         "dense_build_seconds": result.dense_build_seconds,
         "dense_cache_hit": result.dense_cache_hit,
+        "dense_cache_hit_count": result.dense_cache_hit_count,
+        "dense_embedded_count": result.dense_embedded_count,
         "prompt_tokens": result.prompt_tokens,
         "cache_hit_tokens": result.cache_hit_tokens,
         "completion_tokens": result.completion_tokens,
@@ -379,6 +383,8 @@ def run_instance(
             "index_build_seconds": 0.0,
             "dense_build_seconds": 0.0,
             "dense_cache_hit": False,
+            "dense_cache_hit_count": 0,
+            "dense_embedded_count": 0,
             "prompt_tokens": 0,
             "cache_hit_tokens": None,
             "completion_tokens": 0,

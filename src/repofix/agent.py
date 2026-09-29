@@ -164,6 +164,8 @@ class AgentResult:
     index_build_seconds: float
     dense_build_seconds: float
     dense_cache_hit: bool
+    dense_cache_hit_count: int
+    dense_embedded_count: int
     prompt_tokens: int
     cache_hit_tokens: int | None
     completion_tokens: int
@@ -853,6 +855,8 @@ class RepoFixAgent:
             index_build_seconds=index_stats.total_build_seconds,
             dense_build_seconds=index_stats.dense_build_seconds,
             dense_cache_hit=index_stats.dense_cache_hit,
+            dense_cache_hit_count=index_stats.dense_cache_hit_count,
+            dense_embedded_count=index_stats.dense_embedded_count,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
             completion_tokens=completion_tokens,

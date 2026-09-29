@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import hashlib
-import os
 import re
+import sqlite3
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, Sequence
+from typing import TYPE_CHECKING, Iterator, Protocol, Sequence
 
 import numpy as np
 from fastembed import TextEmbedding
@@ -28,7 +28,8 @@ EMBEDDING_THREADS = 4
 DENSE_SOURCE_MAX_CHARS = 512
 RRF_K = 60
 RRF_RANK_WINDOW = 60
-CACHE_FORMAT_VERSION = "repofix-dense-v2"
+CACHE_FORMAT_VERSION = "repofix-dense-chunk-v1"
+CACHE_LOOKUP_BATCH_SIZE = 500
 DEFAULT_CACHE_ROOT = Path(__file__).resolve().parents[2] / ".cache" / "repofix"
 
 
@@ -79,7 +80,10 @@ def get_embedding_backend(cache_root: Path = DEFAULT_CACHE_ROOT) -> FastEmbedBac
 class DenseIndexStats:
     build_seconds: float
     cache_hit: bool
-    cache_key: str
+    requested_chunk_count: int
+    unique_chunk_count: int
+    cache_hit_count: int
+    embedded_count: int
     cache_path: str
 
 
@@ -91,7 +95,11 @@ class HybridIndexStats:
     dense_build_seconds: float
     total_build_seconds: float
     dense_cache_hit: bool
-    dense_cache_key: str
+    dense_requested_chunk_count: int
+    dense_unique_chunk_count: int
+    dense_cache_hit_count: int
+    dense_embedded_count: int
+    dense_cache_path: str
     embedding_library: str
     embedding_model: str
     embedding_dimension: int
@@ -134,23 +142,32 @@ def short_query_proxy(problem_statement: str) -> str:
     return problem_statement.strip()[:500]
 
 
-def _cache_key(chunks: Sequence[Chunk], model_id: str) -> str:
+def _chunk_cache_key(document: str, model_id: str) -> str:
     digest = hashlib.sha256()
     digest.update(CACHE_FORMAT_VERSION.encode())
     digest.update(model_id.encode())
-    for chunk in chunks:
-        for value in (
-            chunk.file_path,
-            chunk.symbol,
-            chunk.chunk_type,
-            str(chunk.start_line),
-            str(chunk.end_line),
-            chunk.source_text,
-        ):
-            payload = value.encode("utf-8")
-            digest.update(len(payload).to_bytes(8, "big"))
-            digest.update(payload)
+    payload = document.encode("utf-8")
+    digest.update(len(payload).to_bytes(8, "big"))
+    digest.update(payload)
     return digest.hexdigest()
+
+
+def _batched(values: Sequence[str], size: int) -> Iterator[Sequence[str]]:
+    for offset in range(0, len(values), size):
+        yield values[offset : offset + size]
+
+
+def _prepare_chunk_cache(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS embeddings (
+            cache_key TEXT PRIMARY KEY,
+            dimension INTEGER NOT NULL,
+            vector BLOB NOT NULL
+        ) WITHOUT ROWID
+        """
+    )
+    connection.commit()
 
 
 class DenseIndex:
@@ -179,28 +196,92 @@ class DenseIndex:
     ) -> tuple[DenseIndex, DenseIndexStats]:
         started = time.monotonic()
         backend = backend or get_embedding_backend(cache_root)
-        cache_key = _cache_key(chunks, backend.model_id)
-        cache_dir = cache_root / "dense" / backend.model_id.replace("/", "--")
+        cache_dir = (
+            cache_root
+            / "dense_chunks"
+            / backend.model_id.replace("/", "--")
+        )
         cache_dir.mkdir(parents=True, exist_ok=True)
-        cache_path = cache_dir / f"{cache_key}.npz"
-        cache_hit = cache_path.exists()
+        cache_path = cache_dir / f"{CACHE_FORMAT_VERSION}.sqlite3"
 
-        if cache_hit:
-            with np.load(cache_path, allow_pickle=False) as stored:
-                vectors = np.asarray(stored["vectors"], dtype=np.float32)
-        else:
-            documents = [_document_text(chunk) for chunk in chunks]
-            vectors = backend.embed_documents(documents)
-            temporary = cache_path.with_suffix(f".tmp-{os.getpid()}.npz")
-            with temporary.open("wb") as handle:
-                np.savez_compressed(handle, vectors=vectors)
-            os.replace(temporary, cache_path)
+        documents_by_key: dict[str, str] = {}
+        positions_by_key: dict[str, list[int]] = {}
+        for position, chunk in enumerate(chunks):
+            document = _document_text(chunk)
+            cache_key = _chunk_cache_key(document, backend.model_id)
+            documents_by_key.setdefault(cache_key, document)
+            positions_by_key.setdefault(cache_key, []).append(position)
+
+        unique_keys = list(documents_by_key)
+        vectors = np.empty((len(chunks), backend.dimension), dtype=np.float32)
+        cached_keys: set[str] = set()
+        embedded_count = 0
+
+        with sqlite3.connect(cache_path, timeout=60) as connection:
+            _prepare_chunk_cache(connection)
+            for key_batch in _batched(unique_keys, CACHE_LOOKUP_BATCH_SIZE):
+                placeholders = ",".join("?" for _ in key_batch)
+                rows = connection.execute(
+                    f"SELECT cache_key, dimension, vector FROM embeddings "
+                    f"WHERE cache_key IN ({placeholders})",
+                    tuple(key_batch),
+                ).fetchall()
+                invalid_keys: list[str] = []
+                for cache_key, dimension, vector_blob in rows:
+                    vector = np.frombuffer(vector_blob, dtype=np.float32)
+                    if dimension != backend.dimension or vector.size != backend.dimension:
+                        invalid_keys.append(cache_key)
+                        continue
+                    for position in positions_by_key[cache_key]:
+                        vectors[position] = vector
+                    cached_keys.add(cache_key)
+                if invalid_keys:
+                    connection.executemany(
+                        "DELETE FROM embeddings WHERE cache_key = ?",
+                        ((cache_key,) for cache_key in invalid_keys),
+                    )
+                    connection.commit()
+
+            missing_keys = [
+                cache_key for cache_key in unique_keys if cache_key not in cached_keys
+            ]
+            for key_batch in _batched(missing_keys, EMBEDDING_BATCH_SIZE):
+                documents = [documents_by_key[cache_key] for cache_key in key_batch]
+                embedded = np.asarray(
+                    backend.embed_documents(documents), dtype=np.float32
+                )
+                expected_shape = (len(key_batch), backend.dimension)
+                if embedded.shape != expected_shape:
+                    raise ValueError(
+                        f"embedding batch shape {embedded.shape} does not match "
+                        f"{expected_shape}"
+                    )
+                connection.executemany(
+                    "INSERT OR REPLACE INTO embeddings "
+                    "(cache_key, dimension, vector) VALUES (?, ?, ?)",
+                    (
+                        (
+                            cache_key,
+                            backend.dimension,
+                            sqlite3.Binary(embedded[index].tobytes()),
+                        )
+                        for index, cache_key in enumerate(key_batch)
+                    ),
+                )
+                connection.commit()
+                for index, cache_key in enumerate(key_batch):
+                    for position in positions_by_key[cache_key]:
+                        vectors[position] = embedded[index]
+                embedded_count += len(key_batch)
 
         index = cls(chunks, vectors, backend)
         return index, DenseIndexStats(
             build_seconds=time.monotonic() - started,
-            cache_hit=cache_hit,
-            cache_key=cache_key,
+            cache_hit=embedded_count == 0,
+            requested_chunk_count=len(chunks),
+            unique_chunk_count=len(unique_keys),
+            cache_hit_count=len(cached_keys),
+            embedded_count=embedded_count,
             cache_path=str(cache_path),
         )
 
@@ -250,7 +331,11 @@ class HybridCodeIndex:
             dense_build_seconds=dense_stats.build_seconds,
             total_build_seconds=time.monotonic() - started,
             dense_cache_hit=dense_stats.cache_hit,
-            dense_cache_key=dense_stats.cache_key,
+            dense_requested_chunk_count=dense_stats.requested_chunk_count,
+            dense_unique_chunk_count=dense_stats.unique_chunk_count,
+            dense_cache_hit_count=dense_stats.cache_hit_count,
+            dense_embedded_count=dense_stats.embedded_count,
+            dense_cache_path=dense_stats.cache_path,
             embedding_library=EMBEDDING_LIBRARY,
             embedding_model=dense.backend.model_id,
             embedding_dimension=dense.backend.dimension,

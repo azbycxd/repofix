@@ -17,6 +17,9 @@ class FakeEmbeddingBackend:
     model_id = "test/fake-embedding"
     dimension = 3
 
+    def __init__(self) -> None:
+        self.embedded_documents = 0
+
     @staticmethod
     def _vector(text: str) -> np.ndarray:
         lowered = text.lower()
@@ -30,6 +33,7 @@ class FakeEmbeddingBackend:
         )
 
     def embed_documents(self, texts):
+        self.embedded_documents += len(texts)
         vectors = np.vstack([self._vector(text) for text in texts])
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
         norms[norms == 0] = 1
@@ -46,7 +50,7 @@ class HybridRetrievalTests(unittest.TestCase):
         issue = "\n## Fix QueryCompiler lookup\n\nLonger details mentioning gold."
         self.assertEqual(short_query_proxy(issue), "Fix QueryCompiler lookup")
 
-    def test_dense_cache_and_rrf_position_only_output(self) -> None:
+    def test_chunk_cache_reuses_embeddings_across_revisions(self) -> None:
         files = {
             "pkg/query.py": "def resolve_lookup(query):\n    return query.resolve()\n",
             "pkg/cache.py": "def clear_cache(cache):\n    cache.clear()\n",
@@ -61,10 +65,29 @@ class HybridRetrievalTests(unittest.TestCase):
             second, second_stats = HybridCodeIndex.from_files(
                 files, cache_root=cache_root, backend=backend
             )
+            revised_files = dict(files)
+            revised_files["pkg/cache.py"] = (
+                "def clear_cache(cache):\n    cache.invalidate()\n"
+            )
+            third, third_stats = HybridCodeIndex.from_files(
+                revised_files, cache_root=cache_root, backend=backend
+            )
 
         self.assertFalse(first_stats.dense_cache_hit)
         self.assertTrue(second_stats.dense_cache_hit)
-        self.assertEqual(first_stats.dense_cache_key, second_stats.dense_cache_key)
+        self.assertEqual(first_stats.dense_cache_hit_count, 0)
+        self.assertEqual(
+            first_stats.dense_embedded_count,
+            first_stats.dense_unique_chunk_count,
+        )
+        self.assertEqual(
+            second_stats.dense_cache_hit_count,
+            second_stats.dense_unique_chunk_count,
+        )
+        self.assertEqual(second_stats.dense_embedded_count, 0)
+        self.assertEqual(third_stats.dense_cache_hit_count, 2)
+        self.assertEqual(third_stats.dense_embedded_count, 1)
+        self.assertEqual(backend.embedded_documents, 4)
         results = second.search("query lookup", top_k=2)
         self.assertEqual(results[0].chunk.file_path, "pkg/query.py")
         self.assertIsNotNone(results[0].bm25_rank)
