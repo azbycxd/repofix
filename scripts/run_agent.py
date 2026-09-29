@@ -30,7 +30,7 @@ from repofix.agent import (  # noqa: E402
     parse_tool_arguments,
 )
 from repofix.env import DockerEnv  # noqa: E402
-from repofix.retrieval import HybridCodeIndex, format_fused_results  # noqa: E402
+from repofix.search import BM25Index, format_search_results  # noqa: E402
 
 
 DATASET = "SWE-bench/SWE-bench_Verified"
@@ -208,16 +208,16 @@ def check_native_file_tools(env: DockerEnv) -> None:
     print("STR_REPLACE_NON_PYTHON_CHECK=PASS")
 
 
-def check_hybrid_code_search(env: DockerEnv) -> None:
-    index, stats = HybridCodeIndex.from_repository(env)
+def check_code_search(env: DockerEnv) -> None:
+    index, stats = BM25Index.from_repository(env)
     assert stats.file_count > 0
     assert stats.chunk_count > 0
     results = index.search("django model field", top_k=5)
     assert results
-    rendered = format_fused_results(results)
+    rendered = format_search_results(results)
     assert ":" in rendered
     assert "type=" in rendered
-    assert "rrf=" in rendered
+    assert "score=" in rendered
     assert "--- source ---" not in rendered
     config = AgentConfig()
     search_view = format_tool_observation(
@@ -231,11 +231,7 @@ def check_hybrid_code_search(env: DockerEnv) -> None:
     assert not search_view.truncated
     print(f"BM25_INDEX_FILES={stats.file_count}")
     print(f"BM25_INDEX_CHUNKS={stats.chunk_count}")
-    print(f"HYBRID_INDEX_BUILD_SECONDS={stats.total_build_seconds:.6f}")
-    print(f"DENSE_INDEX_BUILD_SECONDS={stats.dense_build_seconds:.6f}")
-    print(f"DENSE_CACHE_HIT={stats.dense_cache_hit}")
-    print(f"DENSE_CACHE_HIT_COUNT={stats.dense_cache_hit_count}")
-    print(f"DENSE_EMBEDDED_COUNT={stats.dense_embedded_count}")
+    print(f"BM25_INDEX_BUILD_SECONDS={stats.build_seconds:.6f}")
     print("BM25_SEARCH_POSITION_ONLY=PASS")
     print("BM25_SEARCH_NO_TRUNCATION=PASS")
     print("BM25_SEARCH_CHECK=PASS")
@@ -287,7 +283,7 @@ def offline_check(
             if index == 0:
                 check_tool_output_truncation(env)
                 check_native_file_tools(env)
-                check_hybrid_code_search(env)
+                check_code_search(env)
                 check_patch_collection(env)
     print("TESTBED_DJANGO_IMPORT_CHECKS=PASS")
     print(f"DEEPSEEK_API_KEY_PRESENT={'YES' if api_key_present else 'NO'}")
@@ -430,6 +426,12 @@ def main() -> int:
         action="store_true",
         help="Validate selected DEV containers without a Provider call.",
     )
+    parser.add_argument(
+        "--retrieval-mode",
+        choices=("bm25", "dense_rrf"),
+        default="bm25",
+        help="Retrieval backend; dense_rrf requires requirements-dense.txt.",
+    )
     args = parser.parse_args()
 
     dev_ids = read_instance_ids(TASKS_PATH)
@@ -485,7 +487,7 @@ def main() -> int:
     trajectory_dir.mkdir(parents=True, exist_ok=True)
 
     git_commit = current_git_commit()
-    config = AgentConfig()
+    config = AgentConfig(retrieval_mode=args.retrieval_mode)
     summaries: list[dict[str, Any]] = []
     predictions: list[dict[str, Any]] = []
     for instance_id in selected_ids:

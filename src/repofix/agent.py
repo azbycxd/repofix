@@ -12,10 +12,11 @@ from typing import Any
 from openai import OpenAI
 
 from .env import DockerEnv
-from .retrieval import HybridCodeIndex, format_fused_results
 from .search import (
+    BM25Index,
     SEARCH_DEFAULT_TOP_K,
     SEARCH_MAX_TOP_K,
+    format_search_results,
 )
 
 
@@ -90,8 +91,8 @@ TOOLS = [
         "function": {
             "name": "search_code",
             "description": (
-                "Search the current /testbed repository with BM25+dense RRF and "
-                "return ranked file, symbol, line, and rank metadata."
+                "Search the current /testbed repository with BM25 and return "
+                "ranked file, symbol, line, and score metadata."
             ),
             "parameters": {
                 "type": "object",
@@ -130,6 +131,7 @@ class AgentConfig:
     base_url: str = "https://api.deepseek.com"
     thinking: str = "disabled"
     temperature: float = 0.0
+    retrieval_mode: str = "bm25"
     max_steps: int = 50
     max_cost_usd: float = 0.5
     tool_timeout_seconds: int = 60
@@ -334,7 +336,40 @@ class RepoFixAgent:
 
     def run(self) -> AgentResult:
         started = time.monotonic()
-        code_index, index_stats = HybridCodeIndex.from_repository(self.env)
+        if self.config.retrieval_mode == "bm25":
+            code_index, bm25_stats = BM25Index.from_repository(self.env)
+            index_metadata = {
+                "mode": "bm25",
+                **asdict(bm25_stats),
+            }
+            search_formatter = format_search_results
+            index_file_count = bm25_stats.file_count
+            index_chunk_count = bm25_stats.chunk_count
+            index_build_seconds = bm25_stats.build_seconds
+            dense_build_seconds = 0.0
+            dense_cache_hit = False
+            dense_cache_hit_count = 0
+            dense_embedded_count = 0
+        elif self.config.retrieval_mode == "dense_rrf":
+            from .retrieval import HybridCodeIndex, format_fused_results
+
+            code_index, hybrid_stats = HybridCodeIndex.from_repository(self.env)
+            index_metadata = {
+                "mode": "dense_rrf",
+                **asdict(hybrid_stats),
+            }
+            search_formatter = format_fused_results
+            index_file_count = hybrid_stats.file_count
+            index_chunk_count = hybrid_stats.chunk_count
+            index_build_seconds = hybrid_stats.total_build_seconds
+            dense_build_seconds = hybrid_stats.dense_build_seconds
+            dense_cache_hit = hybrid_stats.dense_cache_hit
+            dense_cache_hit_count = hybrid_stats.dense_cache_hit_count
+            dense_embedded_count = hybrid_stats.dense_embedded_count
+        else:
+            raise ValueError(
+                f"unsupported retrieval mode: {self.config.retrieval_mode}"
+            )
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
@@ -349,7 +384,7 @@ class RepoFixAgent:
                 "model": self.config.model,
                 "git_commit": self.git_commit,
                 "config": asdict(self.config),
-                "code_index": asdict(index_stats),
+                "code_index": index_metadata,
                 "system_prompt": SYSTEM_PROMPT,
                 "problem_statement": self.issue,
             }
@@ -711,7 +746,7 @@ class RepoFixAgent:
                                 }
                             else:
                                 try:
-                                    search_output = format_fused_results(
+                                    search_output = search_formatter(
                                         code_index.search(query, top_k=top_k)
                                     )
                                     full_output_path = None
@@ -850,13 +885,13 @@ class RepoFixAgent:
             syntax_rollbacks=syntax_rollback_count,
             search_calls=search_call_count,
             truncations=truncation_count,
-            index_file_count=index_stats.file_count,
-            index_chunk_count=index_stats.chunk_count,
-            index_build_seconds=index_stats.total_build_seconds,
-            dense_build_seconds=index_stats.dense_build_seconds,
-            dense_cache_hit=index_stats.dense_cache_hit,
-            dense_cache_hit_count=index_stats.dense_cache_hit_count,
-            dense_embedded_count=index_stats.dense_embedded_count,
+            index_file_count=index_file_count,
+            index_chunk_count=index_chunk_count,
+            index_build_seconds=index_build_seconds,
+            dense_build_seconds=dense_build_seconds,
+            dense_cache_hit=dense_cache_hit,
+            dense_cache_hit_count=dense_cache_hit_count,
+            dense_embedded_count=dense_embedded_count,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
             completion_tokens=completion_tokens,

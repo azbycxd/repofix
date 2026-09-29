@@ -5,3 +5,8 @@
 3. V1 的 SourceEvidence → PatchReadyEvidence 严格交接在两个 unseen task 上重复阻塞；V2 不设额外 Evidence Gate。
 4. V1 编辑接口经历过 full-file / line-edit / no-op 问题；V2 后续采用更小、更明确、可验证的编辑接口。
 5. V1 在 durable runtime / checkpoint / ledger 上投入过多；V2 先证明修 bug 能力，只保留必要轨迹和沙箱。
+
+## 检索依赖
+
+默认检索为 BM25，只需安装 `requirements.txt`。已停止的 Dense/RRF 实验需
+额外安装 `requirements-dense.txt`，并显式传入 `--retrieval-mode dense_rrf`。

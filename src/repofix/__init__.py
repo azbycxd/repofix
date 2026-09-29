@@ -3,7 +3,6 @@
 from .agent import AgentConfig, AgentResult, RepoFixAgent
 from .chunking import FALLBACK_CHUNK_LINES, Chunk, chunk_file, chunk_source
 from .env import DockerEnv, ExecutionResult
-from .retrieval import DenseIndex, FusedSearchResult, HybridCodeIndex
 from .search import BM25Index, IndexStats, SearchResult
 
 __all__ = [
@@ -12,11 +11,8 @@ __all__ = [
     "BM25Index",
     "Chunk",
     "DockerEnv",
-    "DenseIndex",
     "ExecutionResult",
     "FALLBACK_CHUNK_LINES",
-    "FusedSearchResult",
-    "HybridCodeIndex",
     "IndexStats",
     "RepoFixAgent",
     "SearchResult",
