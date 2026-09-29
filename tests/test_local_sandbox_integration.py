@@ -37,8 +37,17 @@ version = "0.0.0"
                     "sandbox-fixture", build.image, "integration-test"
                 ) as env:
                     result = env.execute(
-                        "pwd && python --version && "
+                        "cd /tmp && pwd && python --version && "
                         "python -c \"import sandbox_fixture; print(sandbox_fixture.VALUE)\""
+                    )
+                    edit = env.str_replace_file(
+                        "/testbed/sandbox_fixture.py",
+                        "VALUE = 'installed'",
+                        "VALUE = 'edited'",
+                    )
+                    edited_result = env.execute(
+                        "cd /tmp && python -c \"import sandbox_fixture; "
+                        "print(sandbox_fixture.VALUE)\""
                     )
                     assert env.container is not None
                     env.container.reload()
@@ -46,9 +55,12 @@ version = "0.0.0"
 
             self.assertEqual(result.exit_code, 0)
             self.assertFalse(result.timed_out)
-            self.assertIn("/testbed", result.output)
+            self.assertIn("/tmp", result.output)
             self.assertIn("Python 3.12", result.output)
             self.assertIn("installed", result.output)
+            self.assertTrue(edit.success)
+            self.assertEqual(edited_result.exit_code, 0)
+            self.assertIn("edited", edited_result.output)
             self.assertEqual(network_mode, "none")
 
 

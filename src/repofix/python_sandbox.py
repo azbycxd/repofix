@@ -30,7 +30,7 @@ def dependency_install_commands(repository: Path) -> tuple[str, ...]:
         (repository / name).is_file()
         for name in ("pyproject.toml", "setup.py", "setup.cfg")
     ):
-        commands.append("python -m pip install --no-cache-dir .")
+        commands.append("python -m pip install --no-cache-dir -e .")
     return tuple(commands)
 
 

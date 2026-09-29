@@ -86,7 +86,8 @@ class LocalCliTests(unittest.TestCase):
         self.assertEqual(len(commands), 3)
         self.assertIn(f"FROM {PYTHON_BASE_IMAGE}", dockerfile)
         self.assertIn("pip install --no-cache-dir -r requirements.txt", dockerfile)
-        self.assertIn("pip install --no-cache-dir .", dockerfile)
+        self.assertIn("pip install --no-cache-dir -e .", dockerfile)
+        self.assertNotIn("pip install --no-cache-dir .\n", dockerfile)
         self.assertIn("git commit -m baseline", dockerfile)
 
     def test_cli_reports_clear_nonzero_error(self) -> None:

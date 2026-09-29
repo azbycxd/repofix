@@ -54,6 +54,11 @@ local repo
 `pyproject.toml` / `setup.py` / `setup.cfg` 时的项目本身。Agent 运行容器
 固定 `network_mode=none`，不会修改原仓库。
 
+安全边界：Docker build 阶段允许联网，并会执行目标仓库的依赖安装、
+`setup.py` 或 build backend 代码；因此 local CLI 只应用于用户信任的
+repository。项目使用 editable install，运行期 import 始终指向
+`/testbed` 当前源码；Agent runtime 本身仍固定为 `network=none`。
+
 ## Demo
 
 Step 3.1 使用真实公共项目 Colorama `0.4.6`（commit
