@@ -12,6 +12,12 @@ from typing import Any
 from openai import OpenAI
 
 from .env import DockerEnv
+from .search import (
+    SEARCH_DEFAULT_TOP_K,
+    SEARCH_MAX_TOP_K,
+    BM25Index,
+    format_search_results,
+)
 
 
 DEEPSEEK_PRICING_URL = "https://api-docs.deepseek.com/quick_start/pricing/"
@@ -83,6 +89,30 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "search_code",
+            "description": (
+                "Search the current /testbed repository with BM25 and return "
+                "ranked source chunks with file, symbol, line, and score metadata."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "top_k": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": SEARCH_MAX_TOP_K,
+                        "default": SEARCH_DEFAULT_TOP_K,
+                    },
+                },
+                "required": ["query"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "submit",
             "description": "Submit the current repository changes as the final answer.",
             "parameters": {
@@ -128,7 +158,11 @@ class AgentResult:
     str_replace_calls: int
     str_replace_failures: int
     syntax_rollbacks: int
+    search_calls: int
     truncations: int
+    index_file_count: int
+    index_chunk_count: int
+    index_build_seconds: float
     prompt_tokens: int
     cache_hit_tokens: int | None
     completion_tokens: int
@@ -297,6 +331,7 @@ class RepoFixAgent:
 
     def run(self) -> AgentResult:
         started = time.monotonic()
+        code_index, index_stats = BM25Index.from_repository(self.env)
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
@@ -311,6 +346,7 @@ class RepoFixAgent:
                 "model": self.config.model,
                 "git_commit": self.git_commit,
                 "config": asdict(self.config),
+                "code_index": asdict(index_stats),
                 "system_prompt": SYSTEM_PROMPT,
                 "problem_statement": self.issue,
             }
@@ -322,6 +358,7 @@ class RepoFixAgent:
         str_replace_call_count = 0
         str_replace_failure_count = 0
         syntax_rollback_count = 0
+        search_call_count = 0
         truncation_count = 0
         prompt_tokens = 0
         completion_tokens = 0
@@ -415,6 +452,8 @@ class RepoFixAgent:
                         view_call_count += 1
                     elif name == "str_replace":
                         str_replace_call_count += 1
+                    elif name == "search_code":
+                        search_call_count += 1
                     arguments_text = tool_call.function.arguments or "{}"
                     arguments, argument_error = parse_tool_arguments(arguments_text)
                     observation_metadata: dict[str, Any]
@@ -646,6 +685,70 @@ class RepoFixAgent:
                                         if key != "content"
                                     }
                                     truncation_count += int(view.truncated)
+                        elif name == "search_code":
+                            query = arguments.get("query")
+                            top_k = arguments.get("top_k", SEARCH_DEFAULT_TOP_K)
+                            if not (
+                                isinstance(query, str)
+                                and query.strip()
+                                and isinstance(top_k, int)
+                                and not isinstance(top_k, bool)
+                                and 1 <= top_k <= SEARCH_MAX_TOP_K
+                            ):
+                                observation = (
+                                    "search_code error: query must be a non-empty "
+                                    f"string and top_k must be an integer from 1 to {SEARCH_MAX_TOP_K}"
+                                )
+                                observation_metadata = {
+                                    "truncated": False,
+                                    "original_chars": len(observation),
+                                    "original_lines": 1,
+                                    "returned_chars": len(observation),
+                                    "full_output_path": None,
+                                }
+                            else:
+                                try:
+                                    search_output = format_search_results(
+                                        code_index.search(query, top_k=top_k)
+                                    )
+                                    full_output_path = None
+                                    if (
+                                        len(search_output)
+                                        > self.config.tool_output_max_chars
+                                    ):
+                                        full_output_path = (
+                                            f"/tmp/repofix_out_{tool_call_count}.txt"
+                                        )
+                                        self.env.write_text_file(
+                                            full_output_path, search_output
+                                        )
+                                    view = format_tool_observation(
+                                        search_output,
+                                        "",
+                                        full_output_path,
+                                        self.config.tool_output_max_chars,
+                                        self.config.tool_output_head_chars,
+                                        self.config.tool_output_tail_chars,
+                                    )
+                                except Exception as exc:
+                                    observation = f"search_code error: {exc}"
+                                    observation_metadata = {
+                                        "truncated": False,
+                                        "original_chars": len(observation),
+                                        "original_lines": len(
+                                            observation.splitlines()
+                                        ),
+                                        "returned_chars": len(observation),
+                                        "full_output_path": None,
+                                    }
+                                else:
+                                    observation = view.content
+                                    observation_metadata = {
+                                        key: value
+                                        for key, value in asdict(view).items()
+                                        if key != "content"
+                                    }
+                                    truncation_count += int(view.truncated)
                         elif name == "submit":
                             observation = "Submission accepted."
                             observation_metadata = {
@@ -742,7 +845,11 @@ class RepoFixAgent:
             str_replace_calls=str_replace_call_count,
             str_replace_failures=str_replace_failure_count,
             syntax_rollbacks=syntax_rollback_count,
+            search_calls=search_call_count,
             truncations=truncation_count,
+            index_file_count=index_stats.file_count,
+            index_chunk_count=index_stats.chunk_count,
+            index_build_seconds=index_stats.build_seconds,
             prompt_tokens=prompt_tokens,
             cache_hit_tokens=cache_hit_total if cache_hit_available else None,
             completion_tokens=completion_tokens,

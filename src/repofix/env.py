@@ -152,6 +152,44 @@ class DockerEnv:
             raise RuntimeError("Unable to collect final git diff")
         return result.output
 
+    def read_repository_text_files(
+        self, max_file_bytes: int = 1_000_000
+    ) -> dict[str, str]:
+        """Read UTF-8 tracked files from the current /testbed Git revision."""
+        if self.container is None:
+            raise RuntimeError("DockerEnv has not been started")
+        if max_file_bytes <= 0:
+            raise ValueError("max_file_bytes must be positive")
+
+        archived = self.container.exec_run(
+            ["git", "archive", "--format=tar", "HEAD"],
+            workdir=self.workdir,
+            user="root",
+        )
+        if archived.exit_code != 0:
+            details = archived.output.decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"Unable to archive /testbed repository: {details}")
+
+        files: dict[str, str] = {}
+        with tarfile.open(fileobj=io.BytesIO(archived.output), mode="r:") as tar:
+            for member in tar.getmembers():
+                if not member.isfile() or member.size > max_file_bytes:
+                    continue
+                path = posixpath.normpath(member.name)
+                if path.startswith("../") or posixpath.isabs(path):
+                    continue
+                extracted = tar.extractfile(member)
+                if extracted is None:
+                    continue
+                payload = extracted.read()
+                if b"\x00" in payload:
+                    continue
+                try:
+                    files[path] = payload.decode("utf-8")
+                except UnicodeDecodeError:
+                    continue
+        return files
+
     def write_text_file(self, path: str, content: str) -> None:
         """Write UTF-8 text inside the container without shell interpolation."""
         if self.container is None or self.client is None:
