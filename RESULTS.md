@@ -233,6 +233,39 @@ changed during Step 2.4.
 因此停止该实现路线。该结果只否定当前工程实现方式，不证明 Dense retrieval 的
 检索质量无效。
 
+## Step 2.8 BM25 control
+
+This control uses the repaired, position-only BM25 search path before adding
+the reproduction-first prompt or telemetry. Dense/RRF is disabled.
+
+| Task | Harness | Terminal | Steps | Cost | Pre-fix Reproduced | Repro Flipped | First Production Edit | Existing Test Modified | Git-History Searches | Network Attempts |
+| --- | --- | --- | ---: | ---: | --- | --- | ---: | --- | ---: | ---: |
+| `django__django-16429` | RESOLVED | submitted | 10 | $0.002726268 | NO | NO | 2 | YES | 1 | 0 |
+| `django__django-15277` | RESOLVED | submitted | 8 | $0.002635248 | NO | NO | 3 | NO | 1 | 0 |
+| `django__django-13343` | RESOLVED | submitted | 19 | $0.005581212 | NO | NO | 4 | YES | 1 | 0 |
+| `django__django-16454` | RESOLVED | submitted | 19 | $0.005276484 | NO | NO | 2 | YES | 1 | 0 |
+| `django__django-16950` | UNRESOLVED | max_steps | 50 | $0.031352208 | YES | NO | 17 | YES | 5 | 1 |
+
+- Date: 2026-09-29
+- Run ID: `step-2-8-bm25-control`
+- Code commit: `91668d006d83700a6ddfe1b93a5fee68378380ab`
+- Model / config: `deepseek-flash`; temperature 0; thinking disabled;
+  50-step limit; $0.5 cost limit; default BM25; original pre-2.8 prompt
+- Harness result: 4 / 5; unresolved: `django__django-16950`
+- Total steps: 106; prompt/cache-hit/completion tokens:
+  1,163,609 / 1,118,720 / 22,827
+- Total cost: $0.047571420 maximum estimate
+- Agent wall time: 253.81 seconds; Harness wall time: about 111 seconds
+- Git-history searches: 9 shell tool calls; network attempts: 1
+- Pre-fix reproduction: 1 / 5; same-criterion failure-to-pass flips: 0 / 5
+- Existing test files appeared in 4 / 5 final patches. For 16429, 13343, and
+  16454 this accompanied a production fix and added regression coverage. The
+  16950 patch modified only an existing test file after extensive debugging;
+  it never produced a valid production fix and exhausted 50 steps.
+- Trajectory secret/HOLDOUT audit: PASS
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0
+
 ## Step 1.2 experiments
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |
