@@ -92,6 +92,73 @@
 - HOLDOUT_STATUS = SEALED
 - HOLDOUT_AGENT_RUNS = 0
 
+## Step 2.3 BM25 code search
+
+The index uses the existing Python AST chunks and 50-line fallback chunks. A
+standard-library BM25 implementation tokenizes prose, paths, snake_case, and
+CamelCase; file path and symbol tokens receive double weight. Only UTF-8 tracked
+source files from the current `/testbed` Git revision are indexed.
+
+### Offline DEV file localization
+
+| Task | Gold File | Rank | Top1 | Top3 | Top5 | Files | Chunks | Build |
+| --- | --- | ---: | --- | --- | --- | ---: | ---: | ---: |
+| `django__django-16429` | `django/utils/timesince.py` | 2 | NO | YES | YES | 3,282 | 34,482 | 7.16s |
+| `django__django-15277` | `django/db/models/fields/__init__.py` | 2 | NO | YES | YES | 3,237 | 33,376 | 7.20s |
+| `django__django-13343` | `django/db/models/fields/files.py` | 1 | YES | YES | YES | 3,132 | 31,435 | 9.40s |
+| `django__django-16454` | `django/core/management/base.py` | 1 | YES | YES | YES | 3,263 | 34,394 | 11.73s |
+| `django__django-16950` | `django/forms/models.py` | 4 | NO | NO | YES | 3,284 | 34,941 | 11.63s |
+
+- Recall@1: 2 / 5 (0.40)
+- Recall@3: 4 / 5 (0.80)
+- Recall@5: 5 / 5 (1.00)
+- Total offline index build time: 47.12 seconds
+- Gold patches were read only by the offline evaluator to extract file labels;
+  no gold data entered the Agent context.
+
+### Step 2.2 vs Step 2.3 Agent comparison
+
+| Task | 2.2 Result | 2.3 Result | 2.2 Steps | 2.3 Steps | 2.2 Cost | 2.3 Cost | Search Calls | First Correct File Step |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `django__django-16429` | RESOLVED | RESOLVED | 6 | 10 | $0.001522716 | $0.002749404 | 0 | 1 |
+| `django__django-15277` | RESOLVED | RESOLVED | 15 | 7 | $0.003938292 | $0.002014428 | 0 | 1 |
+| `django__django-13343` | RESOLVED | RESOLVED | 23 | 17 | $0.008201340 | $0.005096664 | 0 | 1 |
+| `django__django-16454` | RESOLVED | UNRESOLVED (`missing_module`, ambiguous) | 18 | 21 | $0.005915856 | $0.007559736 | 0 | 1 |
+| `django__django-16950` | RESOLVED | RESOLVED | 25 | 40 | $0.010855116 | $0.023469936 | 1 | 4 |
+
+- Date: 2026-09-29
+- Run ID: `step-2-3-bm25-search`
+- Code commit: `6e84b0e3b57702bf0b25cec4356327972d95afc1`
+- Model / config: `deepseek-flash`; temperature 0; thinking disabled;
+  50-step limit; $0.5 cost limit; output threshold 12,000 characters;
+  native tools `bash`, `view`, `str_replace`, `search_code`, `submit`
+- Resolved count: Step 2.2 = 5 / 5; Step 2.3 = 4 / 5
+- Total steps: 87 -> 95 (+8)
+- Total prompt tokens: 559,478 -> 1,008,274 (+448,796)
+- Total cache-hit tokens: 523,520 -> 963,328 (+439,808)
+- Total completion tokens: 13,754 -> 18,022 (+4,268)
+- Total cost: $0.030433320 -> $0.040890168 (+$0.010456848), maximum estimates
+- Step 2.3 Provider calls / tool calls: 95 / 105
+- Step 2.3 Agent wall time: 439.38 seconds
+- Step 2.3 live index build time: 37.62 seconds total
+- Step 2.3 Harness wall time: 39.38 seconds
+- Search calls: 1 total, only on `django__django-16950`. The Agent followed
+  the top search result into `django/contrib/admin/options.py`, then found the
+  correct `django/forms/models.py` file with a manual grep at step 4. The gold
+  file was not visible in the truncated search observation, so this is evidence
+  that search changed the early path but not that it directly located the fix.
+- The other four tasks did not call `search_code`; their metric differences
+  cannot be attributed to BM25. The 16454 ambiguous failure occurred without a
+  search call and matches a failure class already seen in the temperature=0
+  baseline, so model/harness variation remains a plausible cause.
+- `django__django-16454` submitted a nonempty patch after targeted and broader
+  tests. It modified management parser behavior and added tests, but the official
+  gold-test patch could not apply cleanly and its expected
+  `subparser_vanilla.py` module was absent; Harness classified the failure as
+  `missing_module` and ambiguous.
+- HOLDOUT_STATUS = SEALED
+- HOLDOUT_AGENT_RUNS = 0
+
 ## Step 1.2 experiments
 
 | Date | Commit / config | Model | Task | Resolved | Steps | Tokens | Cost | Notes |

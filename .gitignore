@@ -8,10 +8,12 @@ __pycache__/
 .venv/
 
 # RepoFix runtime artifacts
+runs/
 runs/**/harness/
 runs/**/*.log
 runs/**/predictions.json
 runs/**/predictions.jsonl
+deepseek-flash.step-*.json
 
 # trajectory *.jsonl 不忽略，开发阶段提交用于审查
 logs/
