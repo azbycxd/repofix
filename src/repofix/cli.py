@@ -12,6 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from .agent import AgentConfig
+from .harness.config import HarnessConfig
 from .local_runner import LocalRunError, run_local_repository
 
 
@@ -23,6 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="repofix")
     parser.add_argument("--repo", required=True, type=Path)
     parser.add_argument("--issue", required=True)
+    parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
     return parser
@@ -44,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=output_dir,
             api_key=api_key,
             run_id=run_id,
-            config=AgentConfig(),
+            config=HarnessConfig.for_profile(args.profile),
         )
     except Exception as exc:
         safe_error = str(exc).replace(api_key, "[REDACTED]")

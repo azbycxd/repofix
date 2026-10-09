@@ -485,7 +485,9 @@ def run_instance(
 
 
 def main() -> int:
+    from repofix.harness.config import HarnessConfig
     parser = argparse.ArgumentParser()
+    parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--instance-id")
     selection.add_argument("--all-dev", action="store_true")
@@ -569,7 +571,7 @@ def main() -> int:
     trajectory_dir.mkdir(parents=True, exist_ok=True)
 
     git_commit = current_git_commit()
-    config = AgentConfig(
+    config = HarnessConfig.for_profile(args.profile,
         retrieval_mode=args.retrieval_mode,
         reviewer_enabled=args.reviewer,
     )
