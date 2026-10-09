@@ -1,0 +1,1417 @@
+{
+  "created": "2026-10-09T12:59:46.319084+00:00",
+  "base_git_sha": "e9f3157498d0d80197f9c6ae56df4c5bdc1273d6",
+  "actual_run_git_shas": [
+    "7227920d3b2e50b43a7295b16cb4bf1eeb340301"
+  ],
+  "report_generator_git_sha": "80af1e1fe95cf762699baffd598dce95406bd250",
+  "tasks": [
+    "django__django-16429",
+    "django__django-15277",
+    "django__django-13343"
+  ],
+  "planned_runs": 6,
+  "actual_provider_runs": 6,
+  "judged_runs": 6,
+  "config_hashes": {
+    "v1": "0aca4d25e804a9213ac1503ac7f2845b4e84524708944cc313bf873d5f21d88e",
+    "v3": "0ddd261a95bcbdb3ea0592da3260897e343847910e4b52beb46d6068558db59e"
+  },
+  "evidence": [
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-16429/django__django-16429.jsonl",
+      "sha256": "7a14b65978f7c4cc612559595ae1c9721376f934ff45632fedcbc234b392f226",
+      "size_bytes": 26617
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-16429/django__django-16429.result.json",
+      "sha256": "16015cb99f4e7a80fdc49647b0a98079990dd2e74b220539bf0bbfb4b83e1430",
+      "size_bytes": 1633
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-16429/report.json",
+      "sha256": "8aa4109a389f5ed9d5297f7daf521e7753dddddc190358719fedcc885ef18365",
+      "size_bytes": 2829
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-16429/django__django-16429.patch",
+      "sha256": "648a75d0595cced4bd6c6e1b87427044e4ade1e3978387dfcbb1b2d6653f655b",
+      "size_bytes": 416
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-16429/django__django-16429.evaluation.patch",
+      "sha256": "648a75d0595cced4bd6c6e1b87427044e4ade1e3978387dfcbb1b2d6653f655b",
+      "size_bytes": 416
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-16429/predictions.json",
+      "sha256": "5052ce7fc92649c2dff20bd79b82642e087d66b14c6c6937a37dfc70b36a727c",
+      "size_bytes": 550
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/trajectory.jsonl",
+      "sha256": "e8948d99feb953c6740a3827c3f2e430340e0e5e35f54e870daa1346767f56e0",
+      "size_bytes": 33939
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429.result.json",
+      "sha256": "bf067970aeb3ae717471766cdb7322ceede357e19732866d21ec5e414cd38b97",
+      "size_bytes": 1638
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-16429/report.json",
+      "sha256": "8aa4109a389f5ed9d5297f7daf521e7753dddddc190358719fedcc885ef18365",
+      "size_bytes": 2829
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429.patch",
+      "sha256": "648a75d0595cced4bd6c6e1b87427044e4ade1e3978387dfcbb1b2d6653f655b",
+      "size_bytes": 416
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429.evaluation.patch",
+      "sha256": "648a75d0595cced4bd6c6e1b87427044e4ade1e3978387dfcbb1b2d6653f655b",
+      "size_bytes": 416
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/predictions.json",
+      "sha256": "5052ce7fc92649c2dff20bd79b82642e087d66b14c6c6937a37dfc70b36a727c",
+      "size_bytes": 550
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-15277/django__django-15277.jsonl",
+      "sha256": "cadc0ed490019c99ccc255c9f207d7c8f3a0e4a23883abce9f4453a0fb7ea9d1",
+      "size_bytes": 27015
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-15277/django__django-15277.result.json",
+      "sha256": "a3699d82050c28868fd0df108e7cbb8c191c60033a6f30a6f0b38f712631f728",
+      "size_bytes": 1644
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-15277/report.json",
+      "sha256": "cda350c1a1687fdc0027154713dcc8284d5b118494f8d1dd0fadba2d3d121d7a",
+      "size_bytes": 15004
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-15277/django__django-15277.patch",
+      "sha256": "8512d6bc5111e1339c1786cd5be241461e34fd8ee13a81a04afa5257ef244aae",
+      "size_bytes": 689
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-15277/django__django-15277.evaluation.patch",
+      "sha256": "8512d6bc5111e1339c1786cd5be241461e34fd8ee13a81a04afa5257ef244aae",
+      "size_bytes": 689
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-15277/predictions.json",
+      "sha256": "4cbe1fa7a849f392a365898d3f1e495d2c5164996488076cf2b6bf97e1b07de5",
+      "size_bytes": 824
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/trajectory.jsonl",
+      "sha256": "c27c84d6b2330068b997eb41307e02f09e0a6b1d7dce919215a622cf1dda6fef",
+      "size_bytes": 42288
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277.result.json",
+      "sha256": "b65a97c00de506653e38057ab5bb612aa0f083b585f352ea02d9985525eaab9a",
+      "size_bytes": 1647
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-15277/report.json",
+      "sha256": "cda350c1a1687fdc0027154713dcc8284d5b118494f8d1dd0fadba2d3d121d7a",
+      "size_bytes": 15004
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277.patch",
+      "sha256": "8512d6bc5111e1339c1786cd5be241461e34fd8ee13a81a04afa5257ef244aae",
+      "size_bytes": 689
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277.evaluation.patch",
+      "sha256": "8512d6bc5111e1339c1786cd5be241461e34fd8ee13a81a04afa5257ef244aae",
+      "size_bytes": 689
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/predictions.json",
+      "sha256": "4cbe1fa7a849f392a365898d3f1e495d2c5164996488076cf2b6bf97e1b07de5",
+      "size_bytes": 824
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-13343/django__django-13343.jsonl",
+      "sha256": "afdcd6246b5cc642aefdfe966b696acaa27c99db1c965f7e86472b6e05ce6659",
+      "size_bytes": 70124
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-13343/django__django-13343.result.json",
+      "sha256": "6160186b3fca88c93ebe31c137e1aa8f98731bd02d6e33e2e578c63432a0ef5e",
+      "size_bytes": 1680
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-13343/report.json",
+      "sha256": "c58c63121846f2cbfa6608ebba7fe33e94a1a61f0bc5726b247aec199a0d41f8",
+      "size_bytes": 13011
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-13343/django__django-13343.patch",
+      "sha256": "5be5920f9738282eb346a0f39ff3e7e313f21c1c79ab07dc65a1943935938ffc",
+      "size_bytes": 2084
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-13343/django__django-13343.evaluation.patch",
+      "sha256": "82d858a80a16ff1f35568d594046c2d0e18595a73e0d471a20f10ad11290957e",
+      "size_bytes": 960
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-13343/predictions.json",
+      "sha256": "ebeb39137dbed9000c021c20a29aff45c1410bf5a26980bfb09d1e77424a7286",
+      "size_bytes": 1105
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/trajectory.jsonl",
+      "sha256": "058bab2c9be5563ff1bb72a1d8b77e6a7610b8370b43d98e34d8d53e63edf83e",
+      "size_bytes": 109727
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343.result.json",
+      "sha256": "6eb07dfa499206c12d8a6b3a0224cdf7300cae722be3e2c1da89ed98a6cfa593",
+      "size_bytes": 1685
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-13343/report.json",
+      "sha256": "c58c63121846f2cbfa6608ebba7fe33e94a1a61f0bc5726b247aec199a0d41f8",
+      "size_bytes": 13011
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343.patch",
+      "sha256": "9042dec85bb34dddab99cbb8b85202ed8509f7775c0537e18ee4ebaa2d125400",
+      "size_bytes": 1872
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343.evaluation.patch",
+      "sha256": "2567f50ed74803f12f224e5b4372ae4623c51c06e03d05e7f59b51bb4c3ec33c",
+      "size_bytes": 1018
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/predictions.json",
+      "sha256": "26df747e17548fe276a14381bf7e0d9a46b2418fa95e71a35e50c9c0ab979a2a",
+      "size_bytes": 1166
+    },
+    {
+      "path": "runs/interview-real-20261009/docker_sanity.json",
+      "sha256": "d98229a23e5e1819c4ba58b075ed23e6d2834e802e0e7551153779e23d5256ea",
+      "size_bytes": 2187
+    },
+    {
+      "path": "runs/interview-real-20261009/image_local_baselines.json",
+      "sha256": "ac41ebddad1e49ff6a4bdc31681631cecd6fffb9d625dbb43f21b8e52d40d7ed",
+      "size_bytes": 2676
+    },
+    {
+      "path": "runs/interview-real-20261009/plan.json",
+      "sha256": "5fd04272a9dab44a2dca7888b0500a7d5aae1a4d5d7c2a01fb51af5cdc0d3000",
+      "size_bytes": 34297
+    },
+    {
+      "path": "runs/interview-real-20261009/task_images.json",
+      "sha256": "95669a67c82e502633092c763828039984e1d6d63414fb775e8b255890cdd9a8",
+      "size_bytes": 555
+    },
+    {
+      "path": "runs/interview-real-20261009/audit-history/0001.json",
+      "sha256": "ca11fbaa88ae845fab0e85ca2cb548cd7f249b90372606f569b9b5b92459e60e",
+      "size_bytes": 553
+    },
+    {
+      "path": "runs/interview-real-20261009/audit-history/0002.json",
+      "sha256": "47a71475552c15292cd52ee4ab7fc0589e4106d9f2aaa83a558eba9883832ea6",
+      "size_bytes": 718
+    },
+    {
+      "path": "runs/interview-real-20261009/audit-history/0003.json",
+      "sha256": "3f5308102f8d114064cae5106092211cc6746b17aea4b0708b0893d154ccec9d",
+      "size_bytes": 718
+    },
+    {
+      "path": "runs/interview-real-20261009/docker-mechanisms/environment.txt",
+      "sha256": "db3755eba315e49c881c89cc47ea114fe4dbb8aae2123825e5d58f83c048bd05",
+      "size_bytes": 95
+    },
+    {
+      "path": "runs/interview-real-20261009/docker-mechanisms/results.json",
+      "sha256": "a5f1f21893da5f563a2ab37dbb7963a6ecdeab9205d52fdb83d54bf9fe87d17a",
+      "size_bytes": 1949
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-help/command.json",
+      "sha256": "dc457bdfdd29feabf87d1604baa8f1966290a4c5de08ef190ab2da74af4a9050",
+      "size_bytes": 418
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-help/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-help/stdout.log",
+      "sha256": "087daca36a71c8707cf6a7cb80f0c02534e9cb1ef0a21fd4e1e3472d152da9d9",
+      "size_bytes": 1121
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-13343/command.json",
+      "sha256": "9d137694e130bf4bd5dfbd4da7fdce5f3594cf2a3e5381751ece9863507ff6de",
+      "size_bytes": 711
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-13343/stderr.log",
+      "sha256": "485974aecf06b32cc5c83033a3d92c0efa1442ca7d8fdda4e041620ae362ff44",
+      "size_bytes": 138
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-13343/stdout.log",
+      "sha256": "3a4f3d1bf9d90114ca28c74fe6b20998f1d6ef92bbabcb7faa17b7f3050acc46",
+      "size_bytes": 3987
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-15277/command.json",
+      "sha256": "d7b83e34f29fb7329dbd57fa8c2b3bfb5808e9dc39ff9ebc496d1e4338fe9b0b",
+      "size_bytes": 710
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-15277/stderr.log",
+      "sha256": "485974aecf06b32cc5c83033a3d92c0efa1442ca7d8fdda4e041620ae362ff44",
+      "size_bytes": 138
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-15277/stdout.log",
+      "sha256": "73b0a11a9e9e07ed1959d1ce14439c57d3781c7d4ce60b43f13c4701fa74b36f",
+      "size_bytes": 3915
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-16429/command.json",
+      "sha256": "d4307f25a1024baed557cbde8dcdb43045e31fa429276c8a7dc8f7a757b7dd11",
+      "size_bytes": 710
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-16429/stderr.log",
+      "sha256": "485974aecf06b32cc5c83033a3d92c0efa1442ca7d8fdda4e041620ae362ff44",
+      "size_bytes": 138
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v1-django__django-16429/stdout.log",
+      "sha256": "0d6770df56d3b22c7f0343fe58a3ce7380aa212b7cce87c833ad8a8e220301bd",
+      "size_bytes": 3893
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-13343/command.json",
+      "sha256": "0ecc399a0b664e64b471a07f689c9eaca8fd34e7130e6c7fab9db5f93d438c0e",
+      "size_bytes": 710
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-13343/stderr.log",
+      "sha256": "485974aecf06b32cc5c83033a3d92c0efa1442ca7d8fdda4e041620ae362ff44",
+      "size_bytes": 138
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-13343/stdout.log",
+      "sha256": "b85d6959b89a6c0eb959ac8f7d5b959d415acb7bc84ad53bab64a51b15ab88a5",
+      "size_bytes": 3997
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-15277/command.json",
+      "sha256": "4f18a4e3f64adc55a892c864d25baf4ff8a3e7be85cdbe51a77082ad9c92a1b3",
+      "size_bytes": 710
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-15277/stderr.log",
+      "sha256": "485974aecf06b32cc5c83033a3d92c0efa1442ca7d8fdda4e041620ae362ff44",
+      "size_bytes": 138
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-15277/stdout.log",
+      "sha256": "d77f147909b0dfa76084cb41e20010e91289bd2423a3afe42ac6583c5d24e1ed",
+      "size_bytes": 3921
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-16429/command.json",
+      "sha256": "11a6272f3044e0fc02177f870c1b8f4a9067a79344feaf833326ef8c2774a5eb",
+      "size_bytes": 710
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-16429/stderr.log",
+      "sha256": "485974aecf06b32cc5c83033a3d92c0efa1442ca7d8fdda4e041620ae362ff44",
+      "size_bytes": 138
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/agent-v3-django__django-16429/stdout.log",
+      "sha256": "4fb78a69b8b604624d2010d9be6ccdf799fcfb1c08ad50216d7fa9c73f6efbca",
+      "size_bytes": 3903
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-mechanisms/command.json",
+      "sha256": "c49714fa06d80608571b23b318b55e61b139dc17906d0bcc65a7d1bc989ce941",
+      "size_bytes": 419
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-mechanisms/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-mechanisms/stdout.log",
+      "sha256": "7bc0a91fb2611b7ff657b2a070805e73b0c606f174218261d9cabff791f9027a",
+      "size_bytes": 1699
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-official-baselines/command.json",
+      "sha256": "03019344ab278ac8c96bd86661c11b511d9bd1fcdd842752258579ac059a457b",
+      "size_bytes": 429
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-official-baselines/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-official-baselines/stdout.log",
+      "sha256": "537c68d31aa4870439148b9d7a938e2dea6bf73264492c60ac5d62c6eb13681b",
+      "size_bytes": 2043
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-sanity-tree-verified/command.json",
+      "sha256": "cd845bc4992e3be9079063b53646d8ad8b9fbcf5ff800983265c03d57e2698eb",
+      "size_bytes": 423
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-sanity-tree-verified/stderr.log",
+      "sha256": "dbc403174f620d1c514fc8168121abeb11d372db61514d4576272ddd9fb88859",
+      "size_bytes": 998
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/docker-sanity-tree-verified/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/environment/command.json",
+      "sha256": "8cb5ae09b9e0af2ca9f71a1bdabc4e8763afcfb10b9477e597ed84181641a14c",
+      "size_bytes": 534
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/environment/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/environment/stdout.log",
+      "sha256": "d4cea32fc764828b03be6b3849c541a84234e891aee6f9a4db34d634524ae695",
+      "size_bytes": 1493
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-diff-check/command.json",
+      "sha256": "ddb3e44d360dc53de4316b170ce3ca3f944106afc3b5c344d0ea9ac569c3c39f",
+      "size_bytes": 371
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-diff-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-diff-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-docker-disk/command.json",
+      "sha256": "157adc4bb7219513c0cefe87a18fa33bdefc4dc41362ad557f61304797047ce2",
+      "size_bytes": 372
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-docker-disk/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-docker-disk/stdout.log",
+      "sha256": "49c77359e478c9accf8ccfe3175b470678f9ea6ee45add639976de266676b43d",
+      "size_bytes": 287
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-experiment-containers/command.json",
+      "sha256": "5927ca16a267127353e7f165250df5431f9076d43f1a633244eddad86d52a5ad",
+      "size_bytes": 453
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-experiment-containers/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/final-experiment-containers/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-help/command.json",
+      "sha256": "d5c4f28017664c854b1eba1804bf4239dc4b03f17dcd2943937da46995b41e2f",
+      "size_bytes": 440
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-help/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-help/stdout.log",
+      "sha256": "79f969829a9ce79ad2ac8bddb5017f7c81b8877e8a9bd4d837657da0db9cdf16",
+      "size_bytes": 1965
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-v1/command.json",
+      "sha256": "c665623f21f5e531e880a9d27f35ad268a3420e2adfa46ebc23a11692cb7aa67",
+      "size_bytes": 1037
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-v1/stderr.log",
+      "sha256": "1ec40d4141acb572a8f6e9507377ce58a5b3afe80795846e1427a506b8c36b3d",
+      "size_bytes": 783
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-v1/stdout.log",
+      "sha256": "66c81756f63f19d35fb80013efbeba9bce530928a71df55880e4b7c713312524",
+      "size_bytes": 547
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-v3/command.json",
+      "sha256": "cb29a05b515bdb88d6a8e230bb4ff396d7e22e8e6daa19082dc7384a957e6d39",
+      "size_bytes": 1038
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-v3/stderr.log",
+      "sha256": "d6aad92622fd926adec3401e285524addb9eb302bc281efad0aaa39ba87ad8b9",
+      "size_bytes": 783
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/judge-v3/stdout.log",
+      "sha256": "7eecb9bcd05339a0cf169453383b3f127057f4701460b83b277ed189ce39aa1f",
+      "size_bytes": 547
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-13343/command.json",
+      "sha256": "32ed76073757e8f3cb8adc0e071a8da3b0cefd9a9886c5c01d1335ec7f6a428d",
+      "size_bytes": 422
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-13343/stderr.log",
+      "sha256": "22729ad1fb1d0be9a07be3229ca373b92c5a2bf94fddd3b5164b9adac681e4cf",
+      "size_bytes": 261
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-13343/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-15277/command.json",
+      "sha256": "9e2cec07e401fa9555760fe89bf9afa42cdf062f0fb02a4c3fc6bec734bd55ce",
+      "size_bytes": 423
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-15277/stderr.log",
+      "sha256": "d4ef1a13cf713c03e0ba32a3bdd4d1707fc2092c58df659fb617c6cc9ca60297",
+      "size_bytes": 261
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-15277/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-16429/command.json",
+      "sha256": "45781b68549a851459a05da26b82575e2d71a49dc3d9f1117d657cde74060ddb",
+      "size_bytes": 424
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-16429/stderr.log",
+      "sha256": "adcc9c392cf6c069de34d27080854f7d2f614297019db1ce15a69096b4d46b44",
+      "size_bytes": 261
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-django__django-16429/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-python/command.json",
+      "sha256": "a050150bc6d5e1469257c7e1d8ebd87a1582754800b709543582a4298d40fd4a",
+      "size_bytes": 382
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-python/stderr.log",
+      "sha256": "dfcbaaa333bd54418889b3e8398c36b01e13949c246f50992d9eacbd8ff711d3",
+      "size_bytes": 195
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pull-python/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-docker/command.json",
+      "sha256": "4faf4c79f1de8b39fc37db3c41598a8bb8ba7f520ce66c5de89ce1045ed76c05",
+      "size_bytes": 450
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-docker/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-docker/stdout.log",
+      "sha256": "b513584b6325bcb32589cc9d67c7030ee01fe53510dc9614185df8d3b6e132c8",
+      "size_bytes": 14760
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-docker-images-ready/command.json",
+      "sha256": "dc3a49e3a05af43dce1ddbc7798bf6bebc2defa545402a8f0d88b60f10f90237",
+      "size_bytes": 451
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-docker-images-ready/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-docker-images-ready/stdout.log",
+      "sha256": "40a7b15176005edc874290a492b384e7ecd9d41bcdd298a40c02b8396b9daec5",
+      "size_bytes": 125
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-final-offline/command.json",
+      "sha256": "9a64d4b9d5c02ec116a4dba6af407457a16ab1a146502c7f9b2bfb577849a243",
+      "size_bytes": 411
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-final-offline/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-final-offline/stdout.log",
+      "sha256": "79ae2e96c16d4374d02c141cdbae2b2a27420b052b7ab18e473396dbb597d56f",
+      "size_bytes": 205
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-offline/command.json",
+      "sha256": "703089382209d6a8dee741d2e30a14460a5e1598465add8e47271c4eb8140682",
+      "size_bytes": 410
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-offline/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-offline/stdout.log",
+      "sha256": "d83516dfeddad3fb3ae151c663caa640a612be4cda52588f085a47f9f94accf1",
+      "size_bytes": 206
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-v1-golden/command.json",
+      "sha256": "f99c2bf8df63b60f3b15347ccf15b70167c3aec5e2d44b2a20cccc3031b794ec",
+      "size_bytes": 442
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-v1-golden/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/pytest-v1-golden/stdout.log",
+      "sha256": "033cfb085ee02f8d8e516c6dddf96f5f3719bd8b0c411f963e67c7de458e5e62",
+      "size_bytes": 98
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-copy-python/command.json",
+      "sha256": "54a7a5adcc1e69ab76a52d181eacc9e6e9a2a4093f625e774a49dfa0dda645a5",
+      "size_bytes": 656
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-copy-python/stderr.log",
+      "sha256": "c568056cdcee3b83ce67b3286d0e6fc1d53baea6c9f0b3d95994eb567f6c3f3e",
+      "size_bytes": 245
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-copy-python/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-copy-retry-python/command.json",
+      "sha256": "431574b0cf1103c0758b0c8f72da2a5ee84d2f96a47efb0f994e9f315779d2e6",
+      "size_bytes": 655
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-copy-retry-python/stderr.log",
+      "sha256": "fee23fda8541c42c79492ee24db19504a9956af3b36e2f10768f427d3035f7d0",
+      "size_bytes": 245
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-copy-retry-python/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-manifest-python/command.json",
+      "sha256": "7294de861cec4530b7acbb82aed3e347613b6a8c5db0eade711ea521d03e2998",
+      "size_bytes": 526
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-manifest-python/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/registry-manifest-python/stdout.log",
+      "sha256": "2239e1997ebd353d40f6867170f516dac886c54d087e059497cb9801e0ffae79",
+      "size_bytes": 119945
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-python/command.json",
+      "sha256": "6ce78dc036d9176d322912e35ddcb40ad45d8cace28053e296d69d3768968ed5",
+      "size_bytes": 441
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-python/stderr.log",
+      "sha256": "804e17da3a623b2f382d1fbe5543a62e52549c763b122a4a5aba2fd3e9c00b7f",
+      "size_bytes": 639
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-python/stdout.log",
+      "sha256": "bf59e27af7cabb5a0ff40d4299b0794426d25587f1f23a1bac208c1d5ff7fecb",
+      "size_bytes": 887
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-13343/command.json",
+      "sha256": "72c052fc5c50ba2a99364d317e4aa419df654db53ea1127b7d86e6e111456314",
+      "size_bytes": 482
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-13343/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-13343/stdout.log",
+      "sha256": "97768f94dd12aa77286effc65ff5b0dbcd76440e35230da5043419f485ead4b1",
+      "size_bytes": 1607
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-15277/command.json",
+      "sha256": "b08b5e31db28a9e1f5ceed439d02ab3a39aa574ad15b0db7e1a95dc58858aeb3",
+      "size_bytes": 482
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-15277/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-15277/stdout.log",
+      "sha256": "f2dd2956c9a0a74f5d39f99027fe00a44b62fa9c098ac9db100d15b0ab84e371",
+      "size_bytes": 1525
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-16429/command.json",
+      "sha256": "ea4b964c8c9e395d666a44de31c66089b72f1920313d3e58bd5935c56950b333",
+      "size_bytes": 481
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-16429/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-django__django-16429/stdout.log",
+      "sha256": "817819418c0ffb9045baed5a882eeca51b3d2924bdd5e18d7c5d5e61d21d0002",
+      "size_bytes": 1502
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-python/command.json",
+      "sha256": "379e457f58f1ca864a0d70f5340e8d009e14c55781f8c531a7f6710b8232e7d8",
+      "size_bytes": 441
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-python/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size_bytes": 0
+    },
+    {
+      "path": "runs/interview-real-20261009/commands/verified-transfer-v2-python/stdout.log",
+      "sha256": "5d0ea7172e9f4b86ff1fad35376c855fcf1c55a1816f7765dfd384a9e8cf20c0",
+      "size_bytes": 943
+    },
+    {
+      "path": "runs/interview-real-20261009/docker-mechanisms/checkpoints/step-0001.json",
+      "sha256": "021413b375f3fc359cd507909520f0058bfb4eef7877124357ec9576cea04aed",
+      "size_bytes": 3687
+    },
+    {
+      "path": "runs/interview-real-20261009/docker-mechanisms/checkpoints/workspace-dbce11ab1a8847f633b2af3b3e391a19df5b9ad089af57f453565e791b4a7697.json",
+      "sha256": "dbce11ab1a8847f633b2af3b3e391a19df5b9ad089af57f453565e791b4a7697",
+      "size_bytes": 13976
+    },
+    {
+      "path": "runs/interview-real-20261009/docker-mechanisms/context/tool-54e8f69c7281b585ed73.txt",
+      "sha256": "845899c8e9162087141afeddbfd71265139794332ef6417c2a48c613f03cd9d0",
+      "size_bytes": 36026
+    },
+    {
+      "path": "runs/interview-real-20261009/judge/v1/deepseek-flash.interview-real-20261009-v1.json",
+      "sha256": "c11ba1f8ede9cb213323921e23315e07a55994f30e1f96a7a7bcf2fa11e67594",
+      "size_bytes": 1168
+    },
+    {
+      "path": "runs/interview-real-20261009/judge/v1/predictions.json",
+      "sha256": "ca48573bf1802e9944c92b838cd30e2bba154638ec9beea408ba47c41ac397dd",
+      "size_bytes": 2473
+    },
+    {
+      "path": "runs/interview-real-20261009/judge/v3/deepseek-flash.interview-real-20261009-v3.json",
+      "sha256": "c11ba1f8ede9cb213323921e23315e07a55994f30e1f96a7a7bcf2fa11e67594",
+      "size_bytes": 1168
+    },
+    {
+      "path": "runs/interview-real-20261009/judge/v3/predictions.json",
+      "sha256": "d36dc1a0270a76c8de49b3bba02aabc79a740853364ef08141268e01f0d7b198",
+      "size_bytes": 2534
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-13343/batch_results.json",
+      "sha256": "8b7839c43a18d19e8c291f32a43ff91fb0b9a650f288067cef39ab197c3f742b",
+      "size_bytes": 2411
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-13343/reviewer_initial_predictions.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "size_bytes": 3
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-15277/batch_results.json",
+      "sha256": "73288be43a7df737139aedc14f05f5d8d24d22171e18d69a123e73293d845a96",
+      "size_bytes": 2367
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-15277/reviewer_initial_predictions.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "size_bytes": 3
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-16429/batch_results.json",
+      "sha256": "fcae59e2cc92fa2713db28405d6f9b776c28182098453b315f947e44341b4f5d",
+      "size_bytes": 2356
+    },
+    {
+      "path": "runs/interview-real-20261009/v1/django__django-16429/reviewer_initial_predictions.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "size_bytes": 3
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/batch_results.json",
+      "sha256": "ecd3b144c39dfda0e6dc8dc5231677e91ac2adbd9c4ec61bd664d5d2729bdf91",
+      "size_bytes": 2416
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/reviewer_initial_predictions.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "size_bytes": 3
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/batch_results.json",
+      "sha256": "cdc687a6b745f505cecc40be25949c62ecaa98ae95ff540766345d0b6b6bf1da",
+      "size_bytes": 2370
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/reviewer_initial_predictions.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "size_bytes": 3
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/batch_results.json",
+      "sha256": "d9bae05c0c3c0151a62bbf7af638b8efe21000682686e1f5b64072a37f50e4f0",
+      "size_bytes": 2361
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/reviewer_initial_predictions.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "size_bytes": 3
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/resume.json",
+      "sha256": "212d623a4601438d7992e7e8e77163ecf5005c9642e6669bf93bf8eaed1dbc2d",
+      "size_bytes": 2701
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/summary.json",
+      "sha256": "abca43819f47a2c9448ebf0f888c306eea90eeadc17aa104dd7aa5c9ca6c746c",
+      "size_bytes": 14729
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0001.json",
+      "sha256": "ceaae2f71c8248b1da62aef6a8355a0c9ffefdbd43c41f44b5b3799e8bd9f9e9",
+      "size_bytes": 4998
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0002.json",
+      "sha256": "806d291cf9f7317dd76f24722924af8adc3aa6c23dd2cd3def52b9027e1b20d1",
+      "size_bytes": 7298
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0003.json",
+      "sha256": "b09b387131dcd24ce4b824912644334e80247c62b9033b2830020fa9e7aad4eb",
+      "size_bytes": 7934
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0004.json",
+      "sha256": "84362a33de48e5a0163c38c19e2a1769cf7f5096d879d723c10bf25a791da112",
+      "size_bytes": 11489
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0005.json",
+      "sha256": "6756d6bf6beff4e2dbe6bea101231f8c807f2803cd8d0ec8b81a230a71715bc9",
+      "size_bytes": 14295
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0006.json",
+      "sha256": "80fee74854dc79942ffc0289957c822810ec882f18f3e58a1611094889892edc",
+      "size_bytes": 15662
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0007.json",
+      "sha256": "baefc97444f29dd8ba020163ef429a641ffb37e8eeaba14afe1299dfd53d0500",
+      "size_bytes": 17280
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0008.json",
+      "sha256": "ec86a02bb0ff3c6c3f3aa7657a4a5ba2623c14dddb49566c6318c8c3070d226a",
+      "size_bytes": 18727
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0009.json",
+      "sha256": "e802b974b98d5292e678ed5953d85ff9ee76b6e78cd67c711f5a78acaf36bcec",
+      "size_bytes": 20135
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0010.json",
+      "sha256": "cc26d57e1073047ec7e28f75c18c9a5a4536015ce97163dcc464193026b7545d",
+      "size_bytes": 22074
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0011.json",
+      "sha256": "aec9b056e16012fa636491ec11c45ce849edd72d52b69dfccde807044ec40950",
+      "size_bytes": 23471
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0012.json",
+      "sha256": "c8ad9ada321c5dd637e8ea671c7e506ae74ee02581aa9e97a1c9e93df2251462",
+      "size_bytes": 25449
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0013.json",
+      "sha256": "72235df2237b605d7d4ef350f5d6cfeecf2ac0a02fb665de7b89326eefeb40cf",
+      "size_bytes": 25318
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0014.json",
+      "sha256": "82b8eb6933e91326c952f7da477b45d9dd6fba97df88b68a0d49bc281bdab186",
+      "size_bytes": 26903
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0015.json",
+      "sha256": "29208b6f67a909eef0adadfd5f9559b97ddec6912aa78e91f987e300292419ee",
+      "size_bytes": 29679
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0016.json",
+      "sha256": "f9de42578c7c041ac5c89c7275b54792104f8a5d8dc2d251df1a4568100360a0",
+      "size_bytes": 31511
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0017.json",
+      "sha256": "f2b654c4b3ac3455a07d8c3b5e9a95635ff260951b94f442739df32edde8372e",
+      "size_bytes": 34085
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0018.json",
+      "sha256": "78b4d48f35aace6ead413245c6e65bec018b63b60b9107e3359b48f095ca90db",
+      "size_bytes": 34268
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0019.json",
+      "sha256": "22a90fc169122b5fc044963032f634595a0c1673a90bacefb3c366a729ff1106",
+      "size_bytes": 35986
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0020.json",
+      "sha256": "25cf08e5e7897d0daca334bbbdf9e49e4b4c5b06c18239d81193fe5ea978232e",
+      "size_bytes": 38270
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0021.json",
+      "sha256": "ae023811abd09bb02c732e4227b224fb34537687bfea426a4da4e25fb72334d4",
+      "size_bytes": 39634
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0022.json",
+      "sha256": "4ef22e3626ecd81fe469c8b27098cc500e48bab7ed6b775593bdadd6027edef7",
+      "size_bytes": 40933
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0023.json",
+      "sha256": "0ce82b571b6cbf426d315eb471bd3281694674e734775fb35b7abd238bdd0906",
+      "size_bytes": 43770
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0024.json",
+      "sha256": "a89706fd107957832b5b8a47a73ef6309fff9cfe052b95415aac7a4aaa67669d",
+      "size_bytes": 45635
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0025.json",
+      "sha256": "42139461894c47c9daa4d06bda1b558fc388f5790f5686ab1c57e3e74ad5bd69",
+      "size_bytes": 47528
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0026.json",
+      "sha256": "48d0a206fed2a50eb76c2e277c2daa1ebc34a4fc3904be3e827217343df6a983",
+      "size_bytes": 47554
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0027.json",
+      "sha256": "e1affcc41fefbebff7ba1a32dcc15907dbe605a0f24ca82b6316a899d47a0489",
+      "size_bytes": 50139
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0028.json",
+      "sha256": "ab410897b73e0155d27f21ec337b909ad7997659c5c204125ac12dcf721d03a5",
+      "size_bytes": 51242
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0029.json",
+      "sha256": "9cef6a0edc8636d6aa05f0ea685646b8c65bf559bef6853d251184eefba1260e",
+      "size_bytes": 53111
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0030.json",
+      "sha256": "edd53dd5dd4599410a9c2e10e3a1130bbddccd331b4318338e75bf7c7c7f2d68",
+      "size_bytes": 53944
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0031.json",
+      "sha256": "1ac62a7f2c9b63b66dc0fd68fddaf2b647d060aca81232a2a3df9db08ccf7456",
+      "size_bytes": 54564
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0032.json",
+      "sha256": "ab1ba06699f8af5390cf9bce8f3b7a43a05d53d98c318be8a3176b565cf65845",
+      "size_bytes": 55445
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0033.json",
+      "sha256": "ff80265c3b6f2765e89748a70b0e978608a030e1d01db3d231107725103b1105",
+      "size_bytes": 56984
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0034.json",
+      "sha256": "2c3e1964d0ac576da0869135ffcfd2b886704201df4bd9a5b1cdc31391787233",
+      "size_bytes": 58339
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/step-0035.json",
+      "sha256": "953035d258b21beb7f21b0fd25aff4d68c64e318f08ea7c00976cb7721f29e2a",
+      "size_bytes": 60401
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/workspace-3ca9f3877e18280fa7f5e84af750ab9a5c9ac06cb1453963288cf07257531c28.json",
+      "sha256": "3ca9f3877e18280fa7f5e84af750ab9a5c9ac06cb1453963288cf07257531c28",
+      "size_bytes": 15068
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/workspace-5aa7aef78749ff8b395e9b0c9173553913a86b79bfce01237adf796c9c1227df.json",
+      "sha256": "5aa7aef78749ff8b395e9b0c9173553913a86b79bfce01237adf796c9c1227df",
+      "size_bytes": 13708
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/workspace-c99bc292f5315f5155c438fd160802b6597fcaa64966bfbe4d36c73986b7d869.json",
+      "sha256": "c99bc292f5315f5155c438fd160802b6597fcaa64966bfbe4d36c73986b7d869",
+      "size_bytes": 15028
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-13343/django__django-13343/checkpoints/workspace-efb02adf89fd4442868ca439d78e8c70c316463f9b94a5ab2bcf0d30820e14a3.json",
+      "sha256": "efb02adf89fd4442868ca439d78e8c70c316463f9b94a5ab2bcf0d30820e14a3",
+      "size_bytes": 16204
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/resume.json",
+      "sha256": "3c15bed5be482abb1a62b4aae190b23dfa6394f8a829a81326c7a59430dc795c",
+      "size_bytes": 4275
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/summary.json",
+      "sha256": "e1b0f0469f2567184b047e236d1d5e1e7b2089cd931dcc06ad3dd89f2add1c43",
+      "size_bytes": 7176
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0001.json",
+      "sha256": "b1eef6ab2cad326378f34f7e3f18e0c408cffb05e30658fc713238300e28c4c7",
+      "size_bytes": 6394
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0002.json",
+      "sha256": "2dc2ee23f6e278650da536f2e3a1505fa4717364ee2328185d487c0cc9d5566f",
+      "size_bytes": 8588
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0003.json",
+      "sha256": "5b4b923d05f9de157d13e230fe56d06c50dcf1199006907827d93c089705cb56",
+      "size_bytes": 11732
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0004.json",
+      "sha256": "2b446bd5ba492fed6c33614621572f3954ea1d339dfa4b0f1f4c141b33ef6b05",
+      "size_bytes": 14425
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0005.json",
+      "sha256": "ac54204262882ec8a1254cced72820858a6a72a0d98839f0500378c6d9a32455",
+      "size_bytes": 15900
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0006.json",
+      "sha256": "d314bee9dab19226dc21e02047887ff90d0822df592a0edddb05eccb3aad023c",
+      "size_bytes": 15620
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0007.json",
+      "sha256": "89f3684f6a2b44796f43ff9295aa1c81544f4d672ac1f4b4e597616fecb938c0",
+      "size_bytes": 18166
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0008.json",
+      "sha256": "75afd6a2c967a7d6adb6dfefe8dbaed97875c16ff2f89cb37ed38d9dd8258ceb",
+      "size_bytes": 21309
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0009.json",
+      "sha256": "5e2b055d62cc3c2a56f7f86f3a548f860e7f47448ae5c87700196eca727117fa",
+      "size_bytes": 22932
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0010.json",
+      "sha256": "36b8ef3ab042384c195c8c441b36e97046a6319d10c4c99fbe3f557cdf35b86f",
+      "size_bytes": 24324
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0011.json",
+      "sha256": "81a7bfd29c6ebc529aa687a10985196b12a659f5d3061cbaff74e4c87cdf319b",
+      "size_bytes": 25772
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/step-0012.json",
+      "sha256": "62397804930053b9376cebe5efd504ac483544fd71c1f1042f26e40b34058020",
+      "size_bytes": 26344
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/workspace-2066fe6475903b0df2b0b57609957a63b97809136e6a0bae49719bd6fb5052dd.json",
+      "sha256": "2066fe6475903b0df2b0b57609957a63b97809136e6a0bae49719bd6fb5052dd",
+      "size_bytes": 14628
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-15277/django__django-15277/checkpoints/workspace-5aa7aef78749ff8b395e9b0c9173553913a86b79bfce01237adf796c9c1227df.json",
+      "sha256": "5aa7aef78749ff8b395e9b0c9173553913a86b79bfce01237adf796c9c1227df",
+      "size_bytes": 13708
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/resume.json",
+      "sha256": "a2facabeed50510fbab2f921eb8c7dab3b6a3c5bd31936fa6e845cd3bb5cf4a4",
+      "size_bytes": 2430
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/summary.json",
+      "sha256": "b924563d0a765acffc08fde3f86b07e37c439e918a887037f9b8c48aa8f3be4f",
+      "size_bytes": 5434
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0001.json",
+      "sha256": "c93489c5054c27786aa6223efd5d52e7f60b5ecf30f6761f0d4b9187250cff7d",
+      "size_bytes": 9478
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0002.json",
+      "sha256": "0e94ff0b8d4270858384fc729907a50ff47bd593aa7227cfc153c7d6c9325ab9",
+      "size_bytes": 11635
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0003.json",
+      "sha256": "3a5fe1d247c7779100092f65fa0d8c3e1917abb067a8098045d4f44d4d4a858e",
+      "size_bytes": 12461
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0004.json",
+      "sha256": "3e59e6927539aef9a0778ffd0083cfdc14fe6e33cf54f42a2a6e8f3e54525dd1",
+      "size_bytes": 13754
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0005.json",
+      "sha256": "a7768bb218d585d1b4c50bb025ba0a1887d34303f4a498a07727b9237887b175",
+      "size_bytes": 14912
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0006.json",
+      "sha256": "639e640be46c864944057aff44d222d819f5079a82c6001b10c25dd1981cd430",
+      "size_bytes": 14844
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0007.json",
+      "sha256": "8132f2aacc79088417cdb8e70ad1eff2b023b9a8be5f456725b2a057909251d2",
+      "size_bytes": 16309
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0008.json",
+      "sha256": "c00964b5f6af10ddd3588519aaeef9a242c1aa5a1a8a88f76cc6a116fbb58834",
+      "size_bytes": 17916
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0009.json",
+      "sha256": "6fdae902531bf59d602a3527b731ad3592f067b5b7c2d9420bf27d8025a5b9f1",
+      "size_bytes": 19036
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0010.json",
+      "sha256": "459ff258348485d7ba29a34083bd63a63ddf159be52f0b0cfbaab21b1ce459f5",
+      "size_bytes": 20130
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/step-0011.json",
+      "sha256": "07cccb01a69f913753867769cd8bc315189de891377044f517f927e32812e1cc",
+      "size_bytes": 20704
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/workspace-1e8ed7c904bdaecf292b36171c4aaef61a094c0e4fea7259e8095edd80283a05.json",
+      "sha256": "1e8ed7c904bdaecf292b36171c4aaef61a094c0e4fea7259e8095edd80283a05",
+      "size_bytes": 14264
+    },
+    {
+      "path": "runs/interview-real-20261009/v3/django__django-16429/django__django-16429/checkpoints/workspace-5aa7aef78749ff8b395e9b0c9173553913a86b79bfce01237adf796c9c1227df.json",
+      "sha256": "5aa7aef78749ff8b395e9b0c9173553913a86b79bfce01237adf796c9c1227df",
+      "size_bytes": 13708
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-13343/eval.sh",
+      "sha256": "05a15fefa8c2762aeea216fef08eef85fee98a3efde11a1a9b81ed51b2675267",
+      "size_bytes": 2070
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-13343/patch.diff",
+      "sha256": "82d858a80a16ff1f35568d594046c2d0e18595a73e0d471a20f10ad11290957e",
+      "size_bytes": 960
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-13343/run_instance.log",
+      "sha256": "74c532ba166bb37bee43a74110fef937a55323d2d170f8b9727ea41407c84ab7",
+      "size_bytes": 13907
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-13343/test_output.txt",
+      "sha256": "43db69df17a3628923eb414e9321a590e571a7da5921bf2f7527287e30ce1dd9",
+      "size_bytes": 25894
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-15277/eval.sh",
+      "sha256": "0e57fe723fa0bbbca847379063fee09605068496d0cb36a4cdfbb6b78e5a80b9",
+      "size_bytes": 2016
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-15277/patch.diff",
+      "sha256": "8512d6bc5111e1339c1786cd5be241461e34fd8ee13a81a04afa5257ef244aae",
+      "size_bytes": 689
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-15277/run_instance.log",
+      "sha256": "daa45089dcfc162f044ac3f07deb544f2ecf3b2b41f46f2a4ec2728d2e86dff9",
+      "size_bytes": 14784
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-15277/test_output.txt",
+      "sha256": "b7d393c1a5fc407bfbc30c94715919158e6106add0069c58ada34c35c8754ec1",
+      "size_bytes": 28596
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-16429/eval.sh",
+      "sha256": "8e9051b91686b71c295afa69843957edcb45acfe1239e1e9619ed534c549458d",
+      "size_bytes": 2147
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-16429/patch.diff",
+      "sha256": "648a75d0595cced4bd6c6e1b87427044e4ade1e3978387dfcbb1b2d6653f655b",
+      "size_bytes": 416
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-16429/run_instance.log",
+      "sha256": "092d3692cc377df759cdd413b9fbac16eabab5e3cee65a68ca5f1a2c048e4f52",
+      "size_bytes": 4743
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v1/deepseek-flash/django__django-16429/test_output.txt",
+      "sha256": "d4d836e4bc8a01cc55e6cd73f504ebc67a32648381d277a3a0856b5546f89306",
+      "size_bytes": 18759
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-13343/eval.sh",
+      "sha256": "05a15fefa8c2762aeea216fef08eef85fee98a3efde11a1a9b81ed51b2675267",
+      "size_bytes": 2070
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-13343/patch.diff",
+      "sha256": "2567f50ed74803f12f224e5b4372ae4623c51c06e03d05e7f59b51bb4c3ec33c",
+      "size_bytes": 1018
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-13343/run_instance.log",
+      "sha256": "2acf7f2f4f08200645bd879c0a89d7a9514fa3df39e36e930e13fcd892d9dc15",
+      "size_bytes": 14019
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-13343/test_output.txt",
+      "sha256": "b5f3834601035c128e0834e65b670b650d98a2058567b6b041cc881288e48b7c",
+      "size_bytes": 25952
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-15277/eval.sh",
+      "sha256": "0e57fe723fa0bbbca847379063fee09605068496d0cb36a4cdfbb6b78e5a80b9",
+      "size_bytes": 2016
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-15277/patch.diff",
+      "sha256": "8512d6bc5111e1339c1786cd5be241461e34fd8ee13a81a04afa5257ef244aae",
+      "size_bytes": 689
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-15277/run_instance.log",
+      "sha256": "3a2e67e6360bd30f3bbbb273e9ebaa2db2d472f482e9a5122b4fb169f80147a2",
+      "size_bytes": 14784
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-15277/test_output.txt",
+      "sha256": "42355af7fe1f5c5008dc75e1f104f510a03c1064f281ec951c9a85e526c2a2f2",
+      "size_bytes": 28596
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-16429/eval.sh",
+      "sha256": "8e9051b91686b71c295afa69843957edcb45acfe1239e1e9619ed534c549458d",
+      "size_bytes": 2147
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-16429/patch.diff",
+      "sha256": "648a75d0595cced4bd6c6e1b87427044e4ade1e3978387dfcbb1b2d6653f655b",
+      "size_bytes": 416
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-16429/run_instance.log",
+      "sha256": "8b5c173c63d5c6abc0bd74d66a959ace28fa162423cb606a25375a6617c74139",
+      "size_bytes": 4743
+    },
+    {
+      "path": "logs/run_evaluation/interview-real-20261009-v3/deepseek-flash/django__django-16429/test_output.txt",
+      "sha256": "d77f2da416815790d22f8eb2c0d777a2cef7b9100b1dd581c79531c3d395e362",
+      "size_bytes": 18759
+    },
+    {
+      "path": ".cache/public-image-transfer/library_python/import-verification.json",
+      "sha256": "aad86aa563e5320693fd30eeac0995b41db51dfff698cf64dcac1fa3635ffc8d",
+      "size_bytes": 652
+    },
+    {
+      "path": ".cache/public-image-transfer/library_python/manifest.json",
+      "sha256": "2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe",
+      "size_bytes": 1746
+    },
+    {
+      "path": ".cache/public-image-transfer/library_python/provenance.json",
+      "sha256": "80489a7ccf8c3b0fe9a928b88205d236f6211eaad8be6e7bab83b09e247ffcc7",
+      "size_bytes": 434
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-13343/import-verification.json",
+      "sha256": "d0c3472e5bb6daa78b6d1e116eacce8a86712f0def78074bf1fcab884a491e7f",
+      "size_bytes": 1138
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-13343/manifest.json",
+      "sha256": "913df49ece3ea99cf855b2fdd62edcf10843a412f39aeb6943fd06732ec7d2f5",
+      "size_bytes": 2199
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-13343/provenance.json",
+      "sha256": "9e500ef7dc7043a055d0adfa125e3932863a0815b39fe4b072fb27d039f19e8b",
+      "size_bytes": 477
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-15277/import-verification.json",
+      "sha256": "290dd89e5b9b4423cc1293b03ca8ffa9bdccffc7ddb5db44123d2aac89909282",
+      "size_bytes": 1138
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-15277/manifest.json",
+      "sha256": "51a2cad9356481327ab27c5d0bd78db0682b687d84246feea641aafeb4335920",
+      "size_bytes": 2199
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-15277/provenance.json",
+      "sha256": "9e814624842881ba0274eaf70b487f75d0d80e61ea71771b6360b6650b1df5c2",
+      "size_bytes": 477
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-16429/import-verification.json",
+      "sha256": "6c7c57465a7bd3e23e949cb1549bbf6de301c021ba119bd541a59df3d133ef2c",
+      "size_bytes": 1138
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-16429/manifest.json",
+      "sha256": "2c6681b7bc14c7b0847d3c0b5c5b3bd1ef41e3764b43852ac5415a6e5dde3ae8",
+      "size_bytes": 2200
+    },
+    {
+      "path": ".cache/public-image-transfer/swebench_sweb.eval.x86_64.django_1776_django-16429/provenance.json",
+      "sha256": "4adc6e063e27b024851f05d64cf39ae7f3c6d9c8350498dfbb85154ea8b911c3",
+      "size_bytes": 477
+    }
+  ],
+  "audit": {
+    "scanned_files": 262,
+    "findings": [],
+    "passed": true,
+    "control_metadata_findings": [
+      {
+        "path": "runs/interview-real-20261009/plan.json",
+        "kind": "historical_artifact_filenames_only",
+        "reason": "Hash inventory/status used to prove preservation; not model context or task content"
+      }
+    ],
+    "source_protected_unchanged": true,
+    "eval_protected_unchanged": true,
+    "source_head_unchanged": true,
+    "source_status_unchanged": true,
+    "main_head": "3fe3c0e25a8aa72b2d9e73bee4d995228b9300ac",
+    "v3_head": "e9f3157498d0d80197f9c6ae56df4c5bdc1273d6",
+    "frozen_business_code_unchanged": true
+  },
+  "caveats": [
+    "Known DEV exploratory regression comparison; not held-out generalization.",
+    "Cost is frozen project-price estimate, not a provider bill.",
+    "Cache tokens are a subset of prompt tokens; do not add them twice.",
+    "Per-task Judge wall time unavailable; see per-profile command wall time."
+  ]
+}

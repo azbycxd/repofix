@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "browser": "installed Microsoft Edge; headless, offline mode",
+  "initialPreviewFailure": "Bundled Playwright Chromium executable absent; used installed Edge instead. No browser download.",
+  "results": [
+    {
+      "viewport": 1280,
+      "title": "RepoFix V3｜百度一面口述补充·真实评测",
+      "pageWidth": 1280,
+      "headingCount": 1,
+      "textLength": 4202,
+      "remoteRequests": 0,
+      "offlineRendered": true
+    },
+    {
+      "viewport": 390,
+      "title": "RepoFix V3｜百度一面口述补充·真实评测",
+      "pageWidth": 390,
+      "headingCount": 1,
+      "textLength": 4202,
+      "remoteRequests": 0,
+      "offlineRendered": true
+    }
+  ]
+}

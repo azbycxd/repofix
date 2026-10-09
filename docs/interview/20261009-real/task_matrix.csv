@@ -1,0 +1,4 @@
+﻿task_id,v1_resolved,v3_resolved,v1_judge_status,v3_judge_status,v1_evidence_path,v3_evidence_path
+django__django-16429,True,True,JUDGED,JUDGED,runs/interview-real-20261009/v1/django__django-16429/django__django-16429.jsonl,runs/interview-real-20261009/v3/django__django-16429/django__django-16429/trajectory.jsonl
+django__django-15277,True,True,JUDGED,JUDGED,runs/interview-real-20261009/v1/django__django-15277/django__django-15277.jsonl,runs/interview-real-20261009/v3/django__django-15277/django__django-15277/trajectory.jsonl
+django__django-13343,True,True,JUDGED,JUDGED,runs/interview-real-20261009/v1/django__django-13343/django__django-13343.jsonl,runs/interview-real-20261009/v3/django__django-13343/django__django-13343/trajectory.jsonl

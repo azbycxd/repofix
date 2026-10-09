@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "mode": "read-only CSV audit; no workbook edits or exports",
+  "checks": [
+    {
+      "file": "results.csv",
+      "rows": 6,
+      "cellsMatched": 234,
+      "missingValuesPreserved": true,
+      "inspect": "{\"kind\":\"table\",\"sheet\":\"Evidence\",\"address\":\"A1:E7\",\"rows\":7,\"cols\":5,\"values\":[[\"task_id\",\"profile\",\"repeat\",\"git_sha\",\"model\"],[\"django__django-16429\",\"v1\",\"1\",\"7227920d3b2e50b43a7295b16cb4bf1eeb340301\",\"deepseek-flash\"],[\"django__django-16429\",\"v3\",\"1\",\"7227920d3b2e50b43a7295b16cb4bf1eeb340301\",\"deepseek-flash\"],[\"django__django-15277\",\"v1\",\"1\",\"7227920d3b2e50b43a7295b16cb4bf1eeb340301\",\"deepseek-flash\"],[\"django__django-15277\",\"v3\",\"1\",\"7227920d3b2e50b43a7295b16cb4bf1eeb340301\",\"deepseek-flash\"],[\"django__django-13343\",\"v1\",\"1\",\"7227920d3b2e50b43a7295b16cb4bf1eeb340301\",\"deepseek-flash\"],[\"django__django-13343\",\"v3\",\"1\",\"7227920d3b2e50b43a7295b16cb4bf1eeb340301\",\"deepseek-flash\"]]}"
+    },
+    {
+      "file": "task_matrix.csv",
+      "rows": 3,
+      "cellsMatched": 21,
+      "missingValuesPreserved": true,
+      "inspect": "{\"kind\":\"table\",\"sheet\":\"Evidence\",\"address\":\"A1:E7\",\"rows\":7,\"cols\":5,\"values\":[[\"task_id\",\"v1_resolved\",\"v3_resolved\",\"v1_judge_status\",\"v3_judge_status\"],[\"django__django-16429\",\"True\",\"True\",\"JUDGED\",\"JUDGED\"],[\"django__django-15277\",\"True\",\"True\",\"JUDGED\",\"JUDGED\"],[\"django__django-13343\",\"True\",\"True\",\"JUDGED\",\"JUDGED\"],[null,null,null,null,null],[null,null,null,null,null],[null,null,null,null,null]]}"
+    }
+  ],
+  "uniqueRunKeys": 6,
+  "rawTrajectoryTokenTieOut": true,
+  "independentPriceRecalculation": true,
+  "officialJudgeTieOut": true,
+  "totals": {
+    "v1": {
+      "runs": 3,
+      "resolved": 3,
+      "steps": 44,
+      "prompt": 223632,
+      "completion": 6355,
+      "cache": 212092,
+      "cost": 0.012360551999999999,
+      "loopWall": 236.91792130000067,
+      "processWall": 287.985314587997
+    },
+    "v3": {
+      "runs": 3,
+      "resolved": 3,
+      "steps": 58,
+      "prompt": 336449,
+      "completion": 7989,
+      "cache": 317312,
+      "cost": 0.017231772,
+      "loopWall": 365.70459106399903,
+      "processWall": 438.270562736001
+    }
+  }
+}
