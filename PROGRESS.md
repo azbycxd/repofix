@@ -7,6 +7,11 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F8: Quote-aware parsing consumes redirections without inventing commands;
+  nested $() and backtick commands are separately checked, including redirect
+  targets. Literal single-quoted substitutions remain literal. Pytest PASS.
+  This remains a lexical policy, not a complete shell parser/security boundary.
+
 - F7: RepoFixAgent.register_hook exposes process-local Python hooks to run_v3.
   Built-in policy/syntax/submit checks are registered in HookEngine; command
   hooks remain supported. Full-loop rejection and three-block cap tests PASS.

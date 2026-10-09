@@ -41,3 +41,26 @@ def test_container_hardening_parameters():
         assert kwargs["pids_limit"] == 512 and kwargs["mem_limit"] == "4g"
         assert kwargs["nano_cpus"] == 2_000_000_000
         env.close()
+
+
+def test_redirections_are_not_commands():
+    assert split_commands("pytest 2>&1 | tail -5") == [["pytest"], ["tail", "-5"]]
+    policy = PermissionPolicy([
+        {"decision": "allow", "prefix": "pytest"},
+        {"decision": "allow", "prefix": "tail"},
+    ], default="deny")
+    assert policy.decide("pytest 2>&1 | tail -5").decision == "allow"
+    for suffix in ["> log", "2>> log", "&> log", ">&2", "< input", '> "a | b"']:
+        assert split_commands("pytest " + suffix) == [["pytest"]]
+
+
+@pytest.mark.parametrize("command", [
+    "echo $(git push)", "echo `git push`", 'echo "$(git push)"',
+    "echo $(echo $(git push))", "echo x >$(git push)",
+])
+def test_command_substitution_is_checked(command):
+    assert PermissionPolicy(DEFAULT_RULES).decide(command).decision == "deny"
+
+
+def test_quoted_literal_substitution_is_not_executed():
+    assert PermissionPolicy(DEFAULT_RULES).decide("echo '$(git push)' '`git push`'").decision == "allow"
