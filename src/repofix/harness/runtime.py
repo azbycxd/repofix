@@ -54,6 +54,18 @@ class Runtime:
             self.registry.add(ToolSpec("job_kill", schema("job_kill", "Stop a background job process group.",
                 {"job_id": {"type": "string"}}, ["job_id"]), False,
                 lambda args: self.shell_result(self.jobs.kill(args["job_id"]))))
+        if state.depth == 0 and self.config.subagents in {"explore", "both"}:
+            self.registry.add(ToolSpec("explore", schema("explore", "Delegate read-only exploration; only a bounded summary returns.",
+                {"question": {"type": "string"}, "thoroughness": {"type": "string", "enum": ["quick", "medium", "thorough"]}}, ["question"]), True, self.explore))
+        if state.depth == 0 and self.config.subagents in {"verify", "both"}:
+            self.registry.add(ToolSpec("verify", schema("verify", "Independently run relevant tests; workspace edits are restored.",
+                {"focus": {"type": "string"}}), False, self.verify))
+        if hasattr(agent, "subagent_mode"):
+            props = ({"summary": {"type": "string", "maxLength": 1500}} if agent.subagent_mode == "explore" else
+                     {"verdict": {"type": "string", "enum": ["PASS", "FAIL"]}, "evidence": {"type": "string"}})
+            self.registry.add(ToolSpec("report", schema("report", "Return the final child report.", props, props), False, self.report))
+        if hasattr(agent, "allowed_tools"):
+            self.registry = ToolRegistry(s for name, s in self.registry.specs.items() if name in agent.allowed_tools)
 
     def bash(self, args):
         from .tools.shell import foreground
@@ -114,6 +126,20 @@ class Runtime:
         return ToolResult(format_search_results(self.index.search(query, top_k=top_k)))
 
     def submit(self, args):
+        if self.config.verify_on_submit and self.config.subagents in {"verify", "both"} and self.state.depth == 0:
+            from .subagent import run_subagent
+            rounds = self.state.metadata.get("verify_submit_rounds", 0)
+            if rounds < 2:
+                self.state.metadata["verify_submit_rounds"] = rounds + 1
+                verified = run_subagent(self, "verify", "Check the final patch before submission.")
+                if verified["verdict"] == "FAIL":
+                    self.state.count("hook_blocks")
+                    return ToolResult(json.dumps(verified), metadata={"hook_blocked": True})
+                self.state.last_validation = {"command": "verify subagent", "output": verified["evidence"], "exit_code": 0}
+                self.state.last_validation_version = self.state.workspace_version
+            else:
+                self.state.metadata["submit_forced"] = True
+                self.state.submit_blocks = 3
         if self.hooks:
             from .hooks import Block, Deny
             decision = self.hooks.pre_submit()
@@ -122,6 +148,27 @@ class Runtime:
         self.state.submitted = True
         self.state.termination = "submit_forced" if self.state.metadata.get("submit_forced") else "submitted"
         return ToolResult("Submission accepted.")
+
+    def explore(self, args):
+        from .subagent import run_subagent
+        return ToolResult(run_subagent(self, "explore", args["question"], args.get("thoroughness", "medium")))
+
+    def verify(self, args):
+        from .subagent import run_subagent
+        return ToolResult(json.dumps(run_subagent(self, "verify", args.get("focus", "Check the current diff.")), ensure_ascii=False))
+
+    def report(self, args):
+        if self.agent.subagent_mode == "explore":
+            if not isinstance(args.get("summary"), str) or len(args["summary"]) > 1500:
+                raise ValueError("summary must be text <= 1500 characters")
+            self.state.metadata["report"] = args["summary"]
+        else:
+            if args.get("verdict") not in {"PASS", "FAIL"} or not isinstance(args.get("evidence"), str):
+                raise ValueError("report requires PASS/FAIL and evidence")
+            self.state.metadata["report"] = args
+        self.state.submitted = True
+        self.state.termination = "submitted"
+        return ToolResult("Report accepted.")
 
     def execute(self, call):
         started = time.monotonic()
@@ -142,6 +189,12 @@ class Runtime:
                     return ToolResult(decision.reason, metadata={"hook_blocked": True})
                 before = self.hooks.before()
             result = self.registry.execute(call["name"], hooked["args"])
+            if getattr(self.agent, "subagent_mode", None) == "verify" and call["name"] == "bash":
+                from repofix.reproduction import reproduction_key
+                self.state.metadata.setdefault("verification_commands", []).append({
+                    "command": hooked["args"]["command"], "exit_code": result.exit_code,
+                    "verification": reproduction_key(hooked["args"]["command"]) is not None,
+                    "output": result.content})
             if self.hooks:
                 result = self.hooks.post(hooked, result, before)
         except Exception as exc:

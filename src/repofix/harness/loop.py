@@ -20,6 +20,9 @@ def run_v3(agent):
     from .model import OpenAICompatibleClient
     from .tools.registry import schedule
     from .telemetry import finish, record_usage
+    from threading import RLock
+    if not hasattr(agent, "budget_lock"):
+        agent.budget_lock = RLock()
 
     state = getattr(agent, "state", None) or RunState(messages=[
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -54,7 +57,12 @@ def run_v3(agent):
         state.step += 1
         call_started = time.monotonic()
         try:
-            response = model.complete(state.messages, runtime.registry.schemas, agent.config)
+            with agent.budget_lock:
+                if state.budget.estimated_cost >= agent.config.max_cost_usd:
+                    state.termination = "max_cost"
+                    break
+                response = model.complete(state.messages, runtime.registry.schemas, agent.config)
+                record_usage(state.budget, response.usage, agent.config)
         except KeyboardInterrupt:
             state.termination = "interrupted"
             break
@@ -62,7 +70,6 @@ def run_v3(agent):
             state.termination = "provider_error"
             agent.trace.write({"type": "provider_error", "error": str(exc), "step": state.step})
             break
-        record_usage(state.budget, response.usage, agent.config)
         state.metadata["usage_anchor"] = {"tokens": getattr(response.usage, "prompt_tokens", 0) or 0,
                                            "messages": len(state.messages)}
         choice = response.choices[0]

@@ -120,3 +120,16 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   Docker create parameters. Non-root option remains off and Docker-unverified.
 - Rules intentionally do not claim shell security: sh -c/python -c can bypass
   lexical prefixes; the container is the security boundary.
+
+### M9 — complete
+
+- Explore/verify reuse the V3 loop with independent messages/state, restricted
+  registries, depth one and shared locked cost accounting. Explore limits are
+  8/15/25; verify is 15. Only bounded, role-marker-cleaned reports return.
+- Verify records executed commands and restores any /testbed edits using the
+  snapshot adapter. Optional pre-submit verification is capped at two rounds.
+- Tests: 69 passed, 2 Docker skips; child context isolation, tool restriction,
+  report cleanup, verify workspace restoration, shared-budget stop and depth cap.
+- Defaults: subagents=none; verify_on_submit=false. Multi experiment enables both.
+  Verification is a behavioral guard, not isolation from arbitrary delayed shell
+  side effects; disposable Docker remains the runtime boundary.
