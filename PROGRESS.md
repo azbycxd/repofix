@@ -7,6 +7,10 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F6: Prior verify behavior forced FAIL on any workspace change (a stricter
+  deviation). It now restores the workspace, reports workspace_restored=true,
+  and retains the verdict from test evidence. Passing-with-edits test PASS.
+
 - F5: Verify command outputs are sanitized and capped at 1,000 characters;
   evidence is capped at 1,500 including its report prefix. Malicious role-like
   lines and long-output regression tested through the full loop. Pytest PASS.

@@ -73,7 +73,6 @@ def run_subagent(runtime, mode, question="", thoroughness="medium"):
     evidence = report.get("evidence", "No final report") if isinstance(report, dict) else "No final report"
     if changed:
         evidence += "\nChild modified /testbed; all workspace changes were restored."
-        verdict = "FAIL"  # A pass measured on reverted code is not final evidence.
     commands = [{"command": item["command"], "exit_code": item["exit_code"],
                  "output": clean_report(item["output"], limit=1000)} for item in commands]
     result = {"verdict": verdict, "commands_run": commands, "evidence": clean_report(evidence), "workspace_restored": changed}

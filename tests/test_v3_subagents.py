@@ -41,6 +41,8 @@ def test_verify_restores_workspace_and_requires_real_command(tmp_path):
     assert env.files == env.baseline
     report = json.loads(main.requests[1]["messages"][-1]["content"])
     assert report["workspace_restored"] and report["commands_run"][0]["command"] == "pytest"
+    assert report["verdict"] == "PASS"
+    assert "restored" in report["evidence"]
 
 
 def test_depth_limit_and_budget_prevents_parent_request(tmp_path):
