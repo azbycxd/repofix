@@ -52,3 +52,15 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Tests: 34 passed, 1 Docker skip; external protocol, rewrites, repeated syntax
   errors without rollback, validation order and bounded submission blocking.
 - Default external-hook timeout 30s (project choice); hooks are trusted host code.
+
+### M3 — complete
+
+- Added Add/Update/Move/Delete text patches, four progressive context matching
+  modes, all-files prepare, Python compilation and whole-transaction rollback.
+- View stores full-file hashes. Existing-file edits require a current view;
+  adds need none. Traversal, external symlinks and .git paths are rejected.
+- Tests: 49 passed, 1 Docker skip; parser errors, four matching levels,
+  atomic prepare/rollback, moves/adds/deletes, stale/unseen reads and escapes.
+- Conservative defaults: ambiguous context rejects; deletes also require a
+  current view. Intentional new patch files are staged so feature additions are
+  included in git diff HEAD; unrelated bash-created temporary files remain out.

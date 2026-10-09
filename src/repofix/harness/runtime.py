@@ -20,6 +20,8 @@ class Runtime:
     def __init__(self, agent, state):
         self.agent, self.state = agent, state
         self.env, self.config = agent.env, agent.config
+        from .workspace import RepoFiles
+        self.files = RepoFiles(self.env)
         from .hooks import HookEngine
         self.hooks = HookEngine(self.env, self.config, state) if self.config.hooks_enabled else None
         self.index, self.index_stats = BM25Index.from_repository(self.env)
@@ -31,6 +33,9 @@ class Runtime:
             {"pattern": {"type": "string"}, "path_glob": {"type": "string"},
              "max_results": {"type": "integer", "default": 50}}, ["pattern"]), True,
              lambda args: ToolResult(grep(self.env, **args))))
+        if self.config.apply_patch_enabled:
+            self.registry.add(ToolSpec("apply_patch", schema("apply_patch", "Apply an atomic multi-file text patch in /testbed; Python syntax failures roll back all files.",
+                {"patch": {"type": "string"}}, ["patch"]), False, self.apply_patch))
 
     def bash(self, args):
         result = self.env.execute(args["command"], self.config.tool_timeout_seconds)
@@ -38,13 +43,37 @@ class Runtime:
                           result.exit_code, {"command": args["command"], "timed_out": result.timed_out})
 
     def view(self, args):
-        return ToolResult(self.env.view_file(**args)) if hasattr(self.env, "v3_view") else ToolResult(
-            self.env.view_file(args["path"], args["start_line"], args["end_line"]))
+        import hashlib
+        from repofix.env import DockerEnv
+        path = self.files.resolve(args["path"])
+        text = self.files.read(path)
+        start, end = args["start_line"], args["end_line"]
+        if type(start) is not int or type(end) is not int:
+            raise ValueError("line bounds must be integers")
+        content = f"/testbed/{path}\n" + DockerEnv._numbered_lines(text, start, end)
+        self.state.file_reads[path] = hashlib.sha256(text.encode()).hexdigest()
+        return ToolResult(content)
+
+    def read_guard(self, path, content):
+        import hashlib
+        if self.config.read_before_edit and self.state.file_reads.get(path) != hashlib.sha256(content.encode()).hexdigest():
+            raise ValueError(f"view {path} before editing: never read or content changed since view")
 
     def replace(self, args):
+        path = self.files.resolve(args["path"])
+        self.read_guard(path, self.files.read(path))
         result = self.env.str_replace_file(**args)
         return ToolResult(result.output, metadata={"str_replace_failures": int(not result.success),
                                                    "syntax_rollbacks": int(result.syntax_rollback)})
+
+    def apply_patch(self, args):
+        from .tools.patch import prepare_patch
+        updates = prepare_patch(args["patch"], self.files, self.read_guard)
+        try:
+            self.files.apply(updates)
+        except (SyntaxError, RuntimeError) as exc:
+            return ToolResult(f"apply_patch failed; all files restored: {exc}", metadata={"syntax_rollbacks": 1, "error": True})
+        return ToolResult("Patch applied:\n" + "\n".join(updates))
 
     def search(self, args):
         query, top_k = args.get("query"), args.get("top_k", 5)
