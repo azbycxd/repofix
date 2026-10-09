@@ -223,7 +223,7 @@ pytest 原有两个真实 Docker 测试分别覆盖 local sandbox editable impor
 
 {full_table}
 
-所有数字来自 `.result.json`／JSONL／官方 report，CSV 由程序导出，并经独立 CSV 读入审计逐单元格核对；空值不填 0。完整字段见 `results.csv`，每行记录 profile、repeat、配置哈希、SHA、run_id、real_provider/real_docker、Judge、token、机制事件及证据路径。没有删去失败轨迹；本次没有最终失败 run。
+所有数字来自 `.result.json`／JSONL／官方 report，CSV 由程序导出，并经独立 CSV 读入审计逐单元格核对；空值不填 0。首次文档暂存检查把 CSV 的默认 CRLF 判为 trailing whitespace，导出器改用 LF 后重新检查，数值和原始记录均未改变。完整字段见 `results.csv`，每行记录 profile、repeat、配置哈希、SHA、run_id、real_provider/real_docker、Judge、token、机制事件及证据路径。没有删去失败轨迹；本次没有最终失败 run。
 
 ### 同题矩阵
 
