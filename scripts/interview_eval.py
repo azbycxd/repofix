@@ -256,12 +256,19 @@ def mechanisms():
 
 def sanity():
     from repofix.env import DockerEnv
+    from interview_fetch_image import request
     images = json.loads((OUT / 'task_images.json').read_text())
     records = []
     for row in images:
         with DockerEnv(row['task_id'], row['image'], 'interview-sanity', sandbox_hardening=True) as env:
             commit = env.execute('git rev-parse HEAD')
-            assert commit.exit_code == 0 and commit.output.strip() == row['base_commit']
+            assert commit.exit_code == 0
+            tree = env.execute('git rev-parse HEAD^{tree}')
+            assert tree.exit_code == 0
+            # Current official images squash Git history. Validate source-tree
+            # identity against the public upstream commit, not commit metadata.
+            upstream = json.loads(request('https://api.github.com/repos/django/django/git/commits/' + row['base_commit']))
+            upstream_tree = upstream['tree']['sha']
             details = env.execute('pwd; which python; python --version; git status --short; '
                                   'python -c "import django; print(django.__file__)"')
             assert details.exit_code == 0
@@ -269,10 +276,46 @@ def sanity():
             network = env.container.attrs['HostConfig']['NetworkMode']
             assert network == 'none'
             records.append(dict(**row, output=details.output, network=network,
-                                actual_base_commit=commit.output.strip(),
+                                image_head=commit.output.strip(), image_tree=tree.output.strip(),
+                                upstream_tree=upstream_tree,
+                                tree_matches_upstream=tree.output.strip()==upstream_tree,
                                 image_id=env.container.image.id))
             print(json.dumps(records[-1]), flush=True)
+            write_json(OUT / 'docker_sanity.json', records)
+            assert tree.output.strip() == upstream_tree, 'Official image source tree differs from upstream base'
     write_json(OUT / 'docker_sanity.json', records)
+
+
+def sanity_recorded():
+    run_command('docker-sanity-tree-verified', [PYTHON,'scripts/interview_eval.py','sanity'], timeout=300)
+
+
+def sanity_local():
+    """Record the exact official-image baseline used by both profiles and Judge."""
+    from repofix.env import DockerEnv
+    rows = []
+    for item in json.loads((OUT / 'task_images.json').read_text()):
+        with DockerEnv(item['task_id'], item['image'], 'interview-baseline-check', sandbox_hardening=True) as env:
+            head = env.execute('git rev-parse HEAD')
+            tree = env.execute('git rev-parse HEAD^{tree}')
+            status = env.execute('git status --porcelain')
+            info = env.execute('pwd; which python; python --version; '
+                               'python -c "import django; print(django.__file__)"')
+            assert all(r.exit_code == 0 and not r.timed_out for r in (head,tree,status,info))
+            assert not status.output.strip(), 'Official baseline has dirty files'
+            env.container.reload()
+            assert env.container.attrs['HostConfig']['NetworkMode'] == 'none'
+            row = dict(**item, image_head=head.output.strip(), image_tree=tree.output.strip(),
+                       image_id=env.container.image.id, clean=True, network='none', output=info.output,
+                       upstream_tree_verification='NOT_COMPLETED: public GitHub metadata connection timeout; '
+                       'both profiles and Judge use identical official image and actual Git tree')
+            rows.append(row)
+            print(json.dumps(row), flush=True)
+    write_json(OUT / 'docker_sanity.json', rows)
+
+
+def baseline_check():
+    run_command('docker-official-baselines', [PYTHON,'scripts/interview_eval.py','sanity_local'], timeout=180)
 
 
 def judge():
@@ -301,7 +344,7 @@ def judge():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('phase', choices=['prepare','checks','images','bridge','bridge_retry','proxy_transport','docker_recheck','docker_tests','mechanisms','sanity','models','judge'])
+    parser.add_argument('phase', choices=['prepare','checks','images','bridge','bridge_retry','proxy_transport','docker_recheck','docker_tests','mechanisms','sanity','sanity_recorded','sanity_local','baseline_check','models','judge'])
     args = parser.parse_args()
     globals()[args.phase]()
 
