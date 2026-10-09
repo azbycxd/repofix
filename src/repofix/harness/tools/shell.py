@@ -69,7 +69,21 @@ print(json.dumps(p.pid))
             source = f'''import pathlib, json
 stem = pathlib.Path('/tmp/repofix_jobs') / {job_id!r}
 log = pathlib.Path(str(stem) + '.log'); status = pathlib.Path(str(stem) + '.exit')
-print(json.dumps({{'output': log.read_text(errors='replace') if log.exists() else '',
+tail_lines = {tail_lines!r}
+output = ''
+if log.exists():
+    if tail_lines is None:
+        output = log.read_text(errors='replace')
+    else:
+        blocks = []
+        with log.open('rb') as handle:
+            handle.seek(0, 2); position = handle.tell(); newlines = 0
+            while position > 0 and newlines <= tail_lines:
+                size = min(8192, position); position -= size; handle.seek(position)
+                block = handle.read(size); blocks.append(block); newlines += block.count(b'\\n')
+        output = b''.join(reversed(blocks)).decode(errors='replace')
+        output = '\\n'.join(output.splitlines()[-tail_lines:])
+print(json.dumps({{'output': output,
                   'code': int(status.read_text()) if status.exists() else None}}))
 '''
             data = json.loads(run_python(self.env, source))
@@ -82,11 +96,15 @@ print(json.dumps({{'output': log.read_text(errors='replace') if log.exists() els
 
     def wait(self, job_id, timeout):
         deadline = time.monotonic() + timeout
+        delays, attempt = (.1, .2, .5, 1.0), 0
         while True:
-            data = self.output(job_id)
-            if not data["still_running"] or time.monotonic() >= deadline:
+            data = self.output(job_id, tail_lines=100)
+            if not data["still_running"]:
+                return self.output(job_id)  # complete foreground output, once only
+            if time.monotonic() >= deadline:
                 return data
-            time.sleep(min(.1, max(0, deadline - time.monotonic())))
+            time.sleep(min(delays[min(attempt, len(delays) - 1)], max(0, deadline - time.monotonic())))
+            attempt += 1
 
     def kill(self, job_id):
         if job_id not in self.jobs:

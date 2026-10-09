@@ -44,6 +44,7 @@ def run_subagent(runtime, mode, question="", thoroughness="medium"):
     child.trace.secrets = list(parent.trace.secrets)
     child.state, child.subagent_mode = child_state, mode
     child.budget_lock = parent.budget_lock
+    child.shared_code_index = (runtime.index, runtime.index_stats)
     child.allowed_tools = {"view", "grep", "search_code", "report"} | ({"bash"} if mode == "verify" else set())
     snapshot = capture_workspace(runtime.env) if mode == "verify" else None
     before_budget = asdict(state.budget)

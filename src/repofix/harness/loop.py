@@ -49,6 +49,7 @@ def run_v3(agent):
     started = time.monotonic()
     agent.trace.write({"type": "config", "git_commit": agent.git_commit,
                        "config": asdict(agent.config), "problem_statement": agent.issue})
+    event_cursor = len(state.events)
     while state.step < agent.config.max_steps and not state.termination:
         if agent.config.context_management:
             with agent.budget_lock:
@@ -96,8 +97,6 @@ def run_v3(agent):
                 state.messages.append({"role": "tool", "tool_call_id": call["id"], "content": "[not executed: max_cost]"})
             state.pending_calls = []
             calls = []
-        if checkpoints:
-            checkpoints.save(state, agent.env)
         observations = []
         for call, result, batch_size in schedule(calls, runtime.registry, runtime.execute,
                 agent.config.parallel_readonly, agent.config.readonly_workers):
@@ -119,7 +118,7 @@ def run_v3(agent):
             state.pending_calls = state.pending_calls[1:]
             observations.append({"tool_call_id": call["id"], "name": call["name"], "content": result.content,
                                  "parallel_batch_size": batch_size, **result.metadata})
-            if checkpoints:
+            if checkpoints and call["name"] in {"bash", "str_replace", "apply_patch", "verify"}:
                 checkpoints.save(state, agent.env)
             if state.termination:
                 for pending in state.pending_calls:
@@ -133,7 +132,9 @@ def run_v3(agent):
             "prompt_tokens": getattr(response.usage, "prompt_tokens", None),
             "completion_tokens": getattr(response.usage, "completion_tokens", None),
             "cache_hit_tokens": getattr(response.usage, "prompt_cache_hit_tokens", None),
-            "budget": asdict(state.budget), "behavior": behavior.metrics(), "events": list(state.events)})
+            "budget": asdict(state.budget), "behavior": behavior.metrics(),
+            "events": state.events[event_cursor:]})
+        event_cursor = len(state.events)
         if not calls and not state.termination:
             if state.metadata.get("nudge_used"):
                 state.termination = "no_tool_call"

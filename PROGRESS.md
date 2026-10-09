@@ -7,6 +7,12 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F10: Step traces include only new events. Checkpoints occur at step end and
+  after bash/str_replace/apply_patch/verify, not readonly tools. Polling backs
+  off 0.1/0.2/0.5/1 seconds and seeks log tails; completed foreground output is
+  fetched once in full. Children reuse the parent BM25 snapshot. Counter,
+  event, index-build and polling tests plus full pytest PASS.
+
 - F9: Used the explicitly allowed real-helper alternative. Extended the
   disposable local Git backend to execute real shell commands. Tests now cover
   grep fallback with rg absent, background timeout/poll/kill/environment,

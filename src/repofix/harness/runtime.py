@@ -30,7 +30,8 @@ class Runtime:
             pre=agent.python_hooks["PreToolUse"], post=agent.python_hooks["PostToolUse"],
             submit=agent.python_hooks["PreSubmit"],
             ask=getattr(agent, "permission_ask", None)) if self.config.hooks_enabled else None
-        self.index, self.index_stats = BM25Index.from_repository(self.env)
+        shared_index = getattr(agent, "shared_code_index", None)
+        self.index, self.index_stats = shared_index or BM25Index.from_repository(self.env)
         handlers = {"bash": self.bash, "view": self.view, "str_replace": self.replace,
                     "search_code": self.search, "submit": self.submit}
         self.registry = ToolRegistry(ToolSpec(item["function"]["name"], item,
