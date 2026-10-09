@@ -5,6 +5,15 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Defaults and pre-existing state
 
+## Second-round fixes (2026-10-09)
+
+- Scope: F1–F12, local commits on v3; no live models or HOLDOUT runs.
+- F1: Docker edit payloads now use a temporary JSON archive transfer rather
+  than command arguments. Real-helper tests edit a 310 KB file, apply a
+  multi-file patch and verify rollback plus payload cleanup. Full pytest PASS.
+
+## Original defaults and pre-existing state
+
 - Default profile remains v1; V3 uses separate opt-in configuration.
 - Preserve FINAL_CONFIG.md, task lists and all dev_artifacts byte-for-byte.
 - Existing tracked deletions under runs/ were present before work and are left

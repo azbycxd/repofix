@@ -13,6 +13,7 @@ import pytest
 from repofix.env import ExecutionResult
 from repofix.harness.workspace import RepoFiles, fingerprint
 from repofix.harness.checkpoint import capture_workspace, restore_workspace
+from repofix.harness.tools.patch import prepare_patch
 
 
 class LocalHelperFixture:
@@ -32,6 +33,7 @@ class LocalHelperFixture:
 
     def execute(self, command, timeout=60):
         args = shlex.split(command)
+        assert all(len(arg.encode()) < 100_000 for arg in args)
         assert args[:2] == ["python", "-c"], "only generated Python helpers are allowed"
         code = args[2].replace("'/testbed'", repr(str(self.root)))
         code = code.replace("/tmp/repofix_", str(self.artifacts / "repofix_"))
@@ -80,3 +82,23 @@ def test_real_fingerprint_detects_repeated_dirty_write(tmp_path):
     (env.root / "a.py").write_text("VALUE = 3\n")
     after = fingerprint(env)
     assert before["a.py"] != after["a.py"]
+
+
+def test_large_file_replacement_patch_and_atomic_rollback(tmp_path):
+    env = LocalHelperFixture(tmp_path)
+    files = RepoFiles(env)
+    original = "# padding\n" * 31_000 + "VALUE = 1\n"
+    (env.root / "large.py").write_text(original)
+    files.apply({"large.py": files.read("large.py").replace("VALUE = 1", "VALUE = 2")})
+    patch = (
+        "*** Begin Patch\n*** Update File: large.py\n@@\n-VALUE = 2\n+VALUE = 3\n"
+        "*** Update File: a.py\n@@\n-VALUE = 1\n+VALUE = 2\n*** End Patch"
+    )
+    files.apply(prepare_patch(patch, files))
+    assert files.read("large.py") == original.replace("VALUE = 1", "VALUE = 3")
+    assert files.read("a.py") == "VALUE = 2\n"
+    with pytest.raises(RuntimeError):
+        files.apply({"large.py": original, "a.py": "VALUE = ("})
+    assert files.read("large.py").endswith("VALUE = 3\n")
+    assert files.read("a.py") == "VALUE = 2\n"
+    assert not list(env.artifacts.glob("repofix_apply_*.json"))
