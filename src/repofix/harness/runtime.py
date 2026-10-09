@@ -20,6 +20,8 @@ class Runtime:
     def __init__(self, agent, state):
         self.agent, self.state = agent, state
         self.env, self.config = agent.env, agent.config
+        from .hooks import HookEngine
+        self.hooks = HookEngine(self.env, self.config, state) if self.config.hooks_enabled else None
         self.index, self.index_stats = BM25Index.from_repository(self.env)
         handlers = {"bash": self.bash, "view": self.view, "str_replace": self.replace,
                     "search_code": self.search, "submit": self.submit}
@@ -51,8 +53,13 @@ class Runtime:
         return ToolResult(format_search_results(self.index.search(query, top_k=top_k)))
 
     def submit(self, args):
+        if self.hooks:
+            from .hooks import Block, Deny
+            decision = self.hooks.pre_submit()
+            if isinstance(decision, (Block, Deny)):
+                return ToolResult(decision.reason, metadata={"hook_blocked": True})
         self.state.submitted = True
-        self.state.termination = "submitted"
+        self.state.termination = "submit_forced" if self.state.metadata.get("submit_forced") else "submitted"
         return ToolResult("Submission accepted.")
 
     def execute(self, call):
@@ -61,7 +68,16 @@ class Runtime:
         try:
             if error:
                 raise ValueError(error)
-            result = self.registry.execute(call["name"], args)
+            hooked = {**call, "args": args}
+            if self.hooks:
+                from .hooks import Block, Deny
+                decision = self.hooks.pre(hooked)
+                if isinstance(decision, (Block, Deny)):
+                    return ToolResult(decision.reason, metadata={"hook_blocked": True})
+                before = self.hooks.before()
+            result = self.registry.execute(call["name"], hooked["args"])
+            if self.hooks:
+                result = self.hooks.post(hooked, result, before)
         except Exception as exc:
             result = ToolResult(f"{call['name']} error: {exc}", metadata={"error": True})
         path = None

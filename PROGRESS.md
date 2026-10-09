@@ -40,3 +40,15 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Tests: parallel elapsed time/order, mixed write barriers, grep glob/limit,
   complete offline V3 loop, v1 golden. 30 passed, 1 Docker skip.
 - No deviations or outstanding work. Read-only workers default 4 (project choice).
+
+### M2 — complete
+
+- Python/argv hooks implement Allow/Deny/Rewrite and submit Allow/Block;
+  external exit 2 uses stderr as rejection. Other external errors fail closed.
+- Syntax hook fingerprints dirty contents as well as git porcelain status so
+  repeated edits to already dirty Python files are checked, including bash.
+- Verification must pass after the latest edit; fourth unverified submit is
+  forced and marked. Permission hook is wired to M8 rules when configured.
+- Tests: 34 passed, 1 Docker skip; external protocol, rewrites, repeated syntax
+  errors without rollback, validation order and bounded submission blocking.
+- Default external-hook timeout 30s (project choice); hooks are trusted host code.
