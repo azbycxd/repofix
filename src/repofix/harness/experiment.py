@@ -117,7 +117,7 @@ def run_experiment(
                     fake=fake,
                     resolved=None,
                     submitted=False,
-                    termination_reason="interrupted",
+                    termination_reason="runtime_error",
                     steps=0,
                     tool_calls=0,
                     subagent_calls=0,
@@ -195,6 +195,7 @@ def run_experiment(
                             json.dumps(agent.trace._redact(asdict(verdict)), indent=2)
                         )
                 except Exception as exc:
+                    row["termination_reason"] = "runtime_error"
                     row["error"] = writer._redact_text(str(exc))
                 row["wall_seconds"] = time.monotonic() - started
                 writer.write(row)

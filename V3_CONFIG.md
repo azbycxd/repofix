@@ -83,3 +83,17 @@ Example opt-in overrides (all mechanisms remain individually configurable):
 
 Resume reads the saved configuration from resume.json, not current CLI defaults.
 Never place API keys or .env contents in config, hooks files or task descriptions.
+
+Second-round implementation notes (no model/limit changes):
+
+- Python hooks: `agent.register_hook("PreToolUse", callback)` (or PostToolUse /
+  PreSubmit), before run; callbacks are process-local, not JSON configuration.
+  CLI resume rejects callback-bearing manifests; programmatic resume must
+  re-register them. Built-in checks are registered when hooks_enabled is true.
+- Checkpoints: once at step end plus after bash/str_replace/apply_patch/verify.
+- Job polling: 0.1, 0.2, 0.5, then 1 second; tail-only while waiting.
+- Verification evidence: command outputs <=1000 chars, evidence <=1500 chars,
+  including prefixes. Restoring child edits does not override the test verdict.
+- `no_tool_call` is terminal, not resumable; `runtime_error` is not interruption.
+- Masked outputs: redacted host archives plus model-readable direct /tmp files;
+  a recreated container receives copies from the same local run directory.

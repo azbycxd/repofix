@@ -16,6 +16,7 @@ from repofix.agent import RepoFixAgent
 from repofix.env import ExecutionResult
 from repofix.harness.checkpoint import capture_workspace, restore_workspace
 from repofix.harness.config import HarnessConfig
+from repofix.harness.context import ContextManager
 from repofix.harness.model import FakeModelClient
 from repofix.harness.runtime import Runtime
 from repofix.harness.state import RunState
@@ -204,3 +205,34 @@ def test_real_runtime_large_edit_and_read_guard(tmp_path):
     env.execute("printf '\\nEXTERNAL = 1\\n' >> a.py")
     with pytest.raises(ValueError, match="content changed"):
         runtime.replace({"path": "a.py", "old_str": "VALUE = 3", "new_str": "VALUE = 4"})
+
+
+def test_masked_artifact_is_readable_through_real_shell(tmp_path):
+    env = LocalHelperFixture(tmp_path)
+    content = "evidence " * 4000 + " sentinel-secret"
+    state = RunState(
+        messages=[
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": "task"},
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {"id": "x", "type": "function", "function": {"name": "bash", "arguments": "{}"}}
+                ],
+            },
+            {"role": "tool", "tool_call_id": "x", "content": content},
+        ]
+    )
+    config = HarnessConfig.for_profile("v3", context_window=2000, keep_recent_tool_results=0)
+    manager = ContextManager(
+        config,
+        FakeModelClient([]),
+        env,
+        tmp_path / "run",
+        lambda text: text.replace("sentinel-secret", "[REDACTED]"),
+    )
+    assert not manager.maybe_compact(state)["summary_called"]
+    (host_file,) = manager.artifact_dir.glob("*.txt")
+    result = env.execute("cat " + shlex.quote(manager.container_path(host_file)))
+    assert result.exit_code == 0 and result.output == host_file.read_text()
+    assert "sentinel-secret" not in result.output and "[REDACTED]" in result.output

@@ -37,6 +37,15 @@ class ContextManager:
         self.config, self.model, self.env = config, model, env
         self.artifact_dir = Path(artifact_dir) / "context"
         self.redact = redact
+        # A resumed container has an empty /tmp. Rehydrate bounded, named
+        # context artifacts from the local run, never arbitrary host paths.
+        for path in self.artifact_dir.glob("tool-*.txt"):
+            self.env.write_text_file(self.container_path(path), self.redact(path.read_text()))
+
+    @staticmethod
+    def container_path(path):
+        # Reuse DockerEnv's existing direct-child /tmp archive contract.
+        return f"/tmp/repofix_artifact_{path.name}"
 
     def facts(self, state):
         patch = self.env.get_diff()
@@ -77,8 +86,13 @@ class ContextManager:
                 continue
             key = hashlib.sha256((str(i) + content).encode()).hexdigest()[:20]
             path = self.artifact_dir / f"tool-{key}.txt"
-            path.write_text(self.redact(content), encoding="utf-8")
-            msg["content"] = f"[RepoFix: 已省略 {len(content)} 字符的旧输出，全文见 {path}]"
+            safe_content = self.redact(content)
+            path.write_text(safe_content, encoding="utf-8")
+            container_path = self.container_path(path)
+            self.env.write_text_file(container_path, safe_content)
+            msg["content"] = (
+                f"[RepoFix: 已省略 {len(content)} 字符的旧输出，全文见 {container_path}]"
+            )
             masked += 1
         state.metadata.pop("usage_anchor", None)
         after_mask = estimate(state)

@@ -35,3 +35,17 @@ def test_holdout_refused_before_any_run(tmp_path):
             holdout_path=holdout,
         )
     assert not (tmp_path / "output").exists()
+
+
+def test_experiment_setup_error_is_not_interruption(tmp_path, monkeypatch):
+    def broken_environment():
+        raise RuntimeError("fixture setup failed")
+
+    monkeypatch.setattr("repofix.harness.experiment.fake_env", broken_environment)
+    root = Path(__file__).resolve().parents[1]
+    rows = run_experiment(
+        root / "tasks/fake_tasks.json", ["v3-single"], 1, tmp_path / "experiment", fake=True
+    )
+    assert rows[0]["termination_reason"] == "runtime_error"
+    assert "fixture setup failed" in rows[0]["error"]
+    assert "runtime_error | 1" in render_report(rows)

@@ -36,11 +36,18 @@ def test_mask_only_and_usage_anchor(tmp_path):
     assert estimate(state) >= 10000
     config = HarnessConfig.for_profile("v3", context_window=7000, keep_recent_tool_results=1)
     client = FakeModelClient([])
-    event = ContextManager(config, client, FakeEnv(), tmp_path).maybe_compact(state)
+    env = FakeEnv()
+    event = ContextManager(config, client, env, tmp_path).maybe_compact(state)
     assert event["masked_results"] == 4 and not event["summary_called"]
     assert len(list((tmp_path / "context").glob("*.txt"))) == 4
     assert state.messages[3]["tool_call_id"] == "0"
     assert not client.requests
+    assert len(env.output_files) == 4
+    assert "/tmp/repofix_artifact_" in state.messages[3]["content"]
+    assert str(tmp_path) not in state.messages[3]["content"]
+    new_env = FakeEnv()
+    ContextManager(config, client, new_env, tmp_path)
+    assert new_env.output_files == env.output_files
 
 
 def test_summary_authoritative_fields_and_protocol(tmp_path):

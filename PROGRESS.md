@@ -1,11 +1,18 @@
 # RepoFix V3 progress
 
 Date: 2026-10-09 (Asia/Shanghai). Branch: `v3`. Base: `3fe3c0e`.
-Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
-
-## Defaults and pre-existing state
+Scope: M0–M13 followed by REPOFIX_V3_FIX.md F1–F12, offline only.
+First round was subsequently pushed at the user's explicit request; this repair
+round creates local commits only, with no push or merge.
 
 ## Second-round fixes (2026-10-09)
+
+- F12: Corrected the historical deviation claims and DESIGN sections. Masked
+  outputs now have redacted container-readable /tmp copies, rehydrated on resume;
+  actual local shell can read them. Kept DockerEnv's direct-child /tmp contract
+  instead of adding a new directory API. Final cross-check also corrects runner
+  setup failures to runtime_error rather than interrupted. Full pytest: 119 passed, 2 skipped,
+  5 subtests passed. Remaining integration limitations are listed below.
 
 - F11: Shared frozen definitions moved to core.py (agent.py re-exports public
   names). V1Loop now takes an explicit agent dependency and uses the original
@@ -26,9 +33,9 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   disposable local Git backend to execute real shell commands. Tests now cover
   grep fallback with rg absent, background timeout/poll/kill/environment,
   310 KB Runtime str_replace/apply_patch and external-write read guards.
-  The 12 in-memory branches remain for deterministic fake scripts and golden
-  fixtures (workspace 5, shell 4, checkpoint 1, grep 1, syntax path counting
-  verified at final audit); they are NOT evidence of Docker coverage. Replacing
+  The 11 hasattr(env, "files") branches remain for deterministic fake scripts
+  and golden fixtures (workspace 5, shell 4, checkpoint 1, grep 1), plus the
+  separate fake snapshot restoration format; they are NOT Docker evidence. Replacing
   the entire fixture would change test semantics; production helper paths are
   exercised explicitly instead. Real container lifecycle remains opt-in.
 
@@ -60,15 +67,14 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   failures remain failures. Full pytest PASS.
 
 - Scope: F1–F12, local commits on v3; no live models or HOLDOUT runs.
+- F2: Successful edits now refresh read hashes, including Add/Move targets;
+  Delete clears the old entry. Sequential edits succeed; external edits still
+  require view. Full pytest PASS.
 - F1: Docker edit payloads now use a temporary JSON archive transfer rather
   than command arguments. Real-helper tests edit a 310 KB file, apply a
   multi-file patch and verify rollback plus payload cleanup. Full pytest PASS.
 
 ## Original defaults and pre-existing state
-
-- F2: Successful edits now refresh read hashes, including Add/Move targets;
-  Delete clears the old entry. Sequential edits succeed; external edits still
-  require view. Full pytest PASS.
 
 - Default profile remains v1; V3 uses separate opt-in configuration.
 - Preserve FINAL_CONFIG.md, task lists and all dev_artifacts byte-for-byte.
@@ -81,7 +87,7 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - User permits one reset card below 2% quota; use only if an actual platform
   reset operation is available. Never claim a reset without confirmation.
 
-## Milestones
+## First-round milestones (historical record; corrections follow below)
 
 ### M0 — complete
 
@@ -104,7 +110,8 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   and grep fallback; output includes file/line and bounded matches.
 - Tests: parallel elapsed time/order, mixed write barriers, grep glob/limit,
   complete offline V3 loop, v1 golden. 30 passed, 1 Docker skip.
-- No deviations or outstanding work. Read-only workers default 4 (project choice).
+- Initial coverage relied on fake execution; F9 adds real helper coverage.
+  Read-only workers default 4 (project choice).
 
 ### M2 — complete
 
@@ -159,13 +166,15 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Optional update_plan validates statuses and at most one active step, stores
   state atomically and survives the M5 handoff. It is never a submit requirement.
 - Tests: 56 passed, 2 Docker skips; validation and nonmutation on failure,
-  plan reinjection already covered by M5. No deviations.
+  plan reinjection already covered by M5. This plan-only test does not validate
+  the broader harness implementation or Docker paths.
 
 ### M7 — complete
 
 - Atomic step manifests reference checksummed workspace snapshots (binary diff
-  plus untracked tar outside the container). Checkpoints before dispatch and
-  after tool results preserve pending calls, plan/read hashes and shared budget.
+  plus untracked tar outside the container). Initially checkpoints were written
+  before dispatch and after every tool result; F10 reduces this to step-end and
+  mutating-tool checkpoints while preserving plan/read hashes and shared budget.
 - Added CLI resume and runner --resume; new isolated container, snapshot restore,
   interruption observations for pending calls, no side-effect replay. Corrupt
   newest checkpoints fall back to the previous complete snapshot.
@@ -190,7 +199,8 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 - Explore/verify reuse the V3 loop with independent messages/state, restricted
   registries, depth one and shared locked cost accounting. Explore limits are
-  8/15/25; verify is 15. Only bounded, role-marker-cleaned reports return.
+  8/15/25; verify is 15. Initially only report evidence was cleaned; command
+  outputs were not bounded/cleaned. F5 corrects this gap.
 - Verify records executed commands and restores any /testbed edits using the
   snapshot adapter. Optional pre-submit verification is capped at two rounds.
 - Tests: 69 passed, 2 Docker skips; child context isolation, tool restriction,
@@ -258,11 +268,13 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   results/report at `.cache/v3-final-smoke/`. These are synthetic pipeline tests,
   not a real model capability or retrieval-quality result.
 - Final integration fixes are included here rather than rewriting completed
-  milestone history. No required milestone remains unfinished.
+  milestone history. Later independent review found the defects enumerated in
+  F1–F12; the first-round passing tests did not prove those paths correct.
 
-## Final status
+## First-round status at dd15192
 
-- M0–M13 complete on `v3`, one commit per milestone. No push or merge.
+- M0–M13 locally committed on `v3`, one commit per milestone. Later pushed to
+  origin/v3 on explicit user request; not merged into main.
 - Real Provider calls in this task: **0**. HOLDOUT runs in this task: **0**.
   Historical final-evaluation counts/artifacts remain unchanged.
 - Protected files (FINAL_CONFIG.md, tasks.txt, holdout.txt, dev_artifacts/) match
@@ -273,7 +285,7 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   uncommitted after M13.
 - Quota checked during the task: 24% used / 76% remaining; no reset card used.
 
-## Remaining user-run validation (not unfinished implementation)
+## Remaining user-run validation
 
 1. Optional Docker integration, including background jobs, full resume and
    non-root ownership compatibility. Default tests intentionally skip Docker.
@@ -306,4 +318,60 @@ python scripts/run_experiment.py --tasks /path/to/tasks.json \
   --variants v1,v3-single,v3-multi,v3-nocompact --repeats 1 --out /path/to/new-run
 repofix --repo /path/to/trusted-repo --task "Describe the feature" --kind feature --profile v3
 repofix resume /path/to/run-directory
+```
+
+## Second-round final status and specification deviations
+
+| Item | Before review fix | After fix / evidence |
+| --- | --- | --- |
+| F1 | Whole file embedded in command argument | Archive JSON payload; 310 KB real-helper edits and rollback |
+| F2 | Own edits invalidated read hashes | Refresh successful edits, Add/Move; external changes still rejected |
+| F3 | pytest exit 1 marked benign | Command-word allowlist; failing tests remain failures |
+| F4 | No-tool stop treated as interruption | no_tool_call; terminal resume rejected before container creation |
+| F5 | Raw verify command output returned | Cleaned 1000-char command output; 1500-char evidence |
+| F6 | Any restored edit forced FAIL | Restore + explicit flag; verdict follows executed tests |
+| F7 | Python callbacks not reachable from run | Public register_hook; built-ins registered in HookEngine |
+| F8 | 2>&1 split; substitutions ignored | Redirect-aware splitting; recursive substitution checks |
+| F9 | Critical backend branches mostly untested | Real local grep fallback, background workers, edit helpers tested |
+| F10 | Repeated events/snapshots/index builds | New events only; bounded checkpoints/backoff; shared child index |
+| F11 | State-bag locals, monkey patch, giant lines | core.py, explicit V1Loop dependency, cohesive tool modules, formatter |
+| F12 | Overstated parity; inaccessible masked files | Honest limits; redacted /tmp copies and resume rehydration |
+
+- F1–F12 each has a local `v3-fix(Fn)` commit on v3. No live models, no HOLDOUT
+  runs and no new performance claims. No quota reset used in this repair round.
+- Remaining deliberate deviations: F9 takes the task's allowed helper-test
+  alternative instead of replacing all in-memory branches; F12 uses flat
+  `/tmp/repofix_artifact_tool-*.txt` paths to retain the existing file-write API.
+- V1 golden remains unchanged and passes. Full offline suite: **119 passed,
+  2 Docker skips, 5 subtests passed**. Source line bounds, top-level imports,
+  formatting, compile checks, secret/redaction audit and diff whitespace PASS.
+- Four variants × two repeats were exercised through the repaired fake runner;
+  report: `.cache/v3-fix-final-smoke/report.md`. Synthetic fixture results only.
+- No protected frozen config/task list/dev_artifacts changes. Original 20 tracked
+  runs/ deletions remain unstaged and outside every repair commit.
+
+Still unverified: real Docker put_archive transfer for >300 KB payloads, Docker
+full checkpoint/resume, non-root ownership under dropped capabilities, real
+Provider behavior and real feature-task quality. Local helper tests do not prove
+these integration paths. The optional Docker suite currently covers shell job
+survival and editable sandbox imports; it is not complete container coverage.
+
+User-run commands (WSL, trusted repositories/images only):
+
+```bash
+source /home/jiusi/venvs/repofix/bin/activate
+python -m pytest -q
+# Explicit Docker opt-in; no model key is needed for these integration tests.
+REPOFIX_DOCKER_INTEGRATION=1 python -m pytest -q -m docker --docker
+# Equivalent selection is pytest -m docker; --docker is required by our guard.
+
+# Fill 10–20 real tested feature PR pairs; manually review leakage after build.
+python scripts/build_feature_tasks.py --input /path/to/reviewed-feature-seed.yaml \
+  --out /path/to/feature-tasks.json --execute
+# Configure your own key in ignored .env; never put its value on the command line.
+python scripts/run_experiment.py --tasks /path/to/feature-tasks.json \
+  --variants v1,v3-single,v3-multi,v3-nocompact --repeats 1 \
+  --out /path/to/new-real-experiment
+python scripts/report.py --input /path/to/new-real-experiment/results.jsonl \
+  --out /path/to/new-real-experiment/report.md
 ```
