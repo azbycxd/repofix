@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,9 +35,11 @@ def dependency_install_commands(repository: Path) -> tuple[str, ...]:
     return tuple(commands)
 
 
-def render_dockerfile(repository: Path) -> tuple[str, tuple[str, ...]]:
+def render_dockerfile(repository: Path, setup_commands=()) -> tuple[str, tuple[str, ...]]:
     install_commands = dependency_install_commands(repository)
     install_layers = "\n".join(f"RUN {command}" for command in install_commands)
+    if setup_commands:
+        install_layers += "\n" + "\n".join("RUN " + json.dumps(["bash", "-lc", command]) for command in setup_commands)
     dockerfile = f"""FROM {PYTHON_BASE_IMAGE}
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
 RUN apt-get update \\
@@ -64,8 +67,9 @@ class SandboxBuild:
 
 
 class PythonSandboxImage:
-    def __init__(self, repository: Path, run_id: str) -> None:
+    def __init__(self, repository: Path, run_id: str, setup_commands=()) -> None:
         self.repository = repository.resolve()
+        self.setup_commands = tuple(setup_commands)
         safe_run = re.sub(r"[^a-z0-9_.-]", "-", run_id.lower())[:80]
         self.tag = f"repofix-local:{safe_run}"
         self.client: docker.DockerClient | None = None
@@ -77,7 +81,7 @@ class PythonSandboxImage:
             raise PythonSandboxError(
                 "temporary worktree already contains .repofix.Dockerfile"
             )
-        dockerfile, install_commands = render_dockerfile(self.repository)
+        dockerfile, install_commands = render_dockerfile(self.repository, self.setup_commands)
         dockerfile_path.write_text(dockerfile, encoding="utf-8")
         started = time.monotonic()
         self.client = docker.from_env()

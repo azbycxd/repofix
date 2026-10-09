@@ -90,7 +90,7 @@ class TemporaryGitWorktree:
             raise
         return self
 
-    def materialize_patch(self, patch: str) -> None:
+    def materialize_patch(self, patch: str, stage_new: bool = False) -> None:
         if self.path is None:
             raise LocalRepositoryError("temporary worktree is not active")
         if patch.strip():
@@ -99,6 +99,7 @@ class TemporaryGitWorktree:
                 "apply",
                 "--binary",
                 "--whitespace=nowarn",
+                *(["--index"] if stage_new else []),
                 "-",
                 input_text=patch,
             )

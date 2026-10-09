@@ -118,7 +118,7 @@ def run_local_repository(
                         agent.permission_ask = lambda reason: input(f"Allow command ({reason})? [y/N] ").lower() == "y"
                     result = agent.run()
                     full_diff = result.patch
-            worktree.materialize_patch(full_diff)
+            worktree.materialize_patch(full_diff, stage_new=getattr(config, "profile", "v1") == "v3")
             isolated_patch_materialized = worktree.diff() == full_diff
             if full_diff and not isolated_patch_materialized:
                 raise LocalRunError(

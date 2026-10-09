@@ -1,0 +1,19 @@
+# FORMAT EXAMPLES ONLY: replace placeholders with real public PR evidence.
+# id: unique safe task identifier
+# repo_url: trusted clone URL (setup code runs during Docker build)
+# base_commit: full SHA before the PR
+# merged_commit: full SHA after the PR
+# description: public behavior request, reviewed by a human for answer leakage
+# setup_commands: trusted commands appended during the networked Docker build
+- id: EXAMPLE_FEATURE_ONE
+  repo_url: https://example.invalid/OWNER/REPOSITORY.git
+  base_commit: REPLACE_WITH_REAL_40_CHARACTER_BASE_SHA
+  merged_commit: REPLACE_WITH_REAL_40_CHARACTER_MERGED_SHA
+  description: REPLACE_WITH_PUBLIC_FEATURE_DESCRIPTION_WITHOUT_IMPLEMENTATION_DETAILS
+  setup_commands: []
+- id: EXAMPLE_FEATURE_TWO
+  repo_url: https://example.invalid/OTHER_OWNER/OTHER_REPOSITORY.git
+  base_commit: REPLACE_WITH_REAL_40_CHARACTER_BASE_SHA
+  merged_commit: REPLACE_WITH_REAL_40_CHARACTER_MERGED_SHA
+  description: REPLACE_WITH_ANOTHER_REVIEWED_PUBLIC_FEATURE_DESCRIPTION
+  setup_commands: []

@@ -23,7 +23,8 @@ def _default_run_id() -> str:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="repofix")
     parser.add_argument("--repo", required=True, type=Path)
-    parser.add_argument("--issue", required=True)
+    parser.add_argument("--issue", "--task", dest="issue", required=True)
+    parser.add_argument("--kind", choices=("bugfix", "feature"), default="bugfix")
     parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
     parser.add_argument("--permissions-file")
     parser.add_argument("--run-id", default=None)
@@ -66,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
             api_key=api_key,
             run_id=run_id,
             config=HarnessConfig.for_profile(args.profile, permissions_file=args.permissions_file,
-                                             evaluation_mode=False),
+                                             evaluation_mode=False, task_kind=args.kind),
         )
     except Exception as exc:
         safe_error = str(exc).replace(api_key, "[REDACTED]")

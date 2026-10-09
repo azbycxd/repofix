@@ -133,3 +133,17 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Defaults: subagents=none; verify_on_submit=false. Multi experiment enables both.
   Verification is a behavioral guard, not isolation from arbitrary delayed shell
   side effects; disposable Docker remains the runtime boundary.
+
+### M10 — complete
+
+- Added validated bugfix/feature TaskSpec, separate public prompt payload and
+  judge-only hidden patches. CLI --task aliases --issue, with --kind feature.
+- Builder compares real base/merged Git commits, extracts only test diffs,
+  evaluates identical collected nodes at both revisions and requires human
+  leakage review afterward. Placeholder-only YAML seed template included.
+- Judge uses a new clean sandbox, production-only Agent patch then hidden tests;
+  F2P/P2P must all pass, skipped tests do not count as passes.
+- Tests: 73 passed, 2 Docker skips. Local two-commit end-to-end builder test runs
+  pytest offline; FakeEnv covers judge logic and public/hidden separation.
+- Default judge is pytest-node based; other test runners are a documented future
+  adapter. YAML uses existing SWE-bench PyYAML; JSON works without it.

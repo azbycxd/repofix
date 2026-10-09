@@ -32,6 +32,8 @@ class HarnessConfig(AgentConfig):
     def for_profile(cls, profile="v1", **overrides):
         if profile not in {"v1", "v3"}:
             raise ValueError("profile must be v1 or v3")
+        if profile == "v1" and overrides.get("task_kind", "bugfix") != "bugfix":
+            raise ValueError("feature tasks require --profile v3")
         enabled = {name: True for name in (
             "parallel_readonly", "hooks_enabled", "apply_patch_enabled",
             "read_before_edit", "background_shell", "context_management",

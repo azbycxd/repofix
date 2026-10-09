@@ -24,9 +24,8 @@ def run_v3(agent):
     if not hasattr(agent, "budget_lock"):
         agent.budget_lock = RLock()
 
-    state = getattr(agent, "state", None) or RunState(messages=[
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Fix this issue in /testbed:\n\n{agent.issue}"}])
+    from repofix.tasks.prompts import task_messages
+    state = getattr(agent, "state", None) or RunState(messages=task_messages(agent.config.task_kind, agent.issue))
     agent.state = state
     runtime = Runtime(agent, state)
     model = agent.client if hasattr(agent.client, "complete") else OpenAICompatibleClient(agent.client)
