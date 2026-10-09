@@ -9,6 +9,7 @@ import shlex
 import tarfile
 import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 import docker
@@ -237,6 +238,27 @@ class DockerEnv:
             raise ValueError("tool output files must be direct children of /tmp")
 
         self._put_text_file(directory, filename, content, 0o600)
+
+    @contextmanager
+    def temporary_patch_file(self, path: str, content: str):
+        """Transfer an edit/restore payload; root cleans up its own /tmp file.
+
+        put_archive creates root-owned entries. A non-root helper needs read
+        access but must not try to unlink that entry in sticky-bit /tmp.
+        Ordinary tool output keeps write_text_file's private 0600 contract.
+        """
+        if not re.fullmatch(r"/tmp/repofix_(?:apply|restore)_[0-9a-f]{32}\.json", path):
+            raise ValueError("invalid temporary patch path")
+        if self.container is None or self.client is None:
+            raise RuntimeError("DockerEnv has not been started")
+        try:
+            mode = 0o644 if self.sandbox_user else 0o600
+            self._put_text_file("/tmp", posixpath.basename(path), content, mode)
+            yield path
+        finally:
+            cleanup = self.container.exec_run(["rm", "-f", "--", path], user="root")
+            if cleanup.exit_code != 0:
+                raise RuntimeError(f"Unable to remove temporary patch file: {path}")
 
     def _put_text_file(self, directory: str, filename: str, content: str, mode: int) -> None:
         if self.container is None:

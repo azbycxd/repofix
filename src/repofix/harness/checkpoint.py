@@ -63,11 +63,10 @@ def restore_workspace(env, snapshot):
             if p.is_absolute() or ".." in p.parts or ".git" in p.parts or not m.isfile():
                 raise ValueError("unsafe snapshot member")
     snapshot_path = f"/tmp/repofix_restore_{uuid.uuid4().hex}.json"
-    env.write_text_file(snapshot_path, json.dumps(snapshot))
     source = (
         PATH_HELPER
         + f"\nimport json\nsnapshot_file = Path({snapshot_path!r})\n"
-        + "snapshot = json.loads(snapshot_file.read_text())\nsnapshot_file.unlink()\n"
+        + "snapshot = json.loads(snapshot_file.read_text())\n"
         + """import base64, subprocess, io, tarfile
 archive = tarfile.open(fileobj=io.BytesIO(base64.b64decode(snapshot['untracked_tar'])))
 for member in archive.getmembers(): resolve(member.name)
@@ -84,7 +83,8 @@ for member in archive.getmembers():
     p.write_bytes(archive.extractfile(member).read()); p.chmod(member.mode)
 """
     )
-    run_python(env, source)
+    with env.temporary_patch_file(snapshot_path, json.dumps(snapshot)):
+        run_python(env, source)
 
 
 class CheckpointStore:

@@ -86,7 +86,10 @@ Python callback 不可序列化，CLI resume 会明确拒绝含 callback 的 man
 ..、外部软链接和 .git。文本匹配由 tools/patch.py 负责，环境 IO 在 workspace.py。
 成功编辑刷新已读哈希；Add/Move 登记新路径、Delete 清理旧路径，自己连续修改
 无需重新 view，bash 等外部改动仍需重新读取。大文件 updates 用 put_archive 写
-临时 JSON，helper 读取后删除，不再把源码拼入 python -c 单个参数。
+临时 JSON，不再把源码拼入 python -c 单个参数。apply/restore payload 在
+sandbox_user 模式下为 root-owned 0644（其它模式 0600），helper 只读取；
+宿主控制的 context manager 在 finally 中通过 root 删除指定 UUID 临时文件，
+避免非 root 无法在 sticky-bit /tmp 删除 root 所有文件。普通输出权限不变。
 
 **参考与差异：** 补丁语法参考 Codex apply_patch。RepoFix 的所有文件先准备、
 整批语法回滚更严格，目的是让小型任务的失败可理解；并非复制其匹配器。

@@ -120,15 +120,11 @@ class RepoFiles:
         # Validate ALL paths/read originals before any write; syntax failure
         # restores every file, including adds/deletes/moves. No host paths used.
         payload_path = f"/tmp/repofix_apply_{uuid.uuid4().hex}.json"
-        self.env.write_text_file(payload_path, json.dumps(updates))
         source = (
             PATH_HELPER
             + f"\npayload_path = Path({payload_path!r})\n"
             + """import subprocess, os, json
-try:
-    updates = json.loads(payload_path.read_text(encoding='utf-8'))
-finally:
-    payload_path.unlink(missing_ok=True)
+updates = json.loads(payload_path.read_text(encoding='utf-8'))
 targets = {name: resolve(name) for name in updates}
 saved = {name: (p.read_bytes(), p.stat().st_mode) if p.exists() else None for name,p in targets.items()}
 index_path = Path(subprocess.check_output(['git', 'rev-parse', '--git-path', 'index'], text=True).strip())
@@ -156,4 +152,5 @@ except BaseException:
     raise
 """
         )
-        run_python(self.env, source)
+        with self.env.temporary_patch_file(payload_path, json.dumps(updates)):
+            run_python(self.env, source)

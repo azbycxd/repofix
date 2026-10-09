@@ -8,6 +8,7 @@ import os
 import shlex
 import subprocess
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -76,6 +77,14 @@ class LocalHelperFixture:
     def write_text_file(self, path, content):
         assert path.startswith("/tmp/repofix_")
         (self.artifacts / Path(path).name).write_text(content)
+
+    @contextmanager
+    def temporary_patch_file(self, path, content):
+        self.write_text_file(path, content)
+        try:
+            yield path
+        finally:
+            (self.artifacts / Path(path).name).unlink(missing_ok=True)
 
     def read_repository_text_files(self, max_file_bytes=1_000_000):
         return {

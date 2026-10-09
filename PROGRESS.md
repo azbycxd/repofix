@@ -2,6 +2,16 @@
 
 ## Post-review follow-up (2026-10-09)
 
+- Added a narrowly scoped temporary_patch_file context manager for apply/restore
+  JSON payloads. Docker archive entries are root-owned 0644 with sandbox_user
+  (0600 otherwise); cleanup always runs as root in finally, including interrupted
+  helpers. Sandbox code only reads the payload and no longer attempts unlink in
+  sticky-bit /tmp. Cleanup accepts only generated apply/restore UUID paths.
+  Ordinary tool-output permissions remain unchanged. Archive-metadata and root
+  cleanup tests cover both payload types and interruption; local real-helper
+  edit/rollback/restore tests also pass. Full pytest: 132 passed, 2 Docker skips;
+  unchanged V1 golden PASS. Real non-root Docker integration remains unverified.
+
 - Restored the pre-dispatch checkpoint immediately after assistant messages and
   pending_calls are recorded. F10 had incorrectly removed this recovery boundary;
   only readonly-tool post-checkpoints remain omitted. Step-end and mutating-tool
