@@ -64,3 +64,14 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Conservative defaults: ambiguous context rejects; deletes also require a
   current view. Intentional new patch files are staged so feature additions are
   included in git diff HEAD; unrelated bash-created temporary files remain out.
+
+### M4 — complete
+
+- V3 shell defaults to 120s (max 600s); timed-out jobs stay in the container,
+  with output/status files under /tmp/repofix_jobs. Added poll and process-group
+  kill tools, stable output headers and benign exit-1 annotation. V1 unchanged.
+- Pager/color/unbuffered environment variables injected for V3 shell jobs.
+- Tests: 52 passed, 2 Docker skips; timeout-to-background, poll/kill, completion,
+  environment constants and output headers. Docker survival test is opt-in.
+- Background processes last only as long as their container; resume does not
+  resurrect processes (M7 will mark interrupted calls rather than replay them).

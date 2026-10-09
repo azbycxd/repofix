@@ -22,6 +22,8 @@ class Runtime:
         self.env, self.config = agent.env, agent.config
         from .workspace import RepoFiles
         self.files = RepoFiles(self.env)
+        from .tools.shell import JobManager
+        self.jobs = JobManager(self.env)
         from .hooks import HookEngine
         self.hooks = HookEngine(self.env, self.config, state) if self.config.hooks_enabled else None
         self.index, self.index_stats = BM25Index.from_repository(self.env)
@@ -36,11 +38,34 @@ class Runtime:
         if self.config.apply_patch_enabled:
             self.registry.add(ToolSpec("apply_patch", schema("apply_patch", "Apply an atomic multi-file text patch in /testbed; Python syntax failures roll back all files.",
                 {"patch": {"type": "string"}}, ["patch"]), False, self.apply_patch))
+        if self.config.background_shell:
+            self.registry.specs["bash"] = ToolSpec("bash", schema("bash", "Run a command in /testbed; timeout leaves a background job alive.",
+                {"command": {"type": "string"}, "timeout": {"type": "integer", "default": 120, "maximum": 600},
+                 "run_in_background": {"type": "boolean", "default": False}}, ["command"]), False, self.bash)
+            self.registry.add(ToolSpec("job_output", schema("job_output", "Read background command output and status.",
+                {"job_id": {"type": "string"}, "tail_lines": {"type": "integer", "default": 100}}, ["job_id"]), True, self.job_output))
+            self.registry.add(ToolSpec("job_kill", schema("job_kill", "Stop a background job process group.",
+                {"job_id": {"type": "string"}}, ["job_id"]), False,
+                lambda args: self.shell_result(self.jobs.kill(args["job_id"]))))
 
     def bash(self, args):
-        result = self.env.execute(args["command"], self.config.tool_timeout_seconds)
-        return ToolResult(result.output + ("\n[command timed out]" if result.timed_out else f"\n[exit_code={result.exit_code}]"),
-                          result.exit_code, {"command": args["command"], "timed_out": result.timed_out})
+        from .tools.shell import foreground
+        command, timeout = args["command"], args.get("timeout", 120)
+        if not isinstance(command, str) or not command.strip() or type(timeout) is not int or not 1 <= timeout <= 600:
+            raise ValueError("command required; timeout must be an integer in 1..600")
+        if self.config.background_shell:
+            job_id = self.jobs.start(command)
+            data = self.jobs.output(job_id) if args.get("run_in_background", False) else self.jobs.wait(job_id, timeout)
+        else:
+            data = foreground(self.env, command, timeout)
+        return self.shell_result(data)
+
+    @staticmethod
+    def shell_result(data):
+        return ToolResult(data["output"], data["exit_code"], {"shell": True, **{k: v for k, v in data.items() if k != "output"}})
+
+    def job_output(self, args):
+        return self.shell_result(self.jobs.output(args["job_id"], args.get("tail_lines", 100)))
 
     def view(self, args):
         import hashlib
@@ -120,6 +145,17 @@ class Runtime:
             self.config.tool_output_max_chars, self.config.tool_output_head_chars,
             self.config.tool_output_tail_chars)
         result.content = observation.content
+        if result.metadata.get("shell"):
+            from .tools.shell import benign_exit
+            if result.metadata.get("still_running"):
+                header = f"still running: job_id={result.metadata['job_id']}"
+            else:
+                header = f"exit_code: {result.exit_code} | duration: {result.metadata.get('duration', 0):.3f}s | truncated: {'yes' if observation.truncated else 'no'}"
+                if benign_exit(result.metadata.get("command", ""), result.exit_code):
+                    header += " | benign_exit"
+                    result.metadata["benign_exit"] = True
+            result.content = header + "\n" + result.content
         result.metadata.update({key: value for key, value in asdict(observation).items() if key != "content"})
         result.metadata["duration_seconds"] = time.monotonic() - started
+        result.metadata["returned_chars"] = len(result.content)
         return result
