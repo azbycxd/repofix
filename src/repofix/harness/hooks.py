@@ -58,10 +58,11 @@ class ExternalHook:
 def command_policy(call, state, config, ask=None):
     if call["name"] != "bash":
         return Allow()
-    # Rules are implemented in M8; no implicit host permission mechanism.
-    if config.permissions_file:
-        from .permissions import PermissionPolicy
-        decision = PermissionPolicy.load(config.permissions_file).decide(call["args"].get("command", ""))
+    if config.permissions_enabled:
+        from .permissions import PermissionPolicy, DEFAULT_RULES
+        policy = PermissionPolicy.load(config.permissions_file) if config.permissions_file else PermissionPolicy(DEFAULT_RULES, config.permission_default)
+        decision = policy.decide(call["args"].get("command", ""))
+        state.events.append({"type": "permission", "decision": decision.decision, "reason": decision.reason})
         if decision.decision == "deny":
             return Deny(decision.reason)
         if decision.decision == "ask" and (config.evaluation_mode or ask is None or not ask(decision.reason)):
@@ -91,13 +92,14 @@ def syntax_check(env, changed, result):
 
 
 class HookEngine:
-    def __init__(self, env, config, state, pre=(), post=(), submit=()):
+    def __init__(self, env, config, state, pre=(), post=(), submit=(), ask=None):
         self.env, self.config, self.state = env, config, state
         self.pre_hooks, self.post_hooks, self.submit_hooks = list(pre), list(post), list(submit)
         self.lock = RLock()
+        self.ask = ask
 
     def pre(self, call):
-        for hook in [lambda c, s: command_policy(c, s, self.config), *self.pre_hooks]:
+        for hook in [lambda c, s: command_policy(c, s, self.config, self.ask), *self.pre_hooks]:
             decision = hook(call, self.state)
             if isinstance(decision, (Deny, Block)):
                 self.state.count("hook_blocks")

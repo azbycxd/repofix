@@ -25,6 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo", required=True, type=Path)
     parser.add_argument("--issue", required=True)
     parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
+    parser.add_argument("--permissions-file")
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
     return parser
@@ -64,7 +65,8 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=output_dir,
             api_key=api_key,
             run_id=run_id,
-            config=HarnessConfig.for_profile(args.profile),
+            config=HarnessConfig.for_profile(args.profile, permissions_file=args.permissions_file,
+                                             evaluation_mode=False),
         )
     except Exception as exc:
         safe_error = str(exc).replace(api_key, "[REDACTED]")

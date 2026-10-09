@@ -34,12 +34,15 @@ class DockerEnv:
 
     workdir = "/testbed"
 
-    def __init__(self, instance_id: str, image: str, run_id: str) -> None:
+    def __init__(self, instance_id: str, image: str, run_id: str,
+                 sandbox_hardening: bool = False, sandbox_user: str | None = None) -> None:
         self.instance_id = instance_id
         self.image = image
         self.run_id = run_id
         self.client: docker.DockerClient | None = None
         self.container = None
+        self.sandbox_hardening = sandbox_hardening
+        self.sandbox_user = sandbox_user
 
     @property
     def name(self) -> str:
@@ -65,6 +68,9 @@ class DockerEnv:
             if stale is not None:
                 stale.remove(force=True)
 
+            hardening = ({"cap_drop": ["ALL"], "security_opt": ["no-new-privileges"],
+                          "pids_limit": 512, "mem_limit": "4g", "nano_cpus": 2_000_000_000}
+                         if self.sandbox_hardening else {})
             self.container = self.client.containers.create(
                 image=self.image,
                 name=self.name,
@@ -78,8 +84,13 @@ class DockerEnv:
                     "repofix.run_id": self.run_id,
                     "repofix.instance_id": self.instance_id,
                 },
+                **hardening,
             )
             self.container.start()
+            if self.sandbox_user:
+                ownership = self.container.exec_run(["chown", "-R", self.sandbox_user, self.workdir], user="root")
+                if ownership.exit_code != 0:
+                    raise RuntimeError("unable to prepare non-root /testbed ownership")
             self.container.reload()
             if self.container.status != "running":
                 raise RuntimeError("SWE-bench container did not reach running state")
@@ -111,7 +122,7 @@ class DockerEnv:
                         command,
                     ],
                     workdir=self.workdir,
-                    user="root",
+                    user=self.sandbox_user or "root",
                 )
                 exec_id = created["Id"]
                 state["exec_id"] = exec_id

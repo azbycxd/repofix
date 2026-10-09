@@ -36,7 +36,8 @@ def resume_run(run_dir, api_key):
             image, instance_id = build.image, repo.name
         else:
             image, instance_id = manifest["image"], manifest["instance_id"]
-        env = stack.enter_context(DockerEnv(instance_id, image, run_id))
+        env = stack.enter_context(DockerEnv(instance_id, image, run_id,
+            sandbox_hardening=config.sandbox_hardening, sandbox_user=config.sandbox_user))
         state = CheckpointStore(run_dir).resume(env)
         agent = RepoFixAgent(env, manifest["issue"], run_dir / name, api_key, manifest["git_commit"], config)
         agent.state, agent.resume_metadata = state, manifest

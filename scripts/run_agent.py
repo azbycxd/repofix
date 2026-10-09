@@ -359,7 +359,9 @@ def run_instance(
     patch = ""
     reviewer_initial_patch = ""
     try:
-        with DockerEnv(instance_id, spec.image, run_id) as env:
+        with DockerEnv(instance_id, spec.image, run_id,
+                       sandbox_hardening=getattr(config, "sandbox_hardening", False),
+                       sandbox_user=getattr(config, "sandbox_user", None)) as env:
             result = RepoFixAgent(
                 env=env,
                 issue=instance["problem_statement"],

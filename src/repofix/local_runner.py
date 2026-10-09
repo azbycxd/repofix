@@ -94,6 +94,8 @@ def run_local_repository(
                     instance_id=source_before.root.name,
                     image=build.image,
                     run_id=run_id,
+                    sandbox_hardening=getattr(config, "sandbox_hardening", False),
+                    sandbox_user=getattr(config, "sandbox_user", None),
                 ) as env:
                     assert env.container is not None
                     env.container.reload()
@@ -112,6 +114,8 @@ def run_local_repository(
                     )
                     agent.resume_metadata = {"kind": "local", "repository": str(source_before.root),
                                              "base_commit": source_before.head}
+                    if config is not None and not getattr(config, "evaluation_mode", True):
+                        agent.permission_ask = lambda reason: input(f"Allow command ({reason})? [y/N] ").lower() == "y"
                     result = agent.run()
                     full_diff = result.patch
             worktree.materialize_patch(full_diff)

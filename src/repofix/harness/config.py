@@ -14,6 +14,7 @@ class HarnessConfig(AgentConfig):
     plan_tool: bool = False
     checkpointing: bool = False
     permissions_file: str | None = None
+    permissions_enabled: bool = False
     sandbox_hardening: bool = False
     sandbox_user: str | None = None
     subagents: str = "none"
@@ -35,6 +36,7 @@ class HarnessConfig(AgentConfig):
             "parallel_readonly", "hooks_enabled", "apply_patch_enabled",
             "read_before_edit", "background_shell", "context_management",
             "plan_tool", "checkpointing", "sandbox_hardening",
+            "permissions_enabled",
         )} if profile == "v3" else {}
         enabled.update(overrides)
         if profile == "v1" and any(enabled.get(name, False) for name in (

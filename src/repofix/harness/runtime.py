@@ -25,7 +25,7 @@ class Runtime:
         from .tools.shell import JobManager
         self.jobs = JobManager(self.env)
         from .hooks import HookEngine
-        self.hooks = HookEngine(self.env, self.config, state) if self.config.hooks_enabled else None
+        self.hooks = HookEngine(self.env, self.config, state, ask=getattr(agent, "permission_ask", None)) if self.config.hooks_enabled else None
         self.index, self.index_stats = BM25Index.from_repository(self.env)
         handlers = {"bash": self.bash, "view": self.view, "str_replace": self.replace,
                     "search_code": self.search, "submit": self.submit}
@@ -130,6 +130,11 @@ class Runtime:
             if error:
                 raise ValueError(error)
             hooked = {**call, "args": args}
+            if not self.hooks and self.config.permissions_enabled:
+                from .hooks import command_policy, Deny
+                decision = command_policy(hooked, self.state, self.config, getattr(self.agent, "permission_ask", None))
+                if isinstance(decision, Deny):
+                    return ToolResult(decision.reason, metadata={"permission_denied": True})
             if self.hooks:
                 from .hooks import Block, Deny
                 decision = self.hooks.pre(hooked)

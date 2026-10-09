@@ -108,3 +108,15 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   fallback, crash/resume comparison with uninterrupted messages and budget.
 - Local resume requires the source still at its saved HEAD. Background jobs
   are not revived. Snapshots refuse untracked .env files and known credentials.
+
+### M8 — complete
+
+- Added JSON/TOML allow/ask/deny prefix policy, quote-aware compound splitting,
+  env/nohup/timeout wrapper removal, deny precedence. Eval ask is denied; local
+  CLI may explicitly approve. Rules are independently switchable from hooks.
+- V3 containers drop all capabilities, prohibit privilege gain, cap PIDs at 512,
+  RAM at 4g and CPU at 2; network remains none. V1 create options unchanged.
+- Tests: 66 passed, 2 Docker skips; quote/wrapper/prefix/ask decisions and mocked
+  Docker create parameters. Non-root option remains off and Docker-unverified.
+- Rules intentionally do not claim shell security: sh -c/python -c can bypass
+  lexical prefixes; the container is the security boundary.
