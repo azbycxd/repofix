@@ -26,3 +26,6 @@ where = ["src"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 markers = ["docker: opt-in container integration tests"]
+
+[tool.ruff]
+line-length = 100

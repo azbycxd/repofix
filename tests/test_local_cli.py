@@ -19,9 +19,7 @@ from repofix.worktree import LocalRepositoryError, TemporaryGitWorktree, inspect
 
 
 def git(repo: Path, *args: str) -> str:
-    return subprocess.check_output(
-        ["git", "-C", str(repo), *args], text=True
-    ).strip()
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True).strip()
 
 
 class LocalCliTests(unittest.TestCase):
@@ -54,9 +52,7 @@ class LocalCliTests(unittest.TestCase):
             with TemporaryGitWorktree(repo) as worktree:
                 worktree_path = worktree.path
                 assert worktree_path is not None
-                (worktree_path / "example.py").write_text(
-                    "VALUE = 2\n", encoding="utf-8"
-                )
+                (worktree_path / "example.py").write_text("VALUE = 2\n", encoding="utf-8")
                 self.assertEqual(
                     (repo / "example.py").read_text(encoding="utf-8"),
                     "VALUE = 1\n",
@@ -92,10 +88,14 @@ class LocalCliTests(unittest.TestCase):
 
     def test_cli_reports_clear_nonzero_error(self) -> None:
         error = io.StringIO()
-        with mock.patch.dict("os.environ", {"DEEPSEEK_API_KEY": "fake"}), mock.patch(
-            "repofix.cli.run_local_repository",
-            side_effect=LocalRepositoryError("not a local Git repository"),
-        ), contextlib.redirect_stderr(error):
+        with (
+            mock.patch.dict("os.environ", {"DEEPSEEK_API_KEY": "fake"}),
+            mock.patch(
+                "repofix.cli.run_local_repository",
+                side_effect=LocalRepositoryError("not a local Git repository"),
+            ),
+            contextlib.redirect_stderr(error),
+        ):
             exit_code = main(["--repo", "/missing", "--issue", "broken"])
 
         self.assertEqual(exit_code, 1)

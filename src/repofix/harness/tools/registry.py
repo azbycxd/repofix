@@ -1,6 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Callable
-from concurrent.futures import ThreadPoolExecutor
+
+from repofix.core import TOOLS
 
 
 @dataclass(frozen=True)
@@ -31,15 +33,31 @@ class ToolRegistry:
 
 
 def v1_registry(handler):
-    from repofix.agent import TOOLS
-    return ToolRegistry(ToolSpec(schema["function"]["name"], schema,
-        schema["function"]["name"] in {"view", "search_code"}, handler) for schema in TOOLS)
+    return ToolRegistry(
+        ToolSpec(
+            schema["function"]["name"],
+            schema,
+            schema["function"]["name"] in {"view", "search_code"},
+            handler,
+        )
+        for schema in TOOLS
+    )
 
 
 def schema(name, description, properties, required=()):
-    return {"type": "function", "function": {"name": name, "description": description,
-        "parameters": {"type": "object", "properties": properties,
-                       "required": list(required), "additionalProperties": False}}}
+    return {
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "parameters": {
+                "type": "object",
+                "properties": properties,
+                "required": list(required),
+                "additionalProperties": False,
+            },
+        },
+    }
 
 
 def schedule(calls, registry, execute, parallel=False, workers=4):

@@ -66,9 +66,7 @@ class HybridRetrievalTests(unittest.TestCase):
                 files, cache_root=cache_root, backend=backend
             )
             revised_files = dict(files)
-            revised_files["pkg/cache.py"] = (
-                "def clear_cache(cache):\n    cache.invalidate()\n"
-            )
+            revised_files["pkg/cache.py"] = "def clear_cache(cache):\n    cache.invalidate()\n"
             third, third_stats = HybridCodeIndex.from_files(
                 revised_files, cache_root=cache_root, backend=backend
             )

@@ -1,7 +1,10 @@
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from repofix.harness.experiment import run_experiment
@@ -18,17 +21,25 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if not args.fake:
-            from dotenv import load_dotenv
             load_dotenv()
-        rows = run_experiment(args.tasks, args.variants.split(","), args.repeats, args.out,
-                              args.fake, "" if args.fake else os.environ.get("DEEPSEEK_API_KEY", ""))
+        rows = run_experiment(
+            args.tasks,
+            args.variants.split(","),
+            args.repeats,
+            args.out,
+            args.fake,
+            "" if args.fake else os.environ.get("DEEPSEEK_API_KEY", ""),
+        )
         (args.out / "report.md").write_text(render_report(rows), encoding="utf-8")
-        import json
-        for row in rows: print(json.dumps(row, ensure_ascii=False))
+        for row in rows:
+            print(json.dumps(row, ensure_ascii=False))
         return 1 if any(row.get("error") for row in rows) else 0
     except Exception as exc:
         key = os.environ.get("DEEPSEEK_API_KEY", "")
-        print("Experiment error: " + (str(exc).replace(key, "[REDACTED]") if key else str(exc)), file=sys.stderr)
+        print(
+            "Experiment error: " + (str(exc).replace(key, "[REDACTED]") if key else str(exc)),
+            file=sys.stderr,
+        )
         return 1
 
 

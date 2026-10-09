@@ -7,6 +7,15 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F11: Shared frozen definitions moved to core.py (agent.py re-exports public
+  names). V1Loop now takes an explicit agent dependency and uses the original
+  ordinary-local run body from 3fe3c0e; no state bag or monkey-patched dispatch.
+  Shell/file/search/submit/child handlers live in tools/, Runtime assembles them.
+  Function-local imports were lifted; optional Dense alone uses an explicit
+  import_module only when selected, preserving a dependency-light default.
+  Ruff 0.16.10 formats src/scripts/tests at width 100; all src lines <=120,
+  enforced by a structural test. Full pytest and V1 golden PASS.
+
 - F10: Step traces include only new events. Checkpoints occur at step end and
   after bash/str_replace/apply_patch/verify, not readonly tools. Polling backs
   off 0.1/0.2/0.5/1 seconds and seeks log tails; completed foreground output is

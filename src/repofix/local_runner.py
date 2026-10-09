@@ -6,7 +6,7 @@ import json
 import subprocess
 import sys
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -48,9 +48,7 @@ def _prepare_output(output_dir: Path, repository: Path) -> Path:
     except ValueError:
         pass
     else:
-        raise LocalRunError(
-            "output directory must be outside the source repository"
-        )
+        raise LocalRunError("output directory must be outside the source repository")
     if output.exists() and any(output.iterdir()):
         raise LocalRunError(f"output directory is not empty: {output}")
     output.mkdir(parents=True, exist_ok=True)
@@ -112,18 +110,23 @@ def run_local_repository(
                         git_commit=_implementation_commit(),
                         config=config or AgentConfig(),
                     )
-                    agent.resume_metadata = {"kind": "local", "repository": str(source_before.root),
-                                             "base_commit": source_before.head}
+                    agent.resume_metadata = {
+                        "kind": "local",
+                        "repository": str(source_before.root),
+                        "base_commit": source_before.head,
+                    }
                     if config is not None and not getattr(config, "evaluation_mode", True):
-                        agent.permission_ask = lambda reason: input(f"Allow command ({reason})? [y/N] ").lower() == "y"
+                        agent.permission_ask = lambda reason: (
+                            input(f"Allow command ({reason})? [y/N] ").lower() == "y"
+                        )
                     result = agent.run()
                     full_diff = result.patch
-            worktree.materialize_patch(full_diff, stage_new=getattr(config, "profile", "v1") == "v3")
+            worktree.materialize_patch(
+                full_diff, stage_new=getattr(config, "profile", "v1") == "v3"
+            )
             isolated_patch_materialized = worktree.diff() == full_diff
             if full_diff and not isolated_patch_materialized:
-                raise LocalRunError(
-                    "container patch did not match the temporary worktree diff"
-                )
+                raise LocalRunError("container patch did not match the temporary worktree diff")
     except Exception as exc:
         error = str(exc).replace(api_key, "[REDACTED]")
         if not trajectory_path.exists():
@@ -133,8 +136,7 @@ def run_local_repository(
 
     source_after = inspect_repository(source_before.root)
     source_unchanged = (
-        source_before.head == source_after.head
-        and source_before.status == source_after.status
+        source_before.head == source_after.head and source_before.status == source_after.status
     )
     evaluation = build_evaluation_patch(full_diff)
     production_diff = evaluation.patch
@@ -164,26 +166,19 @@ def run_local_repository(
         "prompt_tokens": result.prompt_tokens if result is not None else 0,
         "cache_hit_tokens": result.cache_hit_tokens if result is not None else None,
         "completion_tokens": result.completion_tokens if result is not None else 0,
-        "estimated_cost_usd": (
-            result.max_estimated_cost_usd if result is not None else 0.0
-        ),
+        "estimated_cost_usd": (result.max_estimated_cost_usd if result is not None else 0.0),
         "pre_fix_reproduction_telemetry": (
             result.pre_fix_reproduced if result is not None else False
         ),
-        "reproduction_flipped_telemetry": (
-            result.repro_flipped if result is not None else False
-        ),
+        "reproduction_flipped_telemetry": (result.repro_flipped if result is not None else False),
         "modified_production_files": production_paths,
         "modified_test_files": test_paths,
         "filtered_test_paths": list(evaluation.filtered_test_paths),
         "search_calls": result.search_calls if result is not None else 0,
-        "reviewer_enabled": (
-            (config or AgentConfig()).reviewer_enabled
-        ),
+        "reviewer_enabled": ((config or AgentConfig()).reviewer_enabled),
         "reviewer_calls": result.reviewer_calls if result is not None else 0,
         "dense_loaded": any(
-            name == "fastembed" or name.startswith("fastembed.")
-            for name in sys.modules
+            name == "fastembed" or name.startswith("fastembed.") for name in sys.modules
         ),
         "full_diff_path": str(output / "full.patch"),
         "production_diff_path": str(output / "production.patch"),

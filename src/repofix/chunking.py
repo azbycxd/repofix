@@ -6,7 +6,6 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
-
 FALLBACK_CHUNK_LINES = 50
 
 
@@ -108,9 +107,7 @@ def _ast_chunk(
     chunk_type: str,
     source_lines: list[str],
 ) -> Chunk:
-    start_line = min(
-        [node.lineno, *(decorator.lineno for decorator in node.decorator_list)]
-    )
+    start_line = min([node.lineno, *(decorator.lineno for decorator in node.decorator_list)])
     end_line = node.end_lineno or node.lineno
     return Chunk(
         file_path=file_path,

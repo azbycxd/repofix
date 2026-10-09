@@ -17,6 +17,8 @@ from datasets import load_dataset
 from dotenv import load_dotenv
 from swebench.harness.utils import make_test_spec
 
+from repofix.cli import main as cli_main
+from repofix.harness.config import HarnessConfig
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
@@ -32,7 +34,6 @@ from repofix.agent import (  # noqa: E402
 from repofix.env import DockerEnv  # noqa: E402
 from repofix.evaluation import build_evaluation_patch  # noqa: E402
 from repofix.search import BM25Index, format_search_results  # noqa: E402
-
 
 DATASET = "SWE-bench/SWE-bench_Verified"
 SPLIT = "test"
@@ -154,10 +155,7 @@ def check_tool_output_truncation(env: DockerEnv) -> None:
 
 def check_native_file_tools(env: DockerEnv) -> None:
     path = "/testbed/.repofix_tool_check.py"
-    created = env.execute(
-        "printf '%s\\n' 'value = 1' 'marker = \"one\"' "
-        f"> {path}"
-    )
+    created = env.execute(f"printf '%s\\n' 'value = 1' 'marker = \"one\"' > {path}")
     assert not created.timed_out and created.exit_code == 0
 
     viewed = env.view_file(path, 1, 2)
@@ -359,9 +357,13 @@ def run_instance(
     patch = ""
     reviewer_initial_patch = ""
     try:
-        with DockerEnv(instance_id, spec.image, run_id,
-                       sandbox_hardening=getattr(config, "sandbox_hardening", False),
-                       sandbox_user=getattr(config, "sandbox_user", None)) as env:
+        with DockerEnv(
+            instance_id,
+            spec.image,
+            run_id,
+            sandbox_hardening=getattr(config, "sandbox_hardening", False),
+            sandbox_user=getattr(config, "sandbox_user", None),
+        ) as env:
             result = RepoFixAgent(
                 env=env,
                 issue=instance["problem_statement"],
@@ -442,9 +444,7 @@ def run_instance(
     evaluation_patch_path = run_dir / f"{instance_id}.evaluation.patch"
     evaluation_patch_path.write_text(evaluation.patch, encoding="utf-8")
     summary["patch_path"] = str(patch_path.relative_to(PROJECT_ROOT))
-    summary["evaluation_patch_path"] = str(
-        evaluation_patch_path.relative_to(PROJECT_ROOT)
-    )
+    summary["evaluation_patch_path"] = str(evaluation_patch_path.relative_to(PROJECT_ROOT))
     summary["evaluation_patch_nonempty"] = bool(evaluation.patch.strip())
     summary["filtered_test_paths"] = list(evaluation.filtered_test_paths)
     result_path = run_dir / f"{instance_id}.result.json"
@@ -461,15 +461,9 @@ def run_instance(
         reviewer_patch_path = run_dir / f"{instance_id}.reviewer-initial.patch"
         reviewer_patch_path.write_text(reviewer_initial_patch, encoding="utf-8")
         reviewer_evaluation = build_evaluation_patch(reviewer_initial_patch)
-        reviewer_evaluation_path = (
-            run_dir / f"{instance_id}.reviewer-initial.evaluation.patch"
-        )
-        reviewer_evaluation_path.write_text(
-            reviewer_evaluation.patch, encoding="utf-8"
-        )
-        summary["reviewer_initial_patch_path"] = str(
-            reviewer_patch_path.relative_to(PROJECT_ROOT)
-        )
+        reviewer_evaluation_path = run_dir / f"{instance_id}.reviewer-initial.evaluation.patch"
+        reviewer_evaluation_path.write_text(reviewer_evaluation.patch, encoding="utf-8")
+        summary["reviewer_initial_patch_path"] = str(reviewer_patch_path.relative_to(PROJECT_ROOT))
         summary["reviewer_initial_evaluation_patch_path"] = str(
             reviewer_evaluation_path.relative_to(PROJECT_ROOT)
         )
@@ -489,7 +483,6 @@ def run_instance(
 
 
 def main() -> int:
-    from repofix.harness.config import HarnessConfig
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
     parser.add_argument("--resume", type=Path)
@@ -524,7 +517,6 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.resume:
-        from repofix.cli import main as cli_main
         return cli_main(["resume", str(args.resume)])
 
     dev_ids = read_instance_ids(TASKS_PATH)
@@ -551,17 +543,11 @@ def main() -> int:
 
     if not api_key:
         raise RuntimeError("DEEPSEEK_API_KEY is not set")
-    run_dir = (
-        Path(args.output_dir)
-        if args.output_dir
-        else PROJECT_ROOT / "runs" / run_id
-    )
+    run_dir = Path(args.output_dir) if args.output_dir else PROJECT_ROOT / "runs" / run_id
     if not run_dir.is_absolute():
         run_dir = PROJECT_ROOT / run_dir
     run_dir = run_dir.resolve()
-    trajectory_dir = (
-        Path(args.trajectory_dir) if args.trajectory_dir else run_dir
-    )
+    trajectory_dir = Path(args.trajectory_dir) if args.trajectory_dir else run_dir
     if not trajectory_dir.is_absolute():
         trajectory_dir = PROJECT_ROOT / trajectory_dir
     trajectory_dir = trajectory_dir.resolve()
@@ -570,17 +556,14 @@ def main() -> int:
             raise RuntimeError("Experiment output must remain inside the project")
     if run_dir.exists() and any(run_dir.iterdir()):
         raise RuntimeError(f"Run directory is not empty: {run_dir}")
-    if (
-        trajectory_dir != run_dir
-        and trajectory_dir.exists()
-        and any(trajectory_dir.iterdir())
-    ):
+    if trajectory_dir != run_dir and trajectory_dir.exists() and any(trajectory_dir.iterdir()):
         raise RuntimeError(f"Trajectory directory is not empty: {trajectory_dir}")
     run_dir.mkdir(parents=True, exist_ok=True)
     trajectory_dir.mkdir(parents=True, exist_ok=True)
 
     git_commit = current_git_commit()
-    config = HarnessConfig.for_profile(args.profile,
+    config = HarnessConfig.for_profile(
+        args.profile,
         retrieval_mode=args.retrieval_mode,
         reviewer_enabled=args.reviewer,
     )
@@ -610,8 +593,7 @@ def main() -> int:
     )
     reviewer_predictions_path = run_dir / "reviewer_initial_predictions.json"
     reviewer_predictions_path.write_text(
-        json.dumps(reviewer_initial_predictions, ensure_ascii=False, indent=2)
-        + "\n",
+        json.dumps(reviewer_initial_predictions, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     batch_result = {

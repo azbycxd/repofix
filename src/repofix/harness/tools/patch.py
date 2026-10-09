@@ -1,6 +1,7 @@
 """Codex-style text patch parser with all-files prepare before any write."""
-from dataclasses import dataclass, field
+
 import unicodedata
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -20,20 +21,35 @@ def parse_patch(patch):
         raise ValueError("patch needs Begin Patch and End Patch markers")
     edits, current = [], None
     for line in lines[1:-1]:
-        kinds = {"*** Add File: ": "add", "*** Update File: ": "update", "*** Delete File: ": "delete"}
+        kinds = {
+            "*** Add File: ": "add",
+            "*** Update File: ": "update",
+            "*** Delete File: ": "delete",
+        }
         marker = next((prefix for prefix in kinds if line.startswith(prefix)), None)
         if marker:
-            current = Edit(kinds[marker], line[len(marker):])
+            current = Edit(kinds[marker], line[len(marker) :])
             if not current.path:
                 raise ValueError("empty file path")
             edits.append(current)
-        elif line.startswith("*** Move to: ") and current and current.kind == "update" and not current.hunks and current.target is None:
-            current.target = line[len("*** Move to: "):]
+        elif (
+            line.startswith("*** Move to: ")
+            and current
+            and current.kind == "update"
+            and not current.hunks
+            and current.target is None
+        ):
+            current.target = line[len("*** Move to: ") :]
         elif line.startswith("@@") and current and current.kind == "update":
             current.hunks.append([])
         elif current and current.kind == "add" and line.startswith("+"):
             current.lines.append(line[1:])
-        elif current and current.kind == "update" and current.hunks and (line[:1] in {" ", "+", "-"} or line == "*** End of File"):
+        elif (
+            current
+            and current.kind == "update"
+            and current.hunks
+            and (line[:1] in {" ", "+", "-"} or line == "*** End of File")
+        ):
             current.hunks[-1].append(line)
         else:
             raise ValueError(f"invalid patch line: {line[:100]}")
@@ -52,9 +68,15 @@ def normalized(line, level):
         return line.rstrip()
     if level == 2:
         return line.strip()
-    return unicodedata.normalize("NFKC", line).translate(str.maketrans({
-        "‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "−": "-", "…": "..."
-    })).strip()
+    return (
+        unicodedata.normalize("NFKC", line)
+        .translate(
+            str.maketrans(
+                {"‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "−": "-", "…": "..."}
+            )
+        )
+        .strip()
+    )
 
 
 def update_content(path, original, hunks):
@@ -69,9 +91,13 @@ def update_content(path, original, hunks):
             raise ValueError(f"{path}: update hunk needs old context")
         found = None
         for level in range(4):
-            candidates = [i for i in range(cursor, len(lines) - len(old) + 1)
-                if (not eof or i + len(old) == len(lines)) and
-                [normalized(s, level) for s in lines[i:i + len(old)]] == [normalized(s, level) for s in old]]
+            candidates = [
+                i
+                for i in range(cursor, len(lines) - len(old) + 1)
+                if (not eof or i + len(old) == len(lines))
+                and [normalized(s, level) for s in lines[i : i + len(old)]]
+                == [normalized(s, level) for s in old]
+            ]
             if candidates:
                 if len(candidates) > 1:
                     raise ValueError(f"{path}: ambiguous context: {old[:3]!r}")
@@ -79,7 +105,7 @@ def update_content(path, original, hunks):
                 break
         if found is None:
             raise ValueError(f"{path}: context not found: {old[:3]!r}")
-        lines[found:found + len(old)] = new
+        lines[found : found + len(old)] = new
         cursor = found + len(new)
     return "\n".join(lines) + ("\n" if original.endswith("\n") and lines else "")
 

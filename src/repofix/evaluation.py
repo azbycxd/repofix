@@ -7,7 +7,6 @@ from dataclasses import dataclass
 
 from .reproduction import is_test_path
 
-
 _DIFF_START_RE = re.compile(r"(?m)(?=^diff --git )")
 
 

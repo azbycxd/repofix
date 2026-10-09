@@ -12,14 +12,12 @@ from typing import Any
 from datasets import load_dataset
 from swebench.harness.utils import make_test_spec
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_ROOT))
 
 from repofix.env import DockerEnv  # noqa: E402
 from repofix.search import BM25Index  # noqa: E402
-
 
 DATASET = "SWE-bench/SWE-bench_Verified"
 SPLIT = "test"
@@ -72,9 +70,7 @@ def main() -> int:
         spec = make_test_spec(instance)
         with DockerEnv(instance_id, spec.image, args.run_id) as env:
             index, stats = BM25Index.from_repository(env)
-            ranked = index.search(
-                instance["problem_statement"], top_k=max(1, len(index.chunks))
-            )
+            ranked = index.search(instance["problem_statement"], top_k=max(1, len(index.chunks)))
         rank = next(
             (
                 position

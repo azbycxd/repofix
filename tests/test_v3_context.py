@@ -1,16 +1,32 @@
 import json
-from repofix.harness.context import ContextManager, estimate, recent_complete_messages
+
 from repofix.harness.config import HarnessConfig
-from repofix.harness.state import RunState
+from repofix.harness.context import ContextManager, estimate
 from repofix.harness.fake import FakeEnv
 from repofix.harness.model import FakeModelClient
+from repofix.harness.state import RunState
 
 
 def state_with_outputs(size=2000, count=5):
-    state = RunState(messages=[{"role": "system", "content": "system"}, {"role": "user", "content": "task"}])
+    state = RunState(
+        messages=[{"role": "system", "content": "system"}, {"role": "user", "content": "task"}]
+    )
     for i in range(count):
-        state.messages.extend([{"role": "assistant", "tool_calls": [{"id": str(i), "type": "function", "function": {"name": "bash", "arguments": "{}"}}]},
-                               {"role": "tool", "tool_call_id": str(i), "content": "x" * size}])
+        state.messages.extend(
+            [
+                {
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "id": str(i),
+                            "type": "function",
+                            "function": {"name": "bash", "arguments": "{}"},
+                        }
+                    ],
+                },
+                {"role": "tool", "tool_call_id": str(i), "content": "x" * size},
+            ]
+        )
     return state
 
 
@@ -31,8 +47,17 @@ def test_summary_authoritative_fields_and_protocol(tmp_path):
     state = state_with_outputs(size=5000)
     state.plan = [{"step": "fix", "status": "in_progress"}]
     state.last_validation = {"command": "pytest", "exit_code": 0, "output": "passed"}
-    env = FakeEnv(); env.files["example.py"] = "VALUE = 2\n"
-    data = dict(goal="fix", constraints=[], done=[], verified_facts=[], failed_attempts=[], next_steps=[], files_changed=["lie"])
+    env = FakeEnv()
+    env.files["example.py"] = "VALUE = 2\n"
+    data = dict(
+        goal="fix",
+        constraints=[],
+        done=[],
+        verified_facts=[],
+        failed_attempts=[],
+        next_steps=[],
+        files_changed=["lie"],
+    )
     client = FakeModelClient([{"content": json.dumps(data)}])
     config = HarnessConfig.for_profile("v3", context_window=2500, keep_recent_tool_results=1)
     event = ContextManager(config, client, env, tmp_path).maybe_compact(state)
@@ -53,6 +78,8 @@ def test_debounce_and_context_exhaustion(tmp_path):
     manager.maybe_compact(state)
     state.step = 1
     assert manager.maybe_compact(state) is None
-    state.step = 2; manager.maybe_compact(state)
-    state.step = 4; manager.maybe_compact(state)
+    state.step = 2
+    manager.maybe_compact(state)
+    state.step = 4
+    manager.maybe_compact(state)
     assert state.termination == "context_exhausted" and len(client.requests) == 3

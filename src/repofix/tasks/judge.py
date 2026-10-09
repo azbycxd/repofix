@@ -1,6 +1,9 @@
 """Judge-only hidden tests; never share this environment/context with Agent."""
+
+import re
 import shlex
 from dataclasses import dataclass
+
 from repofix.evaluation import build_evaluation_patch
 
 
@@ -24,8 +27,11 @@ def apply_diff(env, patch, name):
 def run_test(env, node):
     result = env.execute("python -m pytest -q " + shlex.quote(node), timeout=600)
     # Exit 0 alone could mean the test was skipped. Require pytest pass evidence.
-    import re
-    passed = result.exit_code == 0 and not result.timed_out and bool(re.search(r"\b[1-9][0-9]* passed\b", result.output))
+    passed = (
+        result.exit_code == 0
+        and not result.timed_out
+        and bool(re.search(r"\b[1-9][0-9]* passed\b", result.output))
+    )
     return passed
 
 
@@ -39,6 +45,8 @@ def judge(task, production_patch, env_factory):
             apply_diff(env, task.hidden_test_patch, "hidden_tests")
             for node in dict.fromkeys([*task.fail_to_pass, *task.pass_to_pass]):
                 outcomes[node] = run_test(env, node)
-            return JudgeResult(bool(task.fail_to_pass) and bool(outcomes) and all(outcomes.values()), outcomes)
+            return JudgeResult(
+                bool(task.fail_to_pass) and bool(outcomes) and all(outcomes.values()), outcomes
+            )
     except Exception as exc:
         return JudgeResult(False, outcomes, str(exc))

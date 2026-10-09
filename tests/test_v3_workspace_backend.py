@@ -3,17 +3,26 @@
 Only the fixed /testbed and /tmp helper paths are redirected into tmp_path.
 No model, Docker daemon, network or user's repository is touched.
 """
+
 import os
 import shlex
 import subprocess
 import sys
 from pathlib import Path
+
 import pytest
 
+from repofix.agent import RepoFixAgent
 from repofix.env import ExecutionResult
-from repofix.harness.workspace import RepoFiles, fingerprint
 from repofix.harness.checkpoint import capture_workspace, restore_workspace
+from repofix.harness.config import HarnessConfig
+from repofix.harness.model import FakeModelClient
+from repofix.harness.runtime import Runtime
+from repofix.harness.state import RunState
+from repofix.harness.tools.files import grep
 from repofix.harness.tools.patch import prepare_patch
+from repofix.harness.tools.shell import JobManager
+from repofix.harness.workspace import RepoFiles, fingerprint
 
 
 class LocalHelperFixture:
@@ -22,11 +31,19 @@ class LocalHelperFixture:
         self.root.mkdir()
         self.artifacts = root / "artifacts"
         self.artifacts.mkdir()
-        self.environment = {**os.environ, "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]}
-        for args in [("init", "-q"), ("config", "user.name", "Offline Test"), ("config", "user.email", "offline@example.invalid")]:
+        self.environment = {
+            **os.environ,
+            "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
+        }
+        for args in [
+            ("init", "-q"),
+            ("config", "user.name", "Offline Test"),
+            ("config", "user.email", "offline@example.invalid"),
+        ]:
             self.git(*args)
         (self.root / "a.py").write_text("VALUE = 1\n")
-        self.git("add", "."); self.git("commit", "-qm", "base")
+        self.git("add", ".")
+        self.git("commit", "-qm", "base")
 
     def git(self, *args):
         return subprocess.check_output(["git", "-C", str(self.root), *args], text=True)
@@ -34,13 +51,25 @@ class LocalHelperFixture:
     def execute(self, command, timeout=60):
         args = shlex.split(command)
         assert all(len(arg.encode()) < 100_000 for arg in args)
+
         def redirect(text):
             return text.replace("/testbed", str(self.root)).replace(
-                "/tmp/repofix_", str(self.artifacts / "repofix_"))
-        argv = ([sys.executable, "-c", redirect(args[2])] if args[:2] == ["python", "-c"]
-                else ["/bin/bash", "-c", redirect(command)])
-        result = subprocess.run(argv, cwd=self.root, env=self.environment,
-                                capture_output=True, text=True, timeout=timeout)
+                "/tmp/repofix_", str(self.artifacts / "repofix_")
+            )
+
+        argv = (
+            [sys.executable, "-c", redirect(args[2])]
+            if args[:2] == ["python", "-c"]
+            else ["/bin/bash", "-c", redirect(command)]
+        )
+        result = subprocess.run(
+            argv,
+            cwd=self.root,
+            env=self.environment,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
         return ExecutionResult(result.stdout + result.stderr, result.returncode, False, 0)
 
     def write_text_file(self, path, content):
@@ -48,8 +77,11 @@ class LocalHelperFixture:
         (self.artifacts / Path(path).name).write_text(content)
 
     def read_repository_text_files(self, max_file_bytes=1_000_000):
-        return {p.relative_to(self.root).as_posix(): p.read_text()
-                for p in self.root.rglob("*.py") if p.stat().st_size <= max_file_bytes}
+        return {
+            p.relative_to(self.root).as_posix(): p.read_text()
+            for p in self.root.rglob("*.py")
+            if p.stat().st_size <= max_file_bytes
+        }
 
     def get_diff(self):
         return self.git("diff", "HEAD")
@@ -81,7 +113,8 @@ def test_real_helper_rollback_and_symlink_escape(tmp_path):
     assert files.read("a.py") == "VALUE = 1\n" and not files.exists("broken.py")
     assert env.git("diff", "--cached") == before_index
     (env.root / "outside").symlink_to(tmp_path, target_is_directory=True)
-    with pytest.raises(RuntimeError): files.read("outside/file")
+    with pytest.raises(RuntimeError):
+        files.read("outside/file")
 
 
 def test_real_fingerprint_detects_repeated_dirty_write(tmp_path):
@@ -114,7 +147,6 @@ def test_large_file_replacement_patch_and_atomic_rollback(tmp_path):
 
 
 def test_real_grep_fallback_without_rg(tmp_path):
-    from repofix.harness.tools.files import grep
     env = LocalHelperFixture(tmp_path)
     minimal_path = tmp_path / "bin"
     minimal_path.mkdir()
@@ -128,12 +160,11 @@ def test_real_grep_fallback_without_rg(tmp_path):
 
 
 def test_real_background_timeout_poll_and_kill(tmp_path):
-    from repofix.harness.tools.shell import JobManager
     env = LocalHelperFixture(tmp_path)
     jobs = JobManager(env)
     done = jobs.start("sleep 0.3; printf 'first\\nlast\\n'; echo $PAGER")
     try:
-        assert jobs.wait(done, .01)["still_running"]
+        assert jobs.wait(done, 0.01)["still_running"]
         result = jobs.wait(done, 5)
         assert result["exit_code"] == 0 and "last\ncat" in result["output"]
         assert jobs.output(done, 1)["output"] == "cat"
@@ -142,24 +173,32 @@ def test_real_background_timeout_poll_and_kill(tmp_path):
             jobs.kill(done)
     running = jobs.start("sleep 30")
     try:
-        assert jobs.wait(running, .01)["still_running"]
+        assert jobs.wait(running, 0.01)["still_running"]
         assert jobs.output(running)["still_running"]
     finally:
         assert jobs.kill(running)["exit_code"] == 137
 
 
 def test_real_runtime_large_edit_and_read_guard(tmp_path):
-    from repofix.agent import RepoFixAgent
-    from repofix.harness.config import HarnessConfig
-    from repofix.harness.model import FakeModelClient
-    from repofix.harness.runtime import Runtime
-    from repofix.harness.state import RunState
     env = LocalHelperFixture(tmp_path)
     (env.root / "a.py").write_text("# padding\n" * 31_000 + "VALUE = 1\n")
-    runtime = Runtime(RepoFixAgent(env, "fix", tmp_path / "t", "", "test",
-                      HarnessConfig.for_profile("v3"), FakeModelClient([])), RunState())
+    runtime = Runtime(
+        RepoFixAgent(
+            env,
+            "fix",
+            tmp_path / "t",
+            "",
+            "test",
+            HarnessConfig.for_profile("v3"),
+            FakeModelClient([]),
+        ),
+        RunState(),
+    )
     runtime.view({"path": "a.py", "start_line": 1, "end_line": 1})
-    assert "successful" in runtime.replace({"path": "a.py", "old_str": "VALUE = 1", "new_str": "VALUE = 2"}).content
+    assert (
+        "successful"
+        in runtime.replace({"path": "a.py", "old_str": "VALUE = 1", "new_str": "VALUE = 2"}).content
+    )
     patch = "*** Begin Patch\n*** Update File: a.py\n@@\n-VALUE = 2\n+VALUE = 3\n*** Add File: b.py\n+B = 1\n*** End Patch"
     assert "Patch applied" in runtime.apply_patch({"patch": patch}).content
     env.execute("printf '\\nEXTERNAL = 1\\n' >> a.py")

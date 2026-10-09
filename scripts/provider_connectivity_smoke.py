@@ -10,7 +10,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
@@ -19,7 +18,6 @@ from repofix.agent import (  # noqa: E402
     create_deepseek_client,
     request_chat_completion,
 )
-
 
 SMOKE_MESSAGES = [
     {
@@ -66,9 +64,7 @@ def main() -> int:
         "model": response.model,
         "finish_reason": response.choices[0].finish_reason,
         "tool_calls": [call.function.name for call in tool_calls],
-        "submit_returned": any(
-            call.function.name == "submit" for call in tool_calls
-        ),
+        "submit_returned": any(call.function.name == "submit" for call in tool_calls),
         "usage_fields": usage_fields,
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -14,7 +14,7 @@ import numpy as np
 from fastembed import TextEmbedding
 
 from .chunking import Chunk
-from .search import BM25Index, IndexStats, SearchResult
+from .search import BM25Index, SearchResult
 
 if TYPE_CHECKING:
     from .env import DockerEnv
@@ -126,10 +126,7 @@ def _normalize_rows(vectors: np.ndarray) -> np.ndarray:
 def _document_text(chunk: Chunk) -> str:
     source = chunk.source_text[:DENSE_SOURCE_MAX_CHARS]
     return (
-        f"passage: file {chunk.file_path}\n"
-        f"symbol {chunk.symbol}\n"
-        f"type {chunk.chunk_type}\n"
-        f"{source}"
+        f"passage: file {chunk.file_path}\nsymbol {chunk.symbol}\ntype {chunk.chunk_type}\n{source}"
     )
 
 
@@ -196,11 +193,7 @@ class DenseIndex:
     ) -> tuple[DenseIndex, DenseIndexStats]:
         started = time.monotonic()
         backend = backend or get_embedding_backend(cache_root)
-        cache_dir = (
-            cache_root
-            / "dense_chunks"
-            / backend.model_id.replace("/", "--")
-        )
+        cache_dir = cache_root / "dense_chunks" / backend.model_id.replace("/", "--")
         cache_dir.mkdir(parents=True, exist_ok=True)
         cache_path = cache_dir / f"{CACHE_FORMAT_VERSION}.sqlite3"
 
@@ -242,19 +235,14 @@ class DenseIndex:
                     )
                     connection.commit()
 
-            missing_keys = [
-                cache_key for cache_key in unique_keys if cache_key not in cached_keys
-            ]
+            missing_keys = [cache_key for cache_key in unique_keys if cache_key not in cached_keys]
             for key_batch in _batched(missing_keys, EMBEDDING_BATCH_SIZE):
                 documents = [documents_by_key[cache_key] for cache_key in key_batch]
-                embedded = np.asarray(
-                    backend.embed_documents(documents), dtype=np.float32
-                )
+                embedded = np.asarray(backend.embed_documents(documents), dtype=np.float32)
                 expected_shape = (len(key_batch), backend.dimension)
                 if embedded.shape != expected_shape:
                     raise ValueError(
-                        f"embedding batch shape {embedded.shape} does not match "
-                        f"{expected_shape}"
+                        f"embedding batch shape {embedded.shape} does not match {expected_shape}"
                     )
                 connection.executemany(
                     "INSERT OR REPLACE INTO embeddings "

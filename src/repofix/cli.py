@@ -11,9 +11,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .agent import AgentConfig
 from .harness.config import HarnessConfig
-from .local_runner import LocalRunError, run_local_repository
+from .harness.resume import resume_run
+from .local_runner import run_local_repository
 
 
 def _default_run_id() -> str:
@@ -46,7 +46,6 @@ def main(argv: list[str] | None = None) -> int:
             print("RepoFix error: DEEPSEEK_API_KEY is not set", file=sys.stderr)
             return 2
         try:
-            from .harness.resume import resume_run
             result = resume_run(resume_args.run_dir, key)
             print(f"{result.status}: {result.trajectory_path}")
             return 0 if result.submitted else 1

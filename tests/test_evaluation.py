@@ -4,7 +4,6 @@ import unittest
 
 from repofix.evaluation import build_evaluation_patch, changed_paths
 
-
 PRODUCTION_DIFF = """diff --git a/django/forms/models.py b/django/forms/models.py
 index 1111111..2222222 100644
 --- a/django/forms/models.py

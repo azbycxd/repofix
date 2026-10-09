@@ -26,9 +26,7 @@ def _git(repo: Path, *args: str, input_text: str | None = None) -> str:
         raise LocalRepositoryError(f"unable to execute Git: {exc}") from exc
     if completed.returncode != 0:
         details = completed.stderr.strip() or completed.stdout.strip()
-        raise LocalRepositoryError(
-            f"git {' '.join(args)} failed in {repo}: {details}"
-        )
+        raise LocalRepositoryError(f"git {' '.join(args)} failed in {repo}: {details}")
     return completed.stdout
 
 
@@ -47,9 +45,7 @@ def inspect_repository(path: Path) -> RepositoryState:
         root_text = _git(candidate, "rev-parse", "--show-toplevel").strip()
         inside = _git(candidate, "rev-parse", "--is-inside-work-tree").strip()
     except LocalRepositoryError as exc:
-        raise LocalRepositoryError(
-            f"not a local Git repository: {candidate}"
-        ) from exc
+        raise LocalRepositoryError(f"not a local Git repository: {candidate}") from exc
     if inside != "true":
         raise LocalRepositoryError(f"not a Git working tree: {candidate}")
     root = Path(root_text).resolve()
@@ -135,10 +131,6 @@ class TemporaryGitWorktree:
             self.after = inspect_repository(self.before.root)
 
         if self.after.head != self.before.head or self.after.status != self.before.status:
-            raise LocalRepositoryError(
-                "source repository changed during the isolated RepoFix run"
-            )
+            raise LocalRepositoryError("source repository changed during the isolated RepoFix run")
         if cleanup_error is not None and exc is None:
-            raise LocalRepositoryError(
-                f"unable to clean temporary Git worktree: {cleanup_error}"
-            )
+            raise LocalRepositoryError(f"unable to clean temporary Git worktree: {cleanup_error}")

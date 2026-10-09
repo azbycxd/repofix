@@ -1,10 +1,12 @@
 """Two-stage compaction with protocol-safe recent history and program facts."""
+
 import hashlib
 import json
 import math
 from pathlib import Path
 
 from repofix.evaluation import changed_paths
+
 from .telemetry import record_usage
 
 SUMMARY_FIELDS = ("goal", "constraints", "done", "verified_facts", "failed_attempts", "next_steps")
@@ -19,7 +21,7 @@ def text_tokens(value):
 def estimate(state):
     anchor = state.metadata.get("usage_anchor")
     if anchor:
-        return anchor["tokens"] + text_tokens(state.messages[anchor["messages"]:])
+        return anchor["tokens"] + text_tokens(state.messages[anchor["messages"] :])
     return text_tokens(state.messages)
 
 
@@ -42,9 +44,13 @@ class ContextManager:
         validation = dict(state.last_validation) if state.last_validation else None
         if validation and isinstance(validation.get("output"), str):
             validation["output"] = validation["output"][-2000:]
-        return {"task": state.messages[1]["content"], "plan": state.plan,
-                "files_changed": list(changed_paths(patch)), "diff_stat": stat,
-                "last_validation": validation}
+        return {
+            "task": state.messages[1]["content"],
+            "plan": state.plan,
+            "files_changed": list(changed_paths(patch)),
+            "diff_stat": stat,
+            "last_validation": validation,
+        }
 
     def maybe_compact(self, state):
         threshold = self.config.context_window * self.config.compact_threshold
@@ -57,7 +63,11 @@ class ContextManager:
             return None
         state.metadata["last_compact_step"] = state.step
         tool_indices = [i for i, m in enumerate(state.messages) if m["role"] == "tool"]
-        eligible = tool_indices[:-self.config.keep_recent_tool_results] if self.config.keep_recent_tool_results else tool_indices
+        eligible = (
+            tool_indices[: -self.config.keep_recent_tool_results]
+            if self.config.keep_recent_tool_results
+            else tool_indices
+        )
         masked = 0
         self.artifact_dir.mkdir(parents=True, exist_ok=True)
         for i in eligible:
@@ -72,14 +82,22 @@ class ContextManager:
             masked += 1
         state.metadata.pop("usage_anchor", None)
         after_mask = estimate(state)
-        event = {"type": "compaction", "step": state.step, "before_tokens": before,
-                 "masked_results": masked, "after_mask_tokens": after_mask, "summary_called": False}
+        event = {
+            "type": "compaction",
+            "step": state.step,
+            "before_tokens": before,
+            "masked_results": masked,
+            "after_mask_tokens": after_mask,
+            "summary_called": False,
+        }
         if after_mask > threshold:
             event["summary_called"] = True
-            prompt = {"role": "user", "content":
-                "Produce only a JSON handoff with goal, constraints, done, verified_facts, "
+            prompt = {
+                "role": "user",
+                "content": "Produce only a JSON handoff with goal, constraints, done, verified_facts, "
                 "failed_attempts (including reasons), and next_steps. Do not invent facts. "
-                "Files changed and last test evidence are filled by the harness."}
+                "Files changed and last test evidence are filled by the harness.",
+            }
             try:
                 response = self.model.complete([*state.messages, prompt], [], self.config)
                 record_usage(state.budget, response.usage, self.config)
@@ -91,14 +109,29 @@ class ContextManager:
                     raise ValueError("summary fields must be text or lists")
                 summary = {key: data[key] for key in SUMMARY_FIELDS}
                 summary.update(self.facts(state))
-                suffix = recent_complete_messages(state.messages, max(1, self.config.keep_recent_tool_results))
-                state.messages = [*state.messages[:2], {"role": "user", "content":
-                    "[RepoFix compacted handoff]\n" + json.dumps(summary, ensure_ascii=False)}, *suffix]
+                suffix = recent_complete_messages(
+                    state.messages, max(1, self.config.keep_recent_tool_results)
+                )
+                state.messages = [
+                    *state.messages[:2],
+                    {
+                        "role": "user",
+                        "content": "[RepoFix compacted handoff]\n"
+                        + json.dumps(summary, ensure_ascii=False),
+                    },
+                    *suffix,
+                ]
             except Exception as exc:
                 event["summary_error"] = str(exc)
         else:
             # Mask-only compaction also refreshes authoritative task/plan facts.
-            state.messages.append({"role": "user", "content": "[RepoFix context facts]\n" + json.dumps(self.facts(state), ensure_ascii=False)})
+            state.messages.append(
+                {
+                    "role": "user",
+                    "content": "[RepoFix context facts]\n"
+                    + json.dumps(self.facts(state), ensure_ascii=False),
+                }
+            )
         after = estimate(state)
         event["after_tokens"] = after
         state.count("compactions")

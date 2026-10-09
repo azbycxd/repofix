@@ -57,9 +57,7 @@ class ReproductionTelemetryTests(unittest.TestCase):
 
     def test_reviewer_evidence_rejects_import_and_timeout_failures(self) -> None:
         command = "python /tmp/repofix_repro.py"
-        self.assertFalse(
-            usable_validation_evidence(command, "ImportError: broken", False)
-        )
+        self.assertFalse(usable_validation_evidence(command, "ImportError: broken", False))
         self.assertFalse(usable_validation_evidence(command, "failed", True))
         self.assertTrue(usable_validation_evidence(command, "AssertionError", False))
 

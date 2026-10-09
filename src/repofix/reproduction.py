@@ -7,10 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import Sequence
 
-
-_GIT_HISTORY_RE = re.compile(
-    r"(?:^|[;&|]\s*|\s)git\s+(?:log|show|blame|reflog|rev-list)\b"
-)
+_GIT_HISTORY_RE = re.compile(r"(?:^|[;&|]\s*|\s)git\s+(?:log|show|blame|reflog|rev-list)\b")
 _NETWORK_RE = re.compile(
     r"(?:^|[;&|]\s*|\s)(?:curl|wget)\b"
     r"|\bgit\s+(?:clone|fetch|pull)\b"
@@ -19,9 +16,7 @@ _NETWORK_RE = re.compile(
     r"|https?://",
     re.IGNORECASE,
 )
-_REPRO_FILE_RE = re.compile(
-    r"(/tmp/[^\s'\"]*(?:repro|regression)[^\s'\"]*\.py)", re.IGNORECASE
-)
+_REPRO_FILE_RE = re.compile(r"(/tmp/[^\s'\"]*(?:repro|regression)[^\s'\"]*\.py)", re.IGNORECASE)
 _TEST_COMMAND_RE = re.compile(
     r"\b(?:pytest|py\.test|tox|unittest)\b"
     r"|\b(?:python\S*\s+)?tests/runtests\.py\b"
@@ -64,9 +59,7 @@ def reproduction_failed(exit_code: int | None, output: str) -> bool:
     return exit_code not in (0, None) or bool(_FAILURE_OUTPUT_RE.search(output))
 
 
-def usable_validation_evidence(
-    command: str, output: str, timed_out: bool
-) -> bool:
+def usable_validation_evidence(command: str, output: str, timed_out: bool) -> bool:
     """Return whether a reproduction/test observation is usable by Reviewer."""
     return (
         not timed_out
@@ -90,9 +83,7 @@ class ReproductionTelemetry:
     telemetry_errors: int = 0
     _failed_reproduction_keys: set[str] = field(default_factory=set, repr=False)
 
-    def observe_changes(
-        self, step: int, changes: Sequence[tuple[str, str]]
-    ) -> None:
+    def observe_changes(self, step: int, changes: Sequence[tuple[str, str]]) -> None:
         for status, path in changes:
             if status.startswith("M") and is_test_path(path):
                 self.existing_test_modified = True

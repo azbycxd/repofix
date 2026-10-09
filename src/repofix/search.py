@@ -52,9 +52,7 @@ CODE_SUFFIXES = frozenset(
 CODE_FILENAMES = frozenset({"Dockerfile", "Makefile", "SConstruct"})
 
 _WORD_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*|[0-9]+")
-_CAMEL_RE = re.compile(
-    r"[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z]?[a-z]+|[A-Z]+|[0-9]+"
-)
+_CAMEL_RE = re.compile(r"[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z]?[a-z]+|[A-Z]+|[0-9]+")
 
 
 @dataclass(frozen=True)
@@ -129,9 +127,7 @@ class BM25Index:
             document_frequency.update(frequencies.keys())
 
         count = len(self.chunks)
-        self._average_document_length = (
-            sum(self._document_lengths) / count if count else 0.0
-        )
+        self._average_document_length = sum(self._document_lengths) / count if count else 0.0
         self._idf = {
             term: math.log(1.0 + (count - frequency + 0.5) / (frequency + 0.5))
             for term, frequency in document_frequency.items()
@@ -180,16 +176,13 @@ class BM25Index:
             self.chunks, self._term_frequencies, self._document_lengths
         ):
             score = 0.0
-            normalization = self.k1 * (
-                1.0 - self.b + self.b * document_length / average_length
-            )
+            normalization = self.k1 * (1.0 - self.b + self.b * document_length / average_length)
             for term in query_terms:
                 term_frequency = frequencies.get(term, 0)
                 if not term_frequency:
                     continue
                 score += self._idf.get(term, 0.0) * (
-                    term_frequency * (self.k1 + 1.0)
-                    / (term_frequency + normalization)
+                    term_frequency * (self.k1 + 1.0) / (term_frequency + normalization)
                 )
             if score > 0.0:
                 scored.append(SearchResult(chunk=chunk, score=score))

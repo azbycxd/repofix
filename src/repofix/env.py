@@ -34,8 +34,14 @@ class DockerEnv:
 
     workdir = "/testbed"
 
-    def __init__(self, instance_id: str, image: str, run_id: str,
-                 sandbox_hardening: bool = False, sandbox_user: str | None = None) -> None:
+    def __init__(
+        self,
+        instance_id: str,
+        image: str,
+        run_id: str,
+        sandbox_hardening: bool = False,
+        sandbox_user: str | None = None,
+    ) -> None:
         self.instance_id = instance_id
         self.image = image
         self.run_id = run_id
@@ -68,9 +74,17 @@ class DockerEnv:
             if stale is not None:
                 stale.remove(force=True)
 
-            hardening = ({"cap_drop": ["ALL"], "security_opt": ["no-new-privileges"],
-                          "pids_limit": 512, "mem_limit": "4g", "nano_cpus": 2_000_000_000}
-                         if self.sandbox_hardening else {})
+            hardening = (
+                {
+                    "cap_drop": ["ALL"],
+                    "security_opt": ["no-new-privileges"],
+                    "pids_limit": 512,
+                    "mem_limit": "4g",
+                    "nano_cpus": 2_000_000_000,
+                }
+                if self.sandbox_hardening
+                else {}
+            )
             self.container = self.client.containers.create(
                 image=self.image,
                 name=self.name,
@@ -88,7 +102,9 @@ class DockerEnv:
             )
             self.container.start()
             if self.sandbox_user:
-                ownership = self.container.exec_run(["chown", "-R", self.sandbox_user, self.workdir], user="root")
+                ownership = self.container.exec_run(
+                    ["chown", "-R", self.sandbox_user, self.workdir], user="root"
+                )
                 if ownership.exit_code != 0:
                     raise RuntimeError("unable to prepare non-root /testbed ownership")
             self.container.reload()
@@ -176,9 +192,7 @@ class DockerEnv:
             changes.append((status, path))
         return changes
 
-    def read_repository_text_files(
-        self, max_file_bytes: int = 1_000_000
-    ) -> dict[str, str]:
+    def read_repository_text_files(self, max_file_bytes: int = 1_000_000) -> dict[str, str]:
         """Read UTF-8 tracked files from the current /testbed Git revision."""
         if self.container is None:
             raise RuntimeError("DockerEnv has not been started")
@@ -224,9 +238,7 @@ class DockerEnv:
 
         self._put_text_file(directory, filename, content, 0o600)
 
-    def _put_text_file(
-        self, directory: str, filename: str, content: str, mode: int
-    ) -> None:
+    def _put_text_file(self, directory: str, filename: str, content: str, mode: int) -> None:
         if self.container is None:
             raise RuntimeError("DockerEnv has not been started")
         payload = content.encode("utf-8")
@@ -299,9 +311,7 @@ class DockerEnv:
         if start_line < 1 or end_line < start_line:
             raise ValueError("line range must satisfy 1 <= start_line <= end_line")
         if start_line > len(lines):
-            raise ValueError(
-                f"start_line {start_line} exceeds file length {len(lines)}"
-            )
+            raise ValueError(f"start_line {start_line} exceeds file length {len(lines)}")
         selected = lines[start_line - 1 : min(end_line, len(lines))]
         return "\n".join(
             f"{line_number:6d}\t{line}"
@@ -313,13 +323,9 @@ class DockerEnv:
         numbered = self._numbered_lines(content, start_line, end_line)
         return f"{resolved}\n{numbered}"
 
-    def str_replace_file(
-        self, path: str, old_str: str, new_str: str
-    ) -> StrReplaceResult:
+    def str_replace_file(self, path: str, old_str: str, new_str: str) -> StrReplaceResult:
         if not old_str:
-            return StrReplaceResult(
-                "str_replace error: old_str must not be empty", False, False
-            )
+            return StrReplaceResult("str_replace error: old_str must not be empty", False, False)
         resolved, original, mode = self._read_text_file(path)
         occurrences = original.count(old_str)
         if occurrences == 0:
@@ -346,13 +352,9 @@ class DockerEnv:
             )
             if compile_result.timed_out or compile_result.exit_code != 0:
                 self._put_text_file(directory, filename, original, mode)
-                details = (
-                    compile_result.output.strip()
-                    or "py_compile failed without output"
-                )
+                details = compile_result.output.strip() or "py_compile failed without output"
                 return StrReplaceResult(
-                    "str_replace syntax check failed; original file restored.\n"
-                    f"{details}",
+                    f"str_replace syntax check failed; original file restored.\n{details}",
                     False,
                     True,
                 )
@@ -366,8 +368,7 @@ class DockerEnv:
         context_end = min(total_lines, start_line + replacement_lines + 2)
         context = self._numbered_lines(updated, context_start, context_end)
         return StrReplaceResult(
-            f"Replaced exactly one occurrence. {syntax_message}\n"
-            f"{resolved}\n{context}",
+            f"Replaced exactly one occurrence. {syntax_message}\n{resolved}\n{context}",
             True,
             False,
         )

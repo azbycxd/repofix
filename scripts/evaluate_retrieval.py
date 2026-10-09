@@ -13,14 +13,12 @@ from typing import Any, Sequence
 from datasets import load_dataset
 from swebench.harness.utils import make_test_spec
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_ROOT))
 
 from repofix.env import DockerEnv  # noqa: E402
 from repofix.retrieval import HybridCodeIndex, short_query_proxy  # noqa: E402
-
 
 DATASET = "SWE-bench/SWE-bench_Verified"
 SPLIT = "test"
@@ -30,11 +28,7 @@ _DIFF_HEADER_RE = re.compile(r"^diff --git a/(.+) b/(.+)$", re.MULTILINE)
 
 
 def read_ids(path: Path) -> list[str]:
-    return [
-        line.strip()
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def load_dev_instances(dev_ids: list[str]) -> dict[str, dict[str, Any]]:
@@ -118,8 +112,7 @@ def main() -> int:
         for method in ("bm25", "dense", "rrf"):
             recalls[query_type][method] = {
                 f"recall_at_{cutoff}": sum(
-                    row[f"{method}_rank"] is not None
-                    and row[f"{method}_rank"] <= cutoff
+                    row[f"{method}_rank"] is not None and row[f"{method}_rank"] <= cutoff
                     for row in selected
                 )
                 / len(selected)
@@ -130,8 +123,7 @@ def main() -> int:
         "dataset": DATASET,
         "split": SPLIT,
         "short_query_rule": (
-            "first non-empty issue line, strip leading Markdown markers, "
-            "truncate to 500 characters"
+            "first non-empty issue line, strip leading Markdown markers, truncate to 500 characters"
         ),
         "tasks": rows,
         "indexes": index_rows,

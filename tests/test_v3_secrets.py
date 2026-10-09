@@ -1,4 +1,5 @@
 import pytest
+
 from repofix.agent import TrajectoryWriter
 from repofix.harness.checkpoint import CheckpointStore
 from repofix.harness.fake import FakeEnv

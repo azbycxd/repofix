@@ -46,14 +46,18 @@ async def async_top_level():
             },
         )
         self.assertEqual(by_symbol["top_level"].chunk_type, "top_level_function")
-        self.assertEqual((by_symbol["top_level"].start_line, by_symbol["top_level"].end_line), (3, 7))
+        self.assertEqual(
+            (by_symbol["top_level"].start_line, by_symbol["top_level"].end_line), (3, 7)
+        )
         self.assertTrue(by_symbol["top_level"].source_text.startswith("@decorator\n"))
         self.assertNotIn("nested", by_symbol)
 
         self.assertEqual(by_symbol["Example"].chunk_type, "top_level_class")
         self.assertEqual((by_symbol["Example"].start_line, by_symbol["Example"].end_line), (9, 16))
         self.assertEqual(by_symbol["Example.method"].chunk_type, "class_method")
-        self.assertEqual((by_symbol["Example.method"].start_line, by_symbol["Example.method"].end_line), (12, 13))
+        self.assertEqual(
+            (by_symbol["Example.method"].start_line, by_symbol["Example.method"].end_line), (12, 13)
+        )
         self.assertIn("async def async_method", by_symbol["Example.async_method"].source_text)
         self.assertEqual(by_symbol["async_top_level"].chunk_type, "top_level_function")
         self.assertTrue(all(chunk.file_path == "pkg/example.py" for chunk in chunks))
@@ -75,7 +79,9 @@ async def async_top_level():
     def test_non_python_file_uses_fixed_line_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "notes.txt"
-            path.write_text("".join(f"item {number}\n" for number in range(1, 52)), encoding="utf-8")
+            path.write_text(
+                "".join(f"item {number}\n" for number in range(1, 52)), encoding="utf-8"
+            )
 
             chunks = chunk_file(path)
 

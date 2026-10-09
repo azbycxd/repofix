@@ -1,8 +1,9 @@
 """Small environment adapter for repository fingerprints and file operations."""
+
 import hashlib
 import json
-import shlex
 import posixpath
+import shlex
 import uuid
 
 
@@ -16,10 +17,12 @@ def run_python(env, source):
 def fingerprint(env):
     """Hash dirty file contents too: porcelain status alone misses repeat edits."""
     if hasattr(env, "files"):
-        return {path: hashlib.sha256(env.files.get(path, "[deleted]").encode()).hexdigest()
-                for path in env.files.keys() | env.baseline.keys()
-                if env.files.get(path) != env.baseline.get(path)}
-    source = '''import subprocess, hashlib, json, pathlib
+        return {
+            path: hashlib.sha256(env.files.get(path, "[deleted]").encode()).hexdigest()
+            for path in env.files.keys() | env.baseline.keys()
+            if env.files.get(path) != env.baseline.get(path)
+        }
+    source = """import subprocess, hashlib, json, pathlib
 raw = subprocess.check_output(['git', 'status', '--porcelain=v1', '-z', '--untracked-files=all'])
 parts = raw.split(b'\\0'); result = {}; i = 0
 while i < len(parts):
@@ -32,11 +35,11 @@ while i < len(parts):
     elif p.is_file(): data = p.read_bytes()
     else: data = b'[deleted]'
     result[path] = hashlib.sha256(data).hexdigest()
-print(json.dumps(result))'''
+print(json.dumps(result))"""
     return json.loads(run_python(env, source))
 
 
-PATH_HELPER = '''from pathlib import Path
+PATH_HELPER = """from pathlib import Path
 root = Path('/testbed').resolve()
 def resolve(value):
     if not isinstance(value, str) or not value or '\\0' in value or '..' in Path(value).parts:
@@ -47,7 +50,7 @@ def resolve(value):
     if not p.is_relative_to(root) or p == root or '.git' in p.relative_to(root).parts:
         raise ValueError('path must stay in /testbed outside .git')
     return p
-'''
+"""
 
 
 class RepoFiles:
@@ -61,24 +64,41 @@ class RepoFiles:
         if candidate.startswith("/"):
             if not candidate.startswith("/testbed/"):
                 raise ValueError("path outside /testbed")
-            candidate = candidate[len("/testbed/"):]
+            candidate = candidate[len("/testbed/") :]
         if candidate == "." or ".git" in candidate.split("/"):
             raise ValueError("repository metadata paths are not permitted")
         if hasattr(self.env, "files"):
             return self.env.resolve(candidate)
-        return json.loads(run_python(self.env, PATH_HELPER + f"\nimport json\nprint(json.dumps(str(resolve({candidate!r}).relative_to(root))))"))
+        return json.loads(
+            run_python(
+                self.env,
+                PATH_HELPER
+                + f"\nimport json\nprint(json.dumps(str(resolve({candidate!r}).relative_to(root))))",
+            )
+        )
 
     def exists(self, path):
         path = self.resolve(path)
         if hasattr(self.env, "files"):
             return path in self.env.files
-        return json.loads(run_python(self.env, PATH_HELPER + f"\nimport json\nprint(json.dumps(resolve({path!r}).exists()))"))
+        return json.loads(
+            run_python(
+                self.env,
+                PATH_HELPER + f"\nimport json\nprint(json.dumps(resolve({path!r}).exists()))",
+            )
+        )
 
     def read(self, path):
         path = self.resolve(path)
         if hasattr(self.env, "files"):
             return self.env.files[path]
-        return json.loads(run_python(self.env, PATH_HELPER + f"\nimport json\nprint(json.dumps(resolve({path!r}).read_text(encoding='utf-8')))"))
+        return json.loads(
+            run_python(
+                self.env,
+                PATH_HELPER
+                + f"\nimport json\nprint(json.dumps(resolve({path!r}).read_text(encoding='utf-8')))",
+            )
+        )
 
     def apply(self, updates):
         updates = {self.resolve(p): value for p, value in updates.items()}
@@ -101,7 +121,10 @@ class RepoFiles:
         # restores every file, including adds/deletes/moves. No host paths used.
         payload_path = f"/tmp/repofix_apply_{uuid.uuid4().hex}.json"
         self.env.write_text_file(payload_path, json.dumps(updates))
-        source = PATH_HELPER + f"\npayload_path = Path({payload_path!r})\n" + '''import subprocess, os, json
+        source = (
+            PATH_HELPER
+            + f"\npayload_path = Path({payload_path!r})\n"
+            + """import subprocess, os, json
 try:
     updates = json.loads(payload_path.read_text(encoding='utf-8'))
 finally:
@@ -131,5 +154,6 @@ except BaseException:
     if index_data is None: index_path.unlink(missing_ok=True)
     else: index_path.write_bytes(index_data)
     raise
-'''
+"""
+        )
         run_python(self.env, source)

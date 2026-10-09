@@ -1,199 +1,227 @@
 """V3 tool assembly and observation formatting, independent of model orchestration."""
-import json
+
 import hashlib
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict
 
-from repofix.agent import TOOLS, format_tool_observation, parse_tool_arguments
-from repofix.search import BM25Index, format_search_results
-from .tools.files import grep
+from repofix.core import TOOLS, format_tool_observation, parse_tool_arguments
+from repofix.search import BM25Index
+
+from .hooks import Block, Deny, HookEngine, command_policy, is_validation_command
+from .tools.agents import AgentTools
+from .tools.files import FileTools, grep
+from .tools.plan import update_plan
 from .tools.registry import ToolRegistry, ToolSpec, schema
-
-
-@dataclass
-class ToolResult:
-    content: str
-    exit_code: int | None = None
-    metadata: dict = field(default_factory=dict)
+from .tools.result import ToolResult as ToolResult
+from .tools.search import SearchTools
+from .tools.shell import ShellTools, benign_exit
+from .tools.submit import SubmitTool
+from .workspace import RepoFiles
 
 
 class Runtime:
     def __init__(self, agent, state):
         self.agent, self.state = agent, state
         self.env, self.config = agent.env, agent.config
-        from .workspace import RepoFiles
         self.files = RepoFiles(self.env)
-        from .tools.shell import JobManager
-        self.jobs = JobManager(self.env)
-        from .hooks import HookEngine
-        self.hooks = HookEngine(self.env, self.config, state,
-            pre=agent.python_hooks["PreToolUse"], post=agent.python_hooks["PostToolUse"],
-            submit=agent.python_hooks["PreSubmit"],
-            ask=getattr(agent, "permission_ask", None)) if self.config.hooks_enabled else None
+        self.shell_tools = ShellTools(self.env, self.config)
+        self.jobs = self.shell_tools.jobs
+        self.hooks = (
+            HookEngine(
+                self.env,
+                self.config,
+                state,
+                pre=agent.python_hooks["PreToolUse"],
+                post=agent.python_hooks["PostToolUse"],
+                submit=agent.python_hooks["PreSubmit"],
+                ask=getattr(agent, "permission_ask", None),
+            )
+            if self.config.hooks_enabled
+            else None
+        )
         shared_index = getattr(agent, "shared_code_index", None)
         self.index, self.index_stats = shared_index or BM25Index.from_repository(self.env)
-        handlers = {"bash": self.bash, "view": self.view, "str_replace": self.replace,
-                    "search_code": self.search, "submit": self.submit}
-        self.registry = ToolRegistry(ToolSpec(item["function"]["name"], item,
-            item["function"]["name"] in {"view", "search_code"}, handlers[item["function"]["name"]]) for item in TOOLS)
-        self.registry.add(ToolSpec("grep", schema("grep", "Search repository text; return file and line matches.",
-            {"pattern": {"type": "string"}, "path_glob": {"type": "string"},
-             "max_results": {"type": "integer", "default": 50}}, ["pattern"]), True,
-             lambda args: ToolResult(grep(self.env, **args))))
+        self.file_tools = FileTools(self.files, self.state, self.config)
+        self.search_tools = SearchTools(self.index)
+        self.submit_tool = SubmitTool(self)
+        self.agent_tools = AgentTools(self)
+        handlers = {
+            "bash": self.bash,
+            "view": self.view,
+            "str_replace": self.replace,
+            "search_code": self.search,
+            "submit": self.submit,
+        }
+        self.registry = ToolRegistry(
+            ToolSpec(
+                item["function"]["name"],
+                item,
+                item["function"]["name"] in {"view", "search_code"},
+                handlers[item["function"]["name"]],
+            )
+            for item in TOOLS
+        )
+        self.registry.add(
+            ToolSpec(
+                "grep",
+                schema(
+                    "grep",
+                    "Search repository text; return file and line matches.",
+                    {
+                        "pattern": {"type": "string"},
+                        "path_glob": {"type": "string"},
+                        "max_results": {"type": "integer", "default": 50},
+                    },
+                    ["pattern"],
+                ),
+                True,
+                lambda args: ToolResult(grep(self.env, **args)),
+            )
+        )
         if self.config.apply_patch_enabled:
-            self.registry.add(ToolSpec("apply_patch", schema("apply_patch", "Apply an atomic multi-file text patch in /testbed; Python syntax failures roll back all files.",
-                {"patch": {"type": "string"}}, ["patch"]), False, self.apply_patch))
+            self.registry.add(
+                ToolSpec(
+                    "apply_patch",
+                    schema(
+                        "apply_patch",
+                        "Apply an atomic multi-file text patch in /testbed; "
+                        "Python syntax failures roll back all files.",
+                        {"patch": {"type": "string"}},
+                        ["patch"],
+                    ),
+                    False,
+                    self.apply_patch,
+                )
+            )
         if self.config.plan_tool:
-            from .tools.plan import update_plan
-            self.registry.add(ToolSpec("update_plan", schema("update_plan", "Record task steps; at most one in_progress. This is optional, not a submit gate.",
-                {"steps": {"type": "array", "items": {"type": "object", "properties": {
-                    "step": {"type": "string"}, "status": {"type": "string", "enum": ["pending", "in_progress", "completed"]}},
-                    "required": ["step", "status"], "additionalProperties": False}}}, ["steps"]), False,
-                lambda args: ToolResult(update_plan(self.state, args["steps"]))))
+            self.registry.add(
+                ToolSpec(
+                    "update_plan",
+                    schema(
+                        "update_plan",
+                        "Record task steps; at most one in_progress. This is optional, not a submit gate.",
+                        {
+                            "steps": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "step": {"type": "string"},
+                                        "status": {
+                                            "type": "string",
+                                            "enum": ["pending", "in_progress", "completed"],
+                                        },
+                                    },
+                                    "required": ["step", "status"],
+                                    "additionalProperties": False,
+                                },
+                            }
+                        },
+                        ["steps"],
+                    ),
+                    False,
+                    lambda args: ToolResult(update_plan(self.state, args["steps"])),
+                )
+            )
         if self.config.background_shell:
-            self.registry.specs["bash"] = ToolSpec("bash", schema("bash", "Run a command in /testbed; timeout leaves a background job alive.",
-                {"command": {"type": "string"}, "timeout": {"type": "integer", "default": 120, "maximum": 600},
-                 "run_in_background": {"type": "boolean", "default": False}}, ["command"]), False, self.bash)
-            self.registry.add(ToolSpec("job_output", schema("job_output", "Read background command output and status.",
-                {"job_id": {"type": "string"}, "tail_lines": {"type": "integer", "default": 100}}, ["job_id"]), True, self.job_output))
-            self.registry.add(ToolSpec("job_kill", schema("job_kill", "Stop a background job process group.",
-                {"job_id": {"type": "string"}}, ["job_id"]), False,
-                lambda args: self.shell_result(self.jobs.kill(args["job_id"]))))
+            self.registry.specs["bash"] = ToolSpec(
+                "bash",
+                schema(
+                    "bash",
+                    "Run a command in /testbed; timeout leaves a background job alive.",
+                    {
+                        "command": {"type": "string"},
+                        "timeout": {"type": "integer", "default": 120, "maximum": 600},
+                        "run_in_background": {"type": "boolean", "default": False},
+                    },
+                    ["command"],
+                ),
+                False,
+                self.bash,
+            )
+            self.registry.add(
+                ToolSpec(
+                    "job_output",
+                    schema(
+                        "job_output",
+                        "Read background command output and status.",
+                        {
+                            "job_id": {"type": "string"},
+                            "tail_lines": {"type": "integer", "default": 100},
+                        },
+                        ["job_id"],
+                    ),
+                    True,
+                    self.job_output,
+                )
+            )
+            self.registry.add(
+                ToolSpec(
+                    "job_kill",
+                    schema(
+                        "job_kill",
+                        "Stop a background job process group.",
+                        {"job_id": {"type": "string"}},
+                        ["job_id"],
+                    ),
+                    False,
+                    lambda args: self.shell_result(self.jobs.kill(args["job_id"])),
+                )
+            )
         if state.depth == 0 and self.config.subagents in {"explore", "both"}:
-            self.registry.add(ToolSpec("explore", schema("explore", "Delegate read-only exploration; only a bounded summary returns.",
-                {"question": {"type": "string"}, "thoroughness": {"type": "string", "enum": ["quick", "medium", "thorough"]}}, ["question"]), True, self.explore))
+            self.registry.add(
+                ToolSpec(
+                    "explore",
+                    schema(
+                        "explore",
+                        "Delegate read-only exploration; only a bounded summary returns.",
+                        {
+                            "question": {"type": "string"},
+                            "thoroughness": {
+                                "type": "string",
+                                "enum": ["quick", "medium", "thorough"],
+                            },
+                        },
+                        ["question"],
+                    ),
+                    True,
+                    self.explore,
+                )
+            )
         if state.depth == 0 and self.config.subagents in {"verify", "both"}:
-            self.registry.add(ToolSpec("verify", schema("verify", "Independently run relevant tests; workspace edits are restored.",
-                {"focus": {"type": "string"}}), False, self.verify))
+            self.registry.add(
+                ToolSpec(
+                    "verify",
+                    schema(
+                        "verify",
+                        "Independently run relevant tests; workspace edits are restored.",
+                        {"focus": {"type": "string"}},
+                    ),
+                    False,
+                    self.verify,
+                )
+            )
         if hasattr(agent, "subagent_mode"):
-            props = ({"summary": {"type": "string", "maxLength": 1500}} if agent.subagent_mode == "explore" else
-                     {"verdict": {"type": "string", "enum": ["PASS", "FAIL"]}, "evidence": {"type": "string"}})
-            self.registry.add(ToolSpec("report", schema("report", "Return the final child report.", props, props), False, self.report))
+            props = (
+                {"summary": {"type": "string", "maxLength": 1500}}
+                if agent.subagent_mode == "explore"
+                else {
+                    "verdict": {"type": "string", "enum": ["PASS", "FAIL"]},
+                    "evidence": {"type": "string"},
+                }
+            )
+            self.registry.add(
+                ToolSpec(
+                    "report",
+                    schema("report", "Return the final child report.", props, props),
+                    False,
+                    self.report,
+                )
+            )
         if hasattr(agent, "allowed_tools"):
-            self.registry = ToolRegistry(s for name, s in self.registry.specs.items() if name in agent.allowed_tools)
-
-    def bash(self, args):
-        from .tools.shell import foreground
-        command, timeout = args["command"], args.get("timeout", 120)
-        if not isinstance(command, str) or not command.strip() or type(timeout) is not int or not 1 <= timeout <= 600:
-            raise ValueError("command required; timeout must be an integer in 1..600")
-        if self.config.background_shell:
-            job_id = self.jobs.start(command)
-            data = self.jobs.output(job_id) if args.get("run_in_background", False) else self.jobs.wait(job_id, timeout)
-        else:
-            data = foreground(self.env, command, timeout)
-        return self.shell_result(data)
-
-    @staticmethod
-    def shell_result(data):
-        return ToolResult(data["output"], data["exit_code"], {"shell": True, **{k: v for k, v in data.items() if k != "output"}})
-
-    def job_output(self, args):
-        return self.shell_result(self.jobs.output(args["job_id"], args.get("tail_lines", 100)))
-
-    def view(self, args):
-        import hashlib
-        from repofix.env import DockerEnv
-        path = self.files.resolve(args["path"])
-        text = self.files.read(path)
-        start, end = args["start_line"], args["end_line"]
-        if type(start) is not int or type(end) is not int:
-            raise ValueError("line bounds must be integers")
-        content = f"/testbed/{path}\n" + DockerEnv._numbered_lines(text, start, end)
-        self.state.file_reads[path] = hashlib.sha256(text.encode()).hexdigest()
-        return ToolResult(content)
-
-    def read_guard(self, path, content):
-        import hashlib
-        if self.config.read_before_edit and self.state.file_reads.get(path) != hashlib.sha256(content.encode()).hexdigest():
-            raise ValueError(f"view {path} before editing: never read or content changed since view")
-
-    def replace(self, args):
-        path = self.files.resolve(args["path"])
-        original = self.files.read(path)
-        self.read_guard(path, original)
-        old, new = args["old_str"], args["new_str"]
-        if not isinstance(old, str) or not isinstance(new, str) or not old or original.count(old) != 1:
-            raise ValueError("old_str must be nonempty and occur exactly once; strings required")
-        updated = original.replace(old, new, 1)
-        try:
-            self.files.apply({path: updated})
-        except (SyntaxError, RuntimeError) as exc:
-            return ToolResult(f"str_replace syntax check failed; original restored: {exc}",
-                              metadata={"str_replace_failures": 1, "syntax_rollbacks": 1})
-        lines = updated.splitlines()
-        self.refresh_reads({path: updated})
-        line = updated[:updated.index(new)].count("\n") if new and new in updated else 0
-        context = "\n".join(f"{i + 1}: {lines[i]}" for i in range(max(0, line - 2), min(len(lines), line + new.count("\n") + 3)))
-        return ToolResult(f"Replacement successful: {path}\n{context}")
-
-    def refresh_reads(self, updates):
-        for path, content in updates.items():
-            if content is None:
-                self.state.file_reads.pop(path, None)
-            else:
-                self.state.file_reads[path] = hashlib.sha256(content.encode()).hexdigest()
-
-    def apply_patch(self, args):
-        from .tools.patch import prepare_patch
-        updates = prepare_patch(args["patch"], self.files, self.read_guard)
-        try:
-            self.files.apply(updates)
-        except (SyntaxError, RuntimeError) as exc:
-            return ToolResult(f"apply_patch failed; all files restored: {exc}", metadata={"syntax_rollbacks": 1, "error": True})
-        self.refresh_reads(updates)
-        return ToolResult("Patch applied:\n" + "\n".join(updates))
-
-    def search(self, args):
-        query, top_k = args.get("query"), args.get("top_k", 5)
-        if not isinstance(query, str) or not query.strip() or type(top_k) is not int or not 1 <= top_k <= 20:
-            raise ValueError("query must be nonempty and top_k must be in 1..20")
-        return ToolResult(format_search_results(self.index.search(query, top_k=top_k)))
-
-    def submit(self, args):
-        if self.config.verify_on_submit and self.config.subagents in {"verify", "both"} and self.state.depth == 0:
-            from .subagent import run_subagent
-            rounds = self.state.metadata.get("verify_submit_rounds", 0)
-            if rounds < 2:
-                self.state.metadata["verify_submit_rounds"] = rounds + 1
-                verified = run_subagent(self, "verify", "Check the final patch before submission.")
-                if verified["verdict"] == "FAIL":
-                    self.state.count("hook_blocks")
-                    return ToolResult(json.dumps(verified), metadata={"hook_blocked": True})
-                self.state.last_validation = {"command": "verify subagent", "output": verified["evidence"], "exit_code": 0}
-                self.state.last_validation_version = self.state.workspace_version
-            else:
-                self.state.metadata["submit_forced"] = True
-                self.state.submit_blocks = 3
-        if self.hooks:
-            from .hooks import Block, Deny
-            decision = self.hooks.pre_submit()
-            if isinstance(decision, (Block, Deny)):
-                return ToolResult(decision.reason, metadata={"hook_blocked": True})
-        self.state.submitted = True
-        self.state.termination = "submit_forced" if self.state.metadata.get("submit_forced") else "submitted"
-        return ToolResult("Submission accepted.")
-
-    def explore(self, args):
-        from .subagent import run_subagent
-        return ToolResult(run_subagent(self, "explore", args["question"], args.get("thoroughness", "medium")))
-
-    def verify(self, args):
-        from .subagent import run_subagent
-        return ToolResult(json.dumps(run_subagent(self, "verify", args.get("focus", "Check the current diff.")), ensure_ascii=False))
-
-    def report(self, args):
-        if self.agent.subagent_mode == "explore":
-            if not isinstance(args.get("summary"), str) or len(args["summary"]) > 1500:
-                raise ValueError("summary must be text <= 1500 characters")
-            self.state.metadata["report"] = args["summary"]
-        else:
-            if args.get("verdict") not in {"PASS", "FAIL"} or not isinstance(args.get("evidence"), str):
-                raise ValueError("report requires PASS/FAIL and evidence")
-            self.state.metadata["report"] = args
-        self.state.submitted = True
-        self.state.termination = "submitted"
-        return ToolResult("Report accepted.")
+            self.registry = ToolRegistry(
+                s for name, s in self.registry.specs.items() if name in agent.allowed_tools
+            )
 
     def execute(self, call):
         started = time.monotonic()
@@ -203,23 +231,28 @@ class Runtime:
                 raise ValueError(error)
             hooked = {**call, "args": args}
             if not self.hooks and self.config.permissions_enabled:
-                from .hooks import command_policy, Deny
-                decision = command_policy(hooked, self.state, self.config, getattr(self.agent, "permission_ask", None))
+                decision = command_policy(
+                    hooked, self.state, self.config, getattr(self.agent, "permission_ask", None)
+                )
                 if isinstance(decision, Deny):
                     return ToolResult(decision.reason, metadata={"permission_denied": True})
             if self.hooks:
-                from .hooks import Block, Deny
                 decision = self.hooks.pre(hooked)
                 if isinstance(decision, (Block, Deny)):
                     return ToolResult(decision.reason, metadata={"hook_blocked": True})
                 before = self.hooks.before()
             result = self.registry.execute(call["name"], hooked["args"])
             if getattr(self.agent, "subagent_mode", None) == "verify" and call["name"] == "bash":
-                from .hooks import is_validation_command
-                self.state.metadata.setdefault("verification_commands", []).append({
-                    "command": hooked["args"]["command"], "exit_code": result.exit_code,
-                    "verification": is_validation_command(hooked["args"]["command"], self.config.verification_patterns),
-                    "output": result.content})
+                self.state.metadata.setdefault("verification_commands", []).append(
+                    {
+                        "command": hooked["args"]["command"],
+                        "exit_code": result.exit_code,
+                        "verification": is_validation_command(
+                            hooked["args"]["command"], self.config.verification_patterns
+                        ),
+                        "output": result.content,
+                    }
+                )
             if self.hooks:
                 result = self.hooks.post(hooked, result, before)
         except Exception as exc:
@@ -229,25 +262,67 @@ class Runtime:
         path = None
         if len(result.content) > self.config.tool_output_max_chars:
             # Call IDs are provider-controlled. Never use them as filesystem paths.
-            import hashlib
             key = hashlib.sha256(call["id"].encode()).hexdigest()[:16]
             path = f"/tmp/repofix_out_{self.state.step}_{key}.txt"
             self.env.write_text_file(path, result.content)
-        observation = format_tool_observation(result.content, "", path,
-            self.config.tool_output_max_chars, self.config.tool_output_head_chars,
-            self.config.tool_output_tail_chars)
+        observation = format_tool_observation(
+            result.content,
+            "",
+            path,
+            self.config.tool_output_max_chars,
+            self.config.tool_output_head_chars,
+            self.config.tool_output_tail_chars,
+        )
         result.content = observation.content
         if result.metadata.get("shell"):
-            from .tools.shell import benign_exit
             if result.metadata.get("still_running"):
                 header = f"still running: job_id={result.metadata['job_id']}"
             else:
-                header = f"exit_code: {result.exit_code} | duration: {result.metadata.get('duration', 0):.3f}s | truncated: {'yes' if observation.truncated else 'no'}"
+                header = (
+                    f"exit_code: {result.exit_code} | "
+                    f"duration: {result.metadata.get('duration', 0):.3f}s | "
+                    f"truncated: {'yes' if observation.truncated else 'no'}"
+                )
                 if benign_exit(result.metadata.get("command", ""), result.exit_code):
                     header += " | benign_exit"
                     result.metadata["benign_exit"] = True
             result.content = header + "\n" + result.content
-        result.metadata.update({key: value for key, value in asdict(observation).items() if key != "content"})
+        result.metadata.update(
+            {key: value for key, value in asdict(observation).items() if key != "content"}
+        )
         result.metadata["duration_seconds"] = time.monotonic() - started
         result.metadata["returned_chars"] = len(result.content)
         return result
+
+    def bash(self, args):
+        return self.shell_tools.bash(args)
+
+    def shell_result(self, args):
+        return self.shell_tools.shell_result(args)
+
+    def job_output(self, args):
+        return self.shell_tools.job_output(args)
+
+    def view(self, args):
+        return self.file_tools.view(args)
+
+    def replace(self, args):
+        return self.file_tools.replace(args)
+
+    def apply_patch(self, args):
+        return self.file_tools.apply_patch(args)
+
+    def search(self, args):
+        return self.search_tools.search(args)
+
+    def submit(self, args):
+        return self.submit_tool.submit(args)
+
+    def explore(self, args):
+        return self.agent_tools.explore(args)
+
+    def verify(self, args):
+        return self.agent_tools.verify(args)
+
+    def report(self, args):
+        return self.agent_tools.report(args)

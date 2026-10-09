@@ -1,10 +1,12 @@
 """Generate feature specs using real Git history and an injectable evaluator."""
+
+import re
 import subprocess
 import tempfile
-import re
 from pathlib import Path
 
 from repofix.reproduction import is_test_path
+
 from .spec import TaskSpec
 
 
@@ -17,7 +19,9 @@ def build_task(entry, evaluator):
     required = ("id", "repo_url", "base_commit", "merged_commit", "description")
     if any(not entry.get(key) for key in required):
         raise ValueError("seed needs " + ", ".join(required))
-    if any(not re.fullmatch(r"[0-9a-fA-F]{40}", entry[key]) for key in ("base_commit", "merged_commit")):
+    if any(
+        not re.fullmatch(r"[0-9a-fA-F]{40}", entry[key]) for key in ("base_commit", "merged_commit")
+    ):
         raise ValueError("seed commits must be actual full Git SHAs; replace all placeholders")
     with tempfile.TemporaryDirectory(prefix="repofix-feature-") as directory:
         repo = Path(directory) / "repository"
@@ -37,12 +41,25 @@ def build_task(entry, evaluator):
         git(repo, "reset", "--hard", merged)
         git(repo, "clean", "-fd")
         git(repo, "checkout", "--detach", "--quiet", base)
-        subprocess.run(["git", "-C", str(repo), "apply", "--binary", "-"], input=patch, text=True, check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "apply", "--binary", "-"], input=patch, text=True, check=True
+        )
         git(repo, "add", "--", *tests)
         before = evaluator(repo, entry.get("setup_commands", []), list(after))
-        f2p = sorted(node for node, passed in after.items() if passed and not before.get(node, False))
+        f2p = sorted(
+            node for node, passed in after.items() if passed and not before.get(node, False)
+        )
         p2p = sorted(node for node, passed in after.items() if passed and before.get(node, False))
         if not f2p:
             raise ValueError("no fail-to-pass cases found")
-        return TaskSpec(entry["id"], "feature", entry["repo_url"], base,
-                        entry["description"], patch, f2p, p2p, entry.get("setup_commands", []))
+        return TaskSpec(
+            entry["id"],
+            "feature",
+            entry["repo_url"],
+            base,
+            entry["description"],
+            patch,
+            f2p,
+            p2p,
+            entry.get("setup_commands", []),
+        )

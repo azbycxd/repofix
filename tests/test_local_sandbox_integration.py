@@ -3,8 +3,9 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
-import pytest
 from pathlib import Path
+
+import pytest
 
 from repofix.env import DockerEnv
 from repofix.python_sandbox import PythonSandboxImage
@@ -36,12 +37,10 @@ version = "0.0.0"
             )
 
             with PythonSandboxImage(repository, "integration-test") as build:
-                with DockerEnv(
-                    "sandbox-fixture", build.image, "integration-test"
-                ) as env:
+                with DockerEnv("sandbox-fixture", build.image, "integration-test") as env:
                     result = env.execute(
                         "cd /tmp && pwd && python --version && "
-                        "python -c \"import sandbox_fixture; print(sandbox_fixture.VALUE)\""
+                        'python -c "import sandbox_fixture; print(sandbox_fixture.VALUE)"'
                     )
                     edit = env.str_replace_file(
                         "/testbed/sandbox_fixture.py",
@@ -49,8 +48,8 @@ version = "0.0.0"
                         "VALUE = 'edited'",
                     )
                     edited_result = env.execute(
-                        "cd /tmp && python -c \"import sandbox_fixture; "
-                        "print(sandbox_fixture.VALUE)\""
+                        'cd /tmp && python -c "import sandbox_fixture; '
+                        'print(sandbox_fixture.VALUE)"'
                     )
                     assert env.container is not None
                     env.container.reload()

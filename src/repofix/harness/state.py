@@ -1,4 +1,5 @@
 """Serializable state shared by the loop and optional harness mechanisms."""
+
 from dataclasses import dataclass, field
 
 
@@ -33,7 +34,3 @@ class RunState:
 
     def count(self, name, amount=1):
         self.counters[name] = self.counters.get(name, 0) + amount
-
-
-class LegacyState:
-    """Internal v1 locals container. V1 does not checkpoint or compact."""

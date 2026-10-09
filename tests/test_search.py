@@ -14,10 +14,7 @@ class BM25SearchTests(unittest.TestCase):
                     "    def resolve_lookup(self, lookup):\n"
                     "        return lookup.resolve()\n"
                 ),
-                "pkg/cache.py": (
-                    "def clear_cache(cache):\n"
-                    "    cache.clear()\n"
-                ),
+                "pkg/cache.py": ("def clear_cache(cache):\n    cache.clear()\n"),
                 "web/widget.js": "function renderWidget() { return 'widget'; }\n",
                 "docs/guide.txt": "resolve lookup documentation\n",
             }
@@ -33,9 +30,7 @@ class BM25SearchTests(unittest.TestCase):
 
         self.assertEqual(results[0].chunk.file_path, "pkg/query.py")
         method = next(
-            result
-            for result in results
-            if result.chunk.symbol == "QueryCompiler.resolve_lookup"
+            result for result in results if result.chunk.symbol == "QueryCompiler.resolve_lookup"
         )
         self.assertEqual(method.chunk.chunk_type, "class_method")
         self.assertEqual((method.chunk.start_line, method.chunk.end_line), (2, 3))

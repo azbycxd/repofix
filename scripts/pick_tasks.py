@@ -12,7 +12,6 @@ from datasets.utils.logging import disable_progress_bar, set_verbosity_error
 from huggingface_hub.utils.logging import set_verbosity_error as set_hub_verbosity_error
 from unidiff import PatchSet
 
-
 DATASET = "SWE-bench/SWE-bench_Verified"
 SPLIT = "test"
 RANDOM_SEED = 20260928
@@ -33,9 +32,7 @@ def main() -> None:
     set_hub_verbosity_error()
     disable_progress_bar()
     rows = load_dataset(DATASET, split=SPLIT)
-    candidate_ids = sorted(
-        row["instance_id"] for row in rows if is_single_file_django_task(row)
-    )
+    candidate_ids = sorted(row["instance_id"] for row in rows if is_single_file_django_task(row))
     chosen = random.Random(RANDOM_SEED).sample(candidate_ids, 8)
 
     (PROJECT_ROOT / "tasks.txt").write_text(

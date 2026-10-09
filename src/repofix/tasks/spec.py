@@ -1,6 +1,11 @@
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
 import json
 import re
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -31,15 +36,22 @@ class TaskSpec:
             raise ValueError("hidden_test_patch must be text")
         for name in ("fail_to_pass", "pass_to_pass", "setup_commands"):
             value = getattr(self, name)
-            if not isinstance(value, list) or any(not isinstance(v, str) or not v.strip() for v in value):
+            if not isinstance(value, list) or any(
+                not isinstance(v, str) or not v.strip() for v in value
+            ):
                 raise ValueError(f"{name} must be a list of nonempty strings")
         if set(self.fail_to_pass) & set(self.pass_to_pass):
             raise ValueError("fail_to_pass and pass_to_pass overlap")
 
     def public_task(self):
         # This is the only task payload supplied to an Agent.
-        return {"id": self.id, "kind": self.kind, "repo_url": self.repo_url,
-                "base_commit": self.base_commit, "prompt": self.prompt}
+        return {
+            "id": self.id,
+            "kind": self.kind,
+            "repo_url": self.repo_url,
+            "base_commit": self.base_commit,
+            "prompt": self.prompt,
+        }
 
 
 def load_document(path):
@@ -48,10 +60,8 @@ def load_document(path):
         return json.loads(text)
     except ValueError:
         # PyYAML is already an installed SWE-bench dependency, not a V3 addition.
-        try:
-            import yaml
-        except ImportError as exc:
-            raise ValueError("YAML input needs the existing SWE-bench dependencies; JSON is also accepted") from exc
+        if yaml is None:
+            raise ValueError("YAML input requires PyYAML; JSON is also accepted")
         return yaml.safe_load(text)
 
 

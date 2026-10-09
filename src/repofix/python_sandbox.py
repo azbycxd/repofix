@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import re
 import json
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import docker
-
 
 PYTHON_BASE_IMAGE = "python:3.12-slim"
 PYTEST_VERSION = "8.3.5"
@@ -24,13 +23,8 @@ def dependency_install_commands(repository: Path) -> tuple[str, ...]:
         f"python -m pip install --no-cache-dir pytest=={PYTEST_VERSION}",
     ]
     if (repository / "requirements.txt").is_file():
-        commands.append(
-            "python -m pip install --no-cache-dir -r requirements.txt"
-        )
-    if any(
-        (repository / name).is_file()
-        for name in ("pyproject.toml", "setup.py", "setup.cfg")
-    ):
+        commands.append("python -m pip install --no-cache-dir -r requirements.txt")
+    if any((repository / name).is_file() for name in ("pyproject.toml", "setup.py", "setup.cfg")):
         commands.append("python -m pip install --no-cache-dir -e .")
     return tuple(commands)
 
@@ -39,7 +33,9 @@ def render_dockerfile(repository: Path, setup_commands=()) -> tuple[str, tuple[s
     install_commands = dependency_install_commands(repository)
     install_layers = "\n".join(f"RUN {command}" for command in install_commands)
     if setup_commands:
-        install_layers += "\n" + "\n".join("RUN " + json.dumps(["bash", "-lc", command]) for command in setup_commands)
+        install_layers += "\n" + "\n".join(
+            "RUN " + json.dumps(["bash", "-lc", command]) for command in setup_commands
+        )
     dockerfile = f"""FROM {PYTHON_BASE_IMAGE}
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
 RUN apt-get update \\
@@ -78,9 +74,7 @@ class PythonSandboxImage:
     def __enter__(self) -> SandboxBuild:
         dockerfile_path = self.repository / ".repofix.Dockerfile"
         if dockerfile_path.exists():
-            raise PythonSandboxError(
-                "temporary worktree already contains .repofix.Dockerfile"
-            )
+            raise PythonSandboxError("temporary worktree already contains .repofix.Dockerfile")
         dockerfile, install_commands = render_dockerfile(self.repository, self.setup_commands)
         dockerfile_path.write_text(dockerfile, encoding="utf-8")
         started = time.monotonic()
