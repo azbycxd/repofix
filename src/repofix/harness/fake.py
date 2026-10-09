@@ -39,6 +39,11 @@ class FakeEnv:
             raise value
         if value is not None:
             return value if isinstance(value, ExecutionResult) else ExecutionResult(*value)
+        if command.startswith("git apply "):
+            import shlex
+            patch = self.output_files.get(shlex.split(command)[-1], "")
+            if patch.startswith("diff --git "):
+                self.apply_unified_patch(patch)
         if command.startswith("python -m py_compile "):
             import shlex
             try:
@@ -47,6 +52,32 @@ class FakeEnv:
             except (SyntaxError, KeyError) as exc:
                 return ExecutionResult(str(exc), 1, False, 0)
         return ExecutionResult("", 0, False, 0)
+
+    def apply_unified_patch(self, patch):
+        """Minimal ordinary text diff application for the offline judge fixture."""
+        import re
+        for section in re.split(r"(?m)(?=^diff --git )", patch):
+            if not section.strip(): continue
+            lines = section.splitlines(True)
+            plus = next(line[6:].strip() for line in lines if line.startswith("+++ b/"))
+            path = self.resolve(plus)
+            original = self.files.get(path, "").splitlines(True)
+            output, cursor, index = [], 0, 0
+            while index < len(lines):
+                line = lines[index]
+                if not line.startswith("@@"):
+                    index += 1; continue
+                match = re.match(r"@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@", line)
+                if not match: raise ValueError("invalid fixture hunk")
+                start = max(0, int(match[1]) - 1)
+                output.extend(original[cursor:start]); cursor = start; index += 1
+                while index < len(lines) and not lines[index].startswith("@@"):
+                    value = lines[index]; index += 1
+                    if value.startswith((" ", "-")):
+                        if cursor >= len(original) or original[cursor] != value[1:]: raise ValueError("fixture context mismatch")
+                        cursor += 1
+                    if value.startswith((" ", "+")): output.append(value[1:])
+            output.extend(original[cursor:]); self.files[path] = "".join(output)
 
     def read_repository_text_files(self, max_file_bytes=1_000_000):
         return dict(self.files)

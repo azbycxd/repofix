@@ -11,14 +11,16 @@ from .judge import run_test
 
 
 @contextmanager
-def task_environment(task):
+def task_environment(task, config=None):
     with tempfile.TemporaryDirectory(prefix="repofix-task-") as directory:
         repo = Path(directory) / "repository"
         subprocess.run(["git", "clone", "--quiet", "--", task.repo_url, str(repo)], check=True)
         subprocess.run(["git", "-C", str(repo), "checkout", "--detach", "--quiet", task.base_commit], check=True)
         run_id = "task-" + uuid.uuid4().hex[:12]
         with PythonSandboxImage(repo, run_id, setup_commands=task.setup_commands) as build:
-            with DockerEnv(task.id, build.image, run_id, sandbox_hardening=True) as env:
+            with DockerEnv(task.id, build.image, run_id,
+                           sandbox_hardening=getattr(config, "sandbox_hardening", True),
+                           sandbox_user=getattr(config, "sandbox_user", None)) as env:
                 yield env
 
 

@@ -147,3 +147,15 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   pytest offline; FakeEnv covers judge logic and public/hidden separation.
 - Default judge is pytest-node based; other test runners are a documented future
   adapter. YAML uses existing SWE-bench PyYAML; JSON works without it.
+
+### M11 — complete
+
+- Sequential experiment variants v1/v3-single/v3-multi/v3-nocompact, repeats,
+  per-run JSONL metrics/artifacts, judge results and Markdown report/matrix.
+- Fake mode never constructs Docker/provider clients; it runs scripted root and
+  child loops, applies saved patches to a fresh FakeEnv and judges the outcome.
+- Tests: 75 passed, 2 Docker skips; full four-variant fake pipeline, actual patch
+  application, child adoption, report aggregation and pre-run HOLDOUT rejection.
+- Fake reports are prominently labeled and cannot be mistaken for model scores.
+  v1 feature comparisons intentionally use the frozen bugfix prompt with the
+  public feature description; only V3 receives the feature workflow prompt.

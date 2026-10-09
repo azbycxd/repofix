@@ -1,0 +1,13 @@
+[
+  {
+    "id": "offline-example",
+    "kind": "bugfix",
+    "repo_url": "https://example.invalid/not-a-real-repository.git",
+    "base_commit": "0000000000000000000000000000000000000000",
+    "prompt": "The numeric value is one, but the contract requires two. Correct the behavior and test it.",
+    "hidden_test_patch": "",
+    "fail_to_pass": ["tests/test_example.py::test_value"],
+    "pass_to_pass": [],
+    "setup_commands": []
+  }
+]
