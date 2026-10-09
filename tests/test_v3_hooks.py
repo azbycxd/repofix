@@ -65,3 +65,11 @@ def test_rewrite_cannot_bypass_policy_and_echo_is_not_verification():
     assert isinstance(h.pre({"name": "bash", "args": {"command": "echo safe"}}), Deny)
     assert not is_validation_command("echo 'pytest'")
     assert is_validation_command("cd /testbed && python -m pytest")
+
+
+def test_post_hook_failure_preserves_tool_result():
+    env = FakeEnv()
+    hook = ExternalHook([sys.executable, "-c", "import sys; sys.stderr.write('broken hook'); sys.exit(1)"])
+    h = HookEngine(env, HarnessConfig.for_profile("v3"), RunState(), post=[hook])
+    result = h.post({"name": "bash"}, ToolResult("actual command output"), h.before())
+    assert "actual command output" in result.content and "broken hook" in result.content

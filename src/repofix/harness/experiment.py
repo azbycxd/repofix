@@ -92,6 +92,10 @@ def run_experiment(tasks_path, variants, repeats, output, fake=False, api_key=""
                     with environment as env:
                         agent = RepoFixAgent(env, task.prompt, run_dir / "trajectory.jsonl", api_key,
                                              commit, config, client)
+                        if not fake:
+                            agent.resume_metadata = {"kind": "task", "repo_url": task.repo_url,
+                                "base_commit": task.base_commit, "instance_id": task.id,
+                                "setup_commands": task.setup_commands}
                         if fake:
                             agent.subagent_client_factory = fake_child
                         result = agent.run()

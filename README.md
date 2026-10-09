@@ -92,3 +92,116 @@ Issue 原文：
 
 第一次 artifact 保存在 `dev_artifacts/demos/step-3-1-colorama/`，修正版保存在
 `dev_artifacts/demos/step-3-1-colorama-editable/`。
+
+## V3：可配置的仓库任务 Harness
+
+V3 在独立 `v3` 分支开发。上述 V1/V2/最终评测记录保留原样；本轮仅完成离线
+实现和 FakeModel/FakeEnv 验证，没有产生新的真实模型结果或运行 HOLDOUT。
+默认 profile 仍为 `v1`，其金标准覆盖冻结 prompt、五个工具、回填和统计。
+
+```bash
+source /home/jiusi/venvs/repofix/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m pip install -e .
+pytest -q
+
+# 以下真实 CLI 命令需自行提供有效 key、Docker 和可信本地仓库。
+repofix --repo /path/to/repo --issue "bug description" --profile v1
+repofix --repo /path/to/repo --task "feature description" --kind feature --profile v3
+repofix --repo /path/to/repo --task "feature description" --kind feature \
+  --profile v3 --config /path/to/v3-overrides.json
+```
+
+`--issue` 与 `--task` 是同一参数的别名。V3 在原五工具上增加 grep、可选
+apply_patch、update_plan、后台 bash/job_output/job_kill，以及显式启用的
+explore/verify 子 Agent。已有文件编辑需要先 view；所有补丁文件先匹配，
+Python 语法检查失败时整批回滚。新增文件可以进入 production patch。
+
+上下文先遮蔽旧工具输出，必要时才做摘要；计划、真实改动和验证结果重新注入。
+每步 checkpoint 保存预算、消息和工作区。每个机制可以在 JSON config 单独
+关闭，完整默认值与限制见 [V3_CONFIG.md](V3_CONFIG.md)，设计见
+[DESIGN.md](DESIGN.md)，实施日志见 [PROGRESS.md](PROGRESS.md)。
+
+### 离线实验与报告
+
+```bash
+python scripts/run_experiment.py --tasks tasks/fake_tasks.json \
+  --variants v1,v3-single,v3-multi,v3-nocompact --repeats 1 \
+  --out .cache/v3-example --fake
+python scripts/report.py --input .cache/v3-example/results.jsonl \
+  --out .cache/v3-example/report.md
+```
+
+Fake 报告显式标记为程序通路验证，不能解释为真实任务表现。输出目录必须为空，
+不会覆盖已有 run。真实 custom-task 实验使用审阅过的 TaskSpec 文件并去掉
+`--fake`；脚本在任何运行之前拒绝 `holdout.txt` 中的 ID。v1 对 feature 的
+对照仍使用冻结 bugfix 提示；V3 才使用 feature 工作流。
+
+```bash
+# 填写真实 PR/commit 后由用户执行；会联网 clone 和 build，不调用模型。
+python scripts/build_feature_tasks.py --input tasks/feature_seed.yaml \
+  --out /path/to/reviewed-tasks.json --execute
+```
+
+seed 中两项都是明确占位示例。Builder 从真实 commit 差异提取隐藏测试并
+验证前后结果；生成后必须人工检查公开描述不泄漏实现。Judge 使用全新容器，
+只应用 production patch 和隐藏测试，要求 F2P/P2P 全通过；隐藏 patch 不进入
+Agent 消息。当前 custom-task 判分适配 pytest node IDs。
+
+### 续跑
+
+```bash
+repofix resume /path/to/run-directory
+python scripts/run_agent.py --resume /path/to/run-directory
+```
+
+从最近完整 checkpoint 重新创建隔离容器并恢复文件/预算；未完成工具回填
+interrupted，不重放副作用。损坏的最新记录回退到上一步。CLI 本地仓库必须
+仍在原 HEAD；V3 SWE runner 每题的 run directory 是独立子目录。后台进程
+不会跨容器续跑。尚未执行真实 Docker 续跑验证。
+
+### 权限规则与 Hooks
+
+`--permissions-file /path/to/rules.toml` 示例：
+
+```toml
+default = "allow"
+[[rules]]
+decision = "deny"
+prefix = "git push"
+[[rules]]
+decision = "ask"
+prefix = "pip install"
+[[rules]]
+decision = "allow"
+prefix = "pytest"
+```
+
+评测时 ask 视为 deny；交互 CLI 才询问。规则按 shell 段落处理，但不是完整
+shell 安全分析；安全边界仍是断网 Docker。V3 默认限制 capabilities、PID、
+内存和 CPU，非 root 模式默认关闭且仍需集成验证。
+
+`--hooks-file /path/to/hooks.json` 配置可信宿主 argv 命令：
+
+```json
+{
+  "PreToolUse": [{"command": ["python", "/path/to/policy_hook.py"], "timeout": 30}],
+  "PostToolUse": [],
+  "PreSubmit": []
+}
+```
+
+stdin 是 JSON（event/call/state/result）。exit 0 放行；exit 2 将 stderr
+作为理由回给模型。PreToolUse stdout 可为 `{"rewrite": {"command": "..."}}`，
+PostToolUse stdout 可为 `{"content": "..."}`。其它错误保守拒绝并记录。
+程序内也可给 HookEngine 注册 Python callable。外部 hook 是可信宿主代码，
+不运行在 Agent 的断网容器中。
+
+必要 Docker 测试需显式执行，默认测试不联网：
+
+```bash
+pytest -q --docker tests/test_v3_shell.py
+REPOFIX_DOCKER_INTEGRATION=1 pytest -q --docker tests/test_local_sandbox_integration.py
+```
+
+所有新结果写到用户指定的运行目录；不会改写历史 `dev_artifacts/`。

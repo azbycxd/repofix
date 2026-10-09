@@ -27,7 +27,14 @@ def resume_run(run_dir, api_key):
         raise ValueError("trajectory must be inside the run directory")
     run_id = "resume-" + uuid.uuid4().hex[:12]
     with ExitStack() as stack:
-        if manifest["kind"] == "local":
+        env = None
+        if manifest["kind"] == "task":
+            from repofix.tasks.spec import TaskSpec
+            from repofix.tasks.docker import task_environment
+            task = TaskSpec(manifest["instance_id"], config.task_kind, manifest["repo_url"],
+                manifest["base_commit"], manifest["issue"], setup_commands=manifest.get("setup_commands", []))
+            env = stack.enter_context(task_environment(task, config))
+        elif manifest["kind"] == "local":
             repo = Path(manifest["repository"])
             if inspect_repository(repo).head != manifest["base_commit"]:
                 raise ValueError("source HEAD changed since checkpoint; restore the original revision first")
@@ -36,8 +43,9 @@ def resume_run(run_dir, api_key):
             image, instance_id = build.image, repo.name
         else:
             image, instance_id = manifest["image"], manifest["instance_id"]
-        env = stack.enter_context(DockerEnv(instance_id, image, run_id,
-            sandbox_hardening=config.sandbox_hardening, sandbox_user=config.sandbox_user))
+        if env is None:
+            env = stack.enter_context(DockerEnv(instance_id, image, run_id,
+                sandbox_hardening=config.sandbox_hardening, sandbox_user=config.sandbox_user))
         state = CheckpointStore(run_dir).resume(env)
         agent = RepoFixAgent(env, manifest["issue"], run_dir / name, api_key, manifest["git_commit"], config)
         agent.state, agent.resume_metadata = state, manifest

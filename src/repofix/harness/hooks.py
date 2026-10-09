@@ -192,7 +192,15 @@ class HookEngine:
                 else:
                     self.state.last_validation_version = -1
             for hook in self.post_hooks:
-                result = hook(call, result, self.state)
+                replacement = hook(call, result, self.state)
+                if isinstance(replacement, (Deny, Block)):
+                    result.content += "\n[PostToolUse error] " + replacement.reason
+                    result.metadata["hook_blocked"] = True
+                elif hasattr(replacement, "content") and hasattr(replacement, "metadata"):
+                    result = replacement
+                else:
+                    result.content += "\n[PostToolUse error] invalid hook result"
+                    result.metadata["hook_blocked"] = True
             self.state.events.append({"type": "hook", "event": "PostToolUse", "tool": call["name"], "decision": "observed"})
             return result
 
@@ -203,6 +211,8 @@ class HookEngine:
         for hook in [*self.submit_hooks, verify_before_submit]:
             blocks_before = self.state.submit_blocks
             decision = hook(self.state)
+            if not isinstance(decision, (Allow, Block, Deny)):
+                decision = Block("invalid PreSubmit hook result")
             if isinstance(decision, (Block, Deny)):
                 if self.state.submit_blocks == blocks_before:
                     self.state.submit_blocks += 1

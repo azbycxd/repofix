@@ -27,6 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--kind", choices=("bugfix", "feature"), default="bugfix")
     parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
     parser.add_argument("--permissions-file")
+    parser.add_argument("--hooks-file")
+    parser.add_argument("--config", type=Path, help="JSON HarnessConfig overrides (no credentials)")
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
     return parser
@@ -60,14 +62,21 @@ def main(argv: list[str] | None = None) -> int:
     run_id = args.run_id or _default_run_id()
     output_dir = args.output_dir or Path.home() / ".repofix" / "runs" / run_id
     try:
+        overrides = json.loads(args.config.read_text()) if args.config else {}
+        if not isinstance(overrides, dict) or "profile" in overrides:
+            raise ValueError("config must be a JSON object without profile; use --profile")
+        overrides.update(evaluation_mode=False, task_kind=args.kind)
+        if args.permissions_file:
+            overrides["permissions_file"] = args.permissions_file
+        if args.hooks_file:
+            overrides["hooks_file"] = args.hooks_file
         outcome = run_local_repository(
             repository=args.repo,
             issue=args.issue,
             output_dir=output_dir,
             api_key=api_key,
             run_id=run_id,
-            config=HarnessConfig.for_profile(args.profile, permissions_file=args.permissions_file,
-                                             evaluation_mode=False, task_kind=args.kind),
+            config=HarnessConfig.for_profile(args.profile, **overrides),
         )
     except Exception as exc:
         safe_error = str(exc).replace(api_key, "[REDACTED]")

@@ -67,7 +67,8 @@ def run_subagent(runtime, mode, question="", thoroughness="medium"):
         return clean_report(report or "No report produced before the child stopped.")
     commands = child_state.metadata.get("verification_commands", [])
     verdict = report.get("verdict", "FAIL") if isinstance(report, dict) else "FAIL"
-    if not commands or not any(item["exit_code"] == 0 and item["verification"] for item in commands):
+    final_checks = {item["command"]: item["exit_code"] for item in commands if item["verification"]}
+    if not final_checks or any(code != 0 for code in final_checks.values()):
         verdict = "FAIL"
     evidence = report.get("evidence", "No final report") if isinstance(report, dict) else "No final report"
     if changed:

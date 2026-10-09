@@ -60,7 +60,9 @@ def restore_workspace(env, snapshot):
             p = Path(m.name)
             if p.is_absolute() or ".." in p.parts or ".git" in p.parts or not m.isfile():
                 raise ValueError("unsafe snapshot member")
-    source = PATH_HELPER + f"\nsnapshot = {snapshot!r}\n" + '''import base64, subprocess, io, tarfile
+    snapshot_path = f"/tmp/repofix_restore_{uuid.uuid4().hex}.json"
+    env.write_text_file(snapshot_path, json.dumps(snapshot))
+    source = PATH_HELPER + f"\nimport json\nsnapshot_file = Path({snapshot_path!r})\nsnapshot = json.loads(snapshot_file.read_text())\nsnapshot_file.unlink()\n" + '''import base64, subprocess, io, tarfile
 archive = tarfile.open(fileobj=io.BytesIO(base64.b64decode(snapshot['untracked_tar'])))
 for member in archive.getmembers(): resolve(member.name)
 # Disposable /testbed only; never execute a host git reset.
@@ -100,6 +102,8 @@ class CheckpointStore:
         for path in sorted(self.directory.glob("step-*.json"), reverse=True):
             try:
                 manifest = json.loads(path.read_text())
+                if manifest.get("version") != 1:
+                    continue
                 name = manifest["workspace"]
                 if Path(name).name != name or not name.startswith("workspace-"):
                     continue
@@ -109,6 +113,10 @@ class CheckpointStore:
                 raw = manifest["state"]
                 raw["budget"] = Budget(**raw["budget"])
                 state = RunState(**raw)
+                if type(state.step) is not int or state.step < 0 or not isinstance(state.messages, list) or not isinstance(state.pending_calls, list):
+                    continue
+                if state.budget.estimated_cost < 0 or state.budget.prompt_tokens < 0:
+                    continue
                 return state, json.loads(data)
             except (OSError, ValueError, KeyError, TypeError):
                 continue

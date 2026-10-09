@@ -43,6 +43,10 @@ class HarnessConfig(AgentConfig):
             self.background_shell, self.context_management, self.plan_tool, self.checkpointing,
             self.permissions_enabled, self.sandbox_hardening))):
             raise ValueError("v1 cannot enable V3 mechanisms")
+        if self.profile == "v1":
+            frozen = AgentConfig()
+            if any(getattr(self, f.name) != getattr(frozen, f.name) for f in fields(AgentConfig)):
+                raise ValueError("profile v1 model/tool/limit configuration is frozen; use v3 for overrides")
 
     @classmethod
     def for_profile(cls, profile="v1", **overrides):

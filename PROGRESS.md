@@ -174,3 +174,71 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Cross-cutting checks added: offline tests block socket connections; external
   post/submit protocols work; rewritten shell arguments are rechecked by policy;
   quoted mentions of pytest are not treated as verification commands.
+
+### M13 — complete
+
+- DESIGN.md documents each mechanism as problem/design/reference/difference/
+  validation/limitations. README adds profile/feature/experiment/resume/policy/
+  hooks usage without changing historical results. V3_CONFIG.md lists defaults
+  and distinguishes task-book/project settings from public product mechanisms.
+- Added CLI JSON config overrides, final profile validation, durable custom-task
+  resume metadata and snapshot transport that avoids shell argument-size limits.
+- Cross-milestone tests cover a feature with new production/test files, two-round
+  verifier rejection, real isolated worktree patch materialization, switch-off
+  configuration, redaction, and execution of the actual container helper source
+  in redirected disposable local Git fixtures (no Docker/network).
+- Final tests: **88 passed, 2 Docker skips, 5 subtests passed**. V1 golden PASS.
+  Source/scripts compile check and CLI help/resume help PASS.
+- Actual command smoke: four variants × two repeats with --fake completed;
+  results/report at `.cache/v3-final-smoke/`. These are synthetic pipeline tests,
+  not a real model capability or retrieval-quality result.
+- Final integration fixes are included here rather than rewriting completed
+  milestone history. No required milestone remains unfinished.
+
+## Final status
+
+- M0–M13 complete on `v3`, one commit per milestone. No push or merge.
+- Real Provider calls in this task: **0**. HOLDOUT runs in this task: **0**.
+  Historical final-evaluation counts/artifacts remain unchanged.
+- Protected files (FINAL_CONFIG.md, tasks.txt, holdout.txt, dev_artifacts/) match
+  base 3fe3c0e. README preserves all original content and appends V3 only.
+- Secret scan / redaction tests: PASS. `git diff --check`: PASS.
+- Preserve the **20 pre-existing tracked runs/ deletions** unstaged; they are not
+  V3 changes and are excluded from every commit. No V3 implementation is left
+  uncommitted after M13.
+- Quota checked during the task: 24% used / 76% remaining; no reset card used.
+
+## Remaining user-run validation (not unfinished implementation)
+
+1. Optional Docker integration, including background jobs, full resume and
+   non-root ownership compatibility. Default tests intentionally skip Docker.
+2. Supply real trusted feature PR/commit pairs; replace template placeholders,
+   run the builder and manually review descriptions for implementation leakage.
+3. Run real model experiments only when desired. This task did not consume an
+   API key, make Provider calls or produce new benchmark claims.
+
+Commands (WSL, activate the existing RepoFix Python 3.12 environment first):
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pip install -e .
+pytest -q
+python scripts/run_experiment.py --tasks tasks/fake_tasks.json \
+  --variants v1,v3-single,v3-multi,v3-nocompact --repeats 1 \
+  --out .cache/my-new-fake-run --fake
+python scripts/report.py --input .cache/my-new-fake-run/results.jsonl \
+  --out .cache/my-new-fake-run/report.md
+
+# Optional, explicitly enabled Docker tests:
+pytest -q --docker tests/test_v3_shell.py
+REPOFIX_DOCKER_INTEGRATION=1 pytest -q --docker tests/test_local_sandbox_integration.py
+
+# After replacing the seed placeholders with real reviewed evidence:
+python scripts/build_feature_tasks.py --input /path/to/real-seed.yaml \
+  --out /path/to/tasks.json --execute
+# Manually confirm public descriptions do not leak implementations, then:
+python scripts/run_experiment.py --tasks /path/to/tasks.json \
+  --variants v1,v3-single,v3-multi,v3-nocompact --repeats 1 --out /path/to/new-run
+repofix --repo /path/to/trusted-repo --task "Describe the feature" --kind feature --profile v3
+repofix resume /path/to/run-directory
+```
