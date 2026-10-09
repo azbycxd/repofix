@@ -38,6 +38,13 @@ class Runtime:
         if self.config.apply_patch_enabled:
             self.registry.add(ToolSpec("apply_patch", schema("apply_patch", "Apply an atomic multi-file text patch in /testbed; Python syntax failures roll back all files.",
                 {"patch": {"type": "string"}}, ["patch"]), False, self.apply_patch))
+        if self.config.plan_tool:
+            from .tools.plan import update_plan
+            self.registry.add(ToolSpec("update_plan", schema("update_plan", "Record task steps; at most one in_progress. This is optional, not a submit gate.",
+                {"steps": {"type": "array", "items": {"type": "object", "properties": {
+                    "step": {"type": "string"}, "status": {"type": "string", "enum": ["pending", "in_progress", "completed"]}},
+                    "required": ["step", "status"], "additionalProperties": False}}}, ["steps"]), False,
+                lambda args: ToolResult(update_plan(self.state, args["steps"]))))
         if self.config.background_shell:
             self.registry.specs["bash"] = ToolSpec("bash", schema("bash", "Run a command in /testbed; timeout leaves a background job alive.",
                 {"command": {"type": "string"}, "timeout": {"type": "integer", "default": 120, "maximum": 600},

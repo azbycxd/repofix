@@ -88,3 +88,10 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   pairing, usage anchor, debounce and exhaustion.
 - Uses the allowed chars/3 fallback (no tokenizer dependency or vocabulary
   download). Summary schema is parsed JSON, not a new Agent action protocol.
+
+### M6 — complete
+
+- Optional update_plan validates statuses and at most one active step, stores
+  state atomically and survives the M5 handoff. It is never a submit requirement.
+- Tests: 56 passed, 2 Docker skips; validation and nonmutation on failure,
+  plan reinjection already covered by M5. No deviations.
