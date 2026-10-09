@@ -34,16 +34,25 @@ class LocalHelperFixture:
     def execute(self, command, timeout=60):
         args = shlex.split(command)
         assert all(len(arg.encode()) < 100_000 for arg in args)
-        assert args[:2] == ["python", "-c"], "only generated Python helpers are allowed"
-        code = args[2].replace("'/testbed'", repr(str(self.root)))
-        code = code.replace("/tmp/repofix_", str(self.artifacts / "repofix_"))
-        result = subprocess.run([sys.executable, "-c", code], cwd=self.root, env=self.environment,
+        def redirect(text):
+            return text.replace("/testbed", str(self.root)).replace(
+                "/tmp/repofix_", str(self.artifacts / "repofix_"))
+        argv = ([sys.executable, "-c", redirect(args[2])] if args[:2] == ["python", "-c"]
+                else ["/bin/bash", "-c", redirect(command)])
+        result = subprocess.run(argv, cwd=self.root, env=self.environment,
                                 capture_output=True, text=True, timeout=timeout)
         return ExecutionResult(result.stdout + result.stderr, result.returncode, False, 0)
 
     def write_text_file(self, path, content):
         assert path.startswith("/tmp/repofix_")
         (self.artifacts / Path(path).name).write_text(content)
+
+    def read_repository_text_files(self, max_file_bytes=1_000_000):
+        return {p.relative_to(self.root).as_posix(): p.read_text()
+                for p in self.root.rglob("*.py") if p.stat().st_size <= max_file_bytes}
+
+    def get_diff(self):
+        return self.git("diff", "HEAD")
 
 
 def test_real_helper_transaction_snapshot_restore(tmp_path):
@@ -102,3 +111,57 @@ def test_large_file_replacement_patch_and_atomic_rollback(tmp_path):
     assert files.read("large.py").endswith("VALUE = 3\n")
     assert files.read("a.py") == "VALUE = 2\n"
     assert not list(env.artifacts.glob("repofix_apply_*.json"))
+
+
+def test_real_grep_fallback_without_rg(tmp_path):
+    from repofix.harness.tools.files import grep
+    env = LocalHelperFixture(tmp_path)
+    minimal_path = tmp_path / "bin"
+    minimal_path.mkdir()
+    (minimal_path / "grep").symlink_to("/usr/bin/grep")
+    env.environment["PATH"] = str(minimal_path)
+    (env.root / "notes.txt").write_text("VALUE found\n")
+    assert "a.py:1:VALUE = 1" in grep(env, "VALUE", path_glob="*.py")
+    assert "notes.txt" not in grep(env, "VALUE", path_glob="*.py")
+    assert grep(env, "not_present") == "No matches."
+    assert len(grep(env, "VALUE", max_results=1).splitlines()) == 1
+
+
+def test_real_background_timeout_poll_and_kill(tmp_path):
+    from repofix.harness.tools.shell import JobManager
+    env = LocalHelperFixture(tmp_path)
+    jobs = JobManager(env)
+    done = jobs.start("sleep 0.3; printf 'first\\nlast\\n'; echo $PAGER")
+    try:
+        assert jobs.wait(done, .01)["still_running"]
+        result = jobs.wait(done, 5)
+        assert result["exit_code"] == 0 and "last\ncat" in result["output"]
+        assert jobs.output(done, 1)["output"] == "cat"
+    finally:
+        if jobs.output(done)["still_running"]:
+            jobs.kill(done)
+    running = jobs.start("sleep 30")
+    try:
+        assert jobs.wait(running, .01)["still_running"]
+        assert jobs.output(running)["still_running"]
+    finally:
+        assert jobs.kill(running)["exit_code"] == 137
+
+
+def test_real_runtime_large_edit_and_read_guard(tmp_path):
+    from repofix.agent import RepoFixAgent
+    from repofix.harness.config import HarnessConfig
+    from repofix.harness.model import FakeModelClient
+    from repofix.harness.runtime import Runtime
+    from repofix.harness.state import RunState
+    env = LocalHelperFixture(tmp_path)
+    (env.root / "a.py").write_text("# padding\n" * 31_000 + "VALUE = 1\n")
+    runtime = Runtime(RepoFixAgent(env, "fix", tmp_path / "t", "", "test",
+                      HarnessConfig.for_profile("v3"), FakeModelClient([])), RunState())
+    runtime.view({"path": "a.py", "start_line": 1, "end_line": 1})
+    assert "successful" in runtime.replace({"path": "a.py", "old_str": "VALUE = 1", "new_str": "VALUE = 2"}).content
+    patch = "*** Begin Patch\n*** Update File: a.py\n@@\n-VALUE = 2\n+VALUE = 3\n*** Add File: b.py\n+B = 1\n*** End Patch"
+    assert "Patch applied" in runtime.apply_patch({"patch": patch}).content
+    env.execute("printf '\\nEXTERNAL = 1\\n' >> a.py")
+    with pytest.raises(ValueError, match="content changed"):
+        runtime.replace({"path": "a.py", "old_str": "VALUE = 3", "new_str": "VALUE = 4"})

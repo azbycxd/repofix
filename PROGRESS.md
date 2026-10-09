@@ -7,6 +7,16 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F9: Used the explicitly allowed real-helper alternative. Extended the
+  disposable local Git backend to execute real shell commands. Tests now cover
+  grep fallback with rg absent, background timeout/poll/kill/environment,
+  310 KB Runtime str_replace/apply_patch and external-write read guards.
+  The 12 in-memory branches remain for deterministic fake scripts and golden
+  fixtures (workspace 5, shell 4, checkpoint 1, grep 1, syntax path counting
+  verified at final audit); they are NOT evidence of Docker coverage. Replacing
+  the entire fixture would change test semantics; production helper paths are
+  exercised explicitly instead. Real container lifecycle remains opt-in.
+
 - F8: Quote-aware parsing consumes redirections without inventing commands;
   nested $() and backtick commands are separately checked, including redirect
   targets. Literal single-quoted substitutions remain literal. Pytest PASS.
