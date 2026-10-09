@@ -5,13 +5,23 @@ import time
 import uuid
 
 from ..workspace import run_python
+from ..permissions import split_commands, unwrap
 
 SHELL_ENV = {"PAGER": "cat", "GIT_PAGER": "cat", "NO_COLOR": "1", "TERM": "dumb", "PYTHONUNBUFFERED": "1"}
 
 
 def benign_exit(command, code):
-    import re
-    return code == 1 and bool(re.search(r"\b(?:grep|rg|diff|test|pytest|tox|unittest)\b", command))
+    if code != 1:
+        return False
+    try:
+        segments = split_commands(command)
+        tokens = unwrap(segments[-1]) if segments else []
+    except (ValueError, TypeError):
+        return False
+    return bool(tokens) and (
+        tokens[0] in {"grep", "rg", "egrep", "fgrep", "diff", "test", "[", "find"}
+        or tokens[:2] in [["git", "diff"], ["git", "grep"]]
+    )
 
 
 class JobManager:

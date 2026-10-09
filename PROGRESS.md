@@ -7,6 +7,10 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F3: Exit 1 is benign only for the explicit search/comparison command list,
+  after wrappers and using the final pipeline command; pytest/tox/python
+  failures remain failures. Full pytest PASS.
+
 - Scope: F1–F12, local commits on v3; no live models or HOLDOUT runs.
 - F1: Docker edit payloads now use a temporary JSON archive transfer rather
   than command arguments. Real-helper tests edit a 310 KB file, apply a

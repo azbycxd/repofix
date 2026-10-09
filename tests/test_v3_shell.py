@@ -17,9 +17,19 @@ def test_completed_and_benign():
     jobs = JobManager(FakeEnv(commands={"pytest": ("failed", 1, False, 0)}))
     job = jobs.start("pytest")
     assert not jobs.wait(job, 1)["still_running"]
-    assert benign_exit("python -m pytest", 1)
+    assert not benign_exit("python -m pytest", 1)
     assert not benign_exit("build", 1)
     assert SHELL_ENV["PYTHONUNBUFFERED"] == "1"
+
+
+@pytest.mark.parametrize("command, expected", [
+    ("pytest -q", False), ("grep foo x", True), ("python test.py", False),
+    ("echo pytest", False), ("env X=Y timeout 10 grep foo x", True),
+    ("grep foo x | python test.py", False), ("python test.py | rg foo", True),
+    ("git diff HEAD", True), ("git status", False), ("tox", False),
+])
+def test_benign_exit_uses_command_not_arguments(command, expected):
+    assert benign_exit(command, 1) is expected
 
 
 def test_shell_header(tmp_path):
