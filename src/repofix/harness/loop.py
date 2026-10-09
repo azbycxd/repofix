@@ -29,6 +29,15 @@ def run_v3(agent):
     model = agent.client if hasattr(agent.client, "complete") else OpenAICompatibleClient(agent.client)
     from .context import ContextManager
     context = ContextManager(agent.config, model, agent.env, agent.trace.path.parent, agent.trace._redact_text)
+    from .checkpoint import CheckpointStore, atomic_write
+    import json
+    checkpoints = CheckpointStore(agent.trace.path.parent, agent.trace._redact, agent.trace.secrets) if agent.config.checkpointing else None
+    if checkpoints:
+        manifest = {"config": asdict(agent.config), "issue": agent.issue, "git_commit": agent.git_commit,
+                    "trajectory": agent.trace.path.name,
+                    **getattr(agent, "resume_metadata", {"kind": "docker", "image": getattr(agent.env, "image", ""),
+                       "instance_id": getattr(agent.env, "instance_id", "")})}
+        atomic_write(agent.trace.path.parent / "resume.json", json.dumps(agent.trace._redact(manifest)).encode())
     started = time.monotonic()
     agent.trace.write({"type": "config", "git_commit": agent.git_commit,
                        "config": asdict(agent.config), "problem_statement": agent.issue})
@@ -66,6 +75,8 @@ def run_v3(agent):
                 {"name": c["name"], "arguments": c["arguments"]}} for c in calls]
         state.messages.append(payload)
         state.pending_calls = list(calls)
+        if checkpoints:
+            checkpoints.save(state, agent.env)
         observations = []
         for call, result, batch_size in schedule(calls, runtime.registry, runtime.execute,
                 agent.config.parallel_readonly, agent.config.readonly_workers):
@@ -78,6 +89,8 @@ def run_v3(agent):
             state.pending_calls = state.pending_calls[1:]
             observations.append({"tool_call_id": call["id"], "name": call["name"], "content": result.content,
                                  "parallel_batch_size": batch_size, **result.metadata})
+            if checkpoints:
+                checkpoints.save(state, agent.env)
             if state.termination:
                 for pending in state.pending_calls:
                     state.messages.append({"role": "tool", "tool_call_id": pending["id"],
@@ -93,5 +106,7 @@ def run_v3(agent):
             else:
                 state.messages.append({"role": "user", "content": "Continue using tools, or submit when done."})
                 state.metadata["nudge_used"] = True
+        if checkpoints:
+            checkpoints.save(state, agent.env)
     state.termination = state.termination or "max_steps"
     return finish(agent, state, runtime, time.monotonic() - started)

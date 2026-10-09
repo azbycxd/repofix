@@ -102,14 +102,17 @@ def run_local_repository(
                         raise LocalRunError(
                             f"runtime container network is not disabled: {network_mode}"
                         )
-                    result = RepoFixAgent(
+                    agent = RepoFixAgent(
                         env=env,
                         issue=issue,
                         trajectory_path=trajectory_path,
                         api_key=api_key,
                         git_commit=_implementation_commit(),
                         config=config or AgentConfig(),
-                    ).run()
+                    )
+                    agent.resume_metadata = {"kind": "local", "repository": str(source_before.root),
+                                             "base_commit": source_before.head}
+                    result = agent.run()
                     full_diff = result.patch
             worktree.materialize_patch(full_diff)
             isolated_patch_materialized = worktree.diff() == full_diff

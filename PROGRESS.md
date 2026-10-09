@@ -95,3 +95,16 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   state atomically and survives the M5 handoff. It is never a submit requirement.
 - Tests: 56 passed, 2 Docker skips; validation and nonmutation on failure,
   plan reinjection already covered by M5. No deviations.
+
+### M7 — complete
+
+- Atomic step manifests reference checksummed workspace snapshots (binary diff
+  plus untracked tar outside the container). Checkpoints before dispatch and
+  after tool results preserve pending calls, plan/read hashes and shared budget.
+- Added CLI resume and runner --resume; new isolated container, snapshot restore,
+  interruption observations for pending calls, no side-effect replay. Corrupt
+  newest checkpoints fall back to the previous complete snapshot.
+- Tests: 58 passed, 2 Docker skips; snapshot/unknown tool interruption, corruption
+  fallback, crash/resume comparison with uninterrupted messages and budget.
+- Local resume requires the source still at its saved HEAD. Background jobs
+  are not revived. Snapshots refuse untracked .env files and known credentials.

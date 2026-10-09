@@ -354,6 +354,8 @@ def run_instance(
     spec = make_test_spec(instance)
     instance_id = spec.instance_id
     trajectory_path = trajectory_dir / f"{instance_id}.jsonl"
+    if getattr(config, "profile", "v1") == "v3":
+        trajectory_path = trajectory_dir / instance_id / "trajectory.jsonl"
     patch = ""
     reviewer_initial_patch = ""
     try:
@@ -488,6 +490,7 @@ def main() -> int:
     from repofix.harness.config import HarnessConfig
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
+    parser.add_argument("--resume", type=Path)
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--instance-id")
     selection.add_argument("--all-dev", action="store_true")
@@ -517,6 +520,10 @@ def main() -> int:
         help="Retrieval backend; dense_rrf requires requirements-dense.txt.",
     )
     args = parser.parse_args()
+
+    if args.resume:
+        from repofix.cli import main as cli_main
+        return cli_main(["resume", str(args.resume)])
 
     dev_ids = read_instance_ids(TASKS_PATH)
     holdout_ids = read_instance_ids(HOLDOUT_PATH)

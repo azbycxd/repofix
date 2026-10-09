@@ -31,6 +31,24 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] == "resume":
+        resume_parser = argparse.ArgumentParser(prog="repofix resume")
+        resume_parser.add_argument("run_dir", type=Path)
+        resume_args = resume_parser.parse_args(argv[1:])
+        load_dotenv(Path.cwd() / ".env", override=False)
+        key = os.environ.get("DEEPSEEK_API_KEY", "")
+        if not key:
+            print("RepoFix error: DEEPSEEK_API_KEY is not set", file=sys.stderr)
+            return 2
+        try:
+            from .harness.resume import resume_run
+            result = resume_run(resume_args.run_dir, key)
+            print(f"{result.status}: {result.trajectory_path}")
+            return 0 if result.submitted else 1
+        except Exception as exc:
+            print("RepoFix resume error: " + str(exc).replace(key, "[REDACTED]"), file=sys.stderr)
+            return 1
     args = build_parser().parse_args(argv)
     load_dotenv(Path.cwd() / ".env", override=False)
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
