@@ -47,7 +47,15 @@ def test_read_guard_unseen_read_and_stale(tmp_path):
     with pytest.raises(ValueError, match="view"): runtime.replace(args)
     runtime.view({"path": "example.py", "start_line": 1, "end_line": 1})
     assert "successful" in runtime.replace(args).content
-    with pytest.raises(ValueError, match="content changed"): runtime.replace(args)
+    assert "successful" in runtime.replace({**args, "old_str": "2", "new_str": "3"}).content
+    env.files["example.py"] = "VALUE = 4\n"  # external/bash change
+    with pytest.raises(ValueError, match="content changed"):
+        runtime.replace({**args, "old_str": "4", "new_str": "5"})
+    runtime.apply_patch({"patch": "*** Begin Patch\n*** Add File: new.txt\n+hello\n*** End Patch"})
+    assert "successful" in runtime.replace({"path": "new.txt", "old_str": "hello", "new_str": "world"}).content
+    runtime.apply_patch({"patch": "*** Begin Patch\n*** Update File: new.txt\n*** Move to: moved.txt\n@@\n-world\n+again\n*** End Patch"})
+    assert "new.txt" not in runtime.state.file_reads
+    assert "successful" in runtime.replace({"path": "moved.txt", "old_str": "again", "new_str": "done"}).content
 
 
 @pytest.mark.parametrize("path", ["../evil", "/etc/passwd", "a/../b", ".git/config", "link/file"])

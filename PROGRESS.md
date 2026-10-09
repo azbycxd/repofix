@@ -14,6 +14,10 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Original defaults and pre-existing state
 
+- F2: Successful edits now refresh read hashes, including Add/Move targets;
+  Delete clears the old entry. Sequential edits succeed; external edits still
+  require view. Full pytest PASS.
+
 - Default profile remains v1; V3 uses separate opt-in configuration.
 - Preserve FINAL_CONFIG.md, task lists and all dev_artifacts byte-for-byte.
 - Existing tracked deletions under runs/ were present before work and are left

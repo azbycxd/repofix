@@ -1,5 +1,6 @@
 """V3 tool assembly and observation formatting, independent of model orchestration."""
 import json
+import hashlib
 import time
 from dataclasses import dataclass, field, asdict
 
@@ -117,9 +118,17 @@ class Runtime:
             return ToolResult(f"str_replace syntax check failed; original restored: {exc}",
                               metadata={"str_replace_failures": 1, "syntax_rollbacks": 1})
         lines = updated.splitlines()
+        self.refresh_reads({path: updated})
         line = updated[:updated.index(new)].count("\n") if new and new in updated else 0
         context = "\n".join(f"{i + 1}: {lines[i]}" for i in range(max(0, line - 2), min(len(lines), line + new.count("\n") + 3)))
         return ToolResult(f"Replacement successful: {path}\n{context}")
+
+    def refresh_reads(self, updates):
+        for path, content in updates.items():
+            if content is None:
+                self.state.file_reads.pop(path, None)
+            else:
+                self.state.file_reads[path] = hashlib.sha256(content.encode()).hexdigest()
 
     def apply_patch(self, args):
         from .tools.patch import prepare_patch
@@ -128,6 +137,7 @@ class Runtime:
             self.files.apply(updates)
         except (SyntaxError, RuntimeError) as exc:
             return ToolResult(f"apply_patch failed; all files restored: {exc}", metadata={"syntax_rollbacks": 1, "error": True})
+        self.refresh_reads(updates)
         return ToolResult("Patch applied:\n" + "\n".join(updates))
 
     def search(self, args):
