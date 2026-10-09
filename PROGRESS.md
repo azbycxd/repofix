@@ -75,3 +75,16 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
   environment constants and output headers. Docker survival test is opt-in.
 - Background processes last only as long as their container; resume does not
   resurrect processes (M7 will mark interrupted calls rather than replay them).
+
+### M5 — complete
+
+- Before requests, usage-anchored token estimates trigger old-output masking;
+  raw outputs are redacted into local artifacts. Only when needed, a separate
+  summary request creates a typed handoff. Program-owned files/test/plan/task
+  facts override model fields; recent tool-call pairs remain complete.
+- Consecutive-request debounce and three unsuccessful compactions terminate as
+  context_exhausted. Summary tokens/cost count toward the same budget.
+- Tests: 55 passed, 2 Docker skips; masking, actual summary, facts reinjection,
+  pairing, usage anchor, debounce and exhaustion.
+- Uses the allowed chars/3 fallback (no tokenizer dependency or vocabulary
+  download). Summary schema is parsed JSON, not a new Agent action protocol.

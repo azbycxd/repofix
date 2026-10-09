@@ -27,10 +27,18 @@ def run_v3(agent):
     agent.state = state
     runtime = Runtime(agent, state)
     model = agent.client if hasattr(agent.client, "complete") else OpenAICompatibleClient(agent.client)
+    from .context import ContextManager
+    context = ContextManager(agent.config, model, agent.env, agent.trace.path.parent, agent.trace._redact_text)
     started = time.monotonic()
     agent.trace.write({"type": "config", "git_commit": agent.git_commit,
                        "config": asdict(agent.config), "problem_statement": agent.issue})
     while state.step < agent.config.max_steps and not state.termination:
+        if agent.config.context_management:
+            event = context.maybe_compact(state)
+            if event:
+                agent.trace.write(event)
+            if state.termination:
+                break
         if state.budget.estimated_cost >= agent.config.max_cost_usd:
             state.termination = "max_cost"
             break
@@ -46,6 +54,8 @@ def run_v3(agent):
             agent.trace.write({"type": "provider_error", "error": str(exc), "step": state.step})
             break
         record_usage(state.budget, response.usage, agent.config)
+        state.metadata["usage_anchor"] = {"tokens": getattr(response.usage, "prompt_tokens", 0) or 0,
+                                           "messages": len(state.messages)}
         choice = response.choices[0]
         message = choice.message
         calls = [{"id": call.id, "name": call.function.name, "arguments": call.function.arguments or "{}"}
