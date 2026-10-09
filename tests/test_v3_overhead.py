@@ -35,12 +35,23 @@ def test_checkpoint_counts_and_step_events(tmp_path):
     original = CheckpointStore.save
 
     def save(store, state, env):
-        saved.append(state.step)
+        saved.append((state.step, len(state.pending_calls)))
         return original(store, state, env)
 
     with patch.object(CheckpointStore, "save", save):
         agent.run()
-    assert saved == [1, 2, 2, 3, 3, 4]
+    assert saved == [
+        (1, 2),
+        (1, 0),  # before dispatch and step end; not after readonly tools
+        (2, 1),
+        (2, 0),
+        (2, 0),  # before dispatch, after edit, step end
+        (3, 1),
+        (3, 0),
+        (3, 0),  # before dispatch, after bash, step end
+        (4, 1),
+        (4, 0),  # before submit and step end
+    ]
     records = [json.loads(line) for line in (tmp_path / "t").read_text().splitlines()]
     events = [e for r in records if r["type"] == "step" for e in r["events"]]
     assert events == agent.state.events

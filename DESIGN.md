@@ -152,8 +152,9 @@ benign 仅限 grep/rg/egrep/fgrep/diff/test/[/git diff/git grep/find 的退出�
 
 **问题：** 中断后需要恢复文件和预算，而不是重复执行有副作用的命令。
 
-**设计：** 每步结束保存 state，另在 bash/str_replace/apply_patch/verify 后保存；
-不为每个只读结果写快照。manifest 用临时文件 + rename，
+**设计：** assistant 消息追加且 pending_calls 赋值后、工具执行前先保存 state；
+每步结束和 bash/str_replace/apply_patch/verify 后也保存，不为每个只读结果写快照。
+manifest 用临时文件 + rename，
 引用带 SHA-256 的 workspace blob。Docker snapshot 是 binary diff 和未跟踪
 普通文件 tar。恢复先验证，再在新容器重建；pending call 回填 interrupted。
 同名 step 原子更新，损坏最新记录回退。run manifest 只含公开任务和重建信息。
@@ -270,7 +271,8 @@ step 仅记录新增 events，summary 汇总所有事件。两次无工具响应
   大文件写入/回滚等实际 helper 源码做本地进程测试。不能称为 Docker 验收。
 - 尚未验证真实容器内完整 resume、Docker put_archive 大文件传输、非 root
   所有权与所有 Docker/资源限制组合。离线测试和 fake 数字不能作为简历性能。
-- 缩短 checkpoint 频率意味着步骤内工具调用前的崩溃只能恢复上一完整快照；
-  副作用不会重放，后台进程不会复活。词法权限不是对任意 shell 的安全证明。
+- 执行工具前的 checkpoint 保存 assistant 和 pending_calls；工具中断后恢复
+  执行前快照，并给 pending 调用回填 interrupted，不自动重放副作用。
+  后台进程不会复活。词法权限不是对任意 shell 的安全证明。
 - 没有真实模型调用，也没有真实 feature PR benchmark。任务种子仍需人工
   提供 10–20 个真实带测试 PR 并检查需求文本是否泄漏实现。

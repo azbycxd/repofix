@@ -86,3 +86,49 @@ def test_complete_step_resume_matches_uninterrupted(tmp_path):
 
     assert normalized(resumed.state.messages) == normalized(full.state.messages)
     assert resumed.state.budget == full.state.budget
+
+
+def test_single_bash_interruption_preserves_pending_call_without_replay(tmp_path):
+    command = "interrupted-command"
+
+    def interrupted(env):
+        env.files["example.py"] = "VALUE = 99\n"
+        raise KeyboardInterrupt()
+
+    config = HarnessConfig.for_profile("v3", hooks_enabled=False)
+    env = FakeEnv(commands={command: interrupted})
+    first = RepoFixAgent(
+        env,
+        "fix",
+        tmp_path / "t.jsonl",
+        "",
+        "test",
+        config,
+        FakeModelClient([{"calls": [("bash", {"command": command})]}]),
+    )
+    with pytest.raises(KeyboardInterrupt):
+        first.run()
+    assert env.executed.count(command) == 1
+    saved, _ = CheckpointStore(tmp_path).load()
+    assert saved.step == 1 and saved.budget.provider_calls == 1
+    assert len(saved.pending_calls) == 1
+    pending_id = saved.pending_calls[0]["id"]
+    assert saved.messages[-1]["tool_calls"][0]["id"] == pending_id
+
+    target = FakeEnv(commands={command: AssertionError("must not replay interrupted bash")})
+    state = CheckpointStore(tmp_path).resume(target)
+    assert target.files == target.baseline  # restore pre-tool snapshot
+    assert not target.executed and not state.pending_calls
+    interrupted_result = {
+        "role": "tool",
+        "tool_call_id": pending_id,
+        "content": "[interrupted: tool call did not complete before the run stopped]",
+    }
+    assert state.messages[-1] == interrupted_result
+    client = FakeModelClient([{"calls": [("submit", {})]}])
+    resumed = RepoFixAgent(target, "fix", tmp_path / "t.jsonl", "", "test", config, client)
+    resumed.state = state
+    result = resumed.run()
+    assert result.submitted and result.provider_calls == 2
+    assert client.requests[0]["messages"][-1] == interrupted_result
+    assert command not in target.executed

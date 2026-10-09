@@ -138,6 +138,10 @@ def run_v3(agent):
             ]
         state.messages.append(payload)
         state.pending_calls = list(calls)
+        # Persist the assistant/tool-call protocol before any tool can interrupt
+        # or mutate the workspace. Resume marks pending calls, never replays them.
+        if checkpoints:
+            checkpoints.save(state, agent.env)
         if state.budget.estimated_cost >= agent.config.max_cost_usd:
             state.termination = "max_cost"
             for call in calls:

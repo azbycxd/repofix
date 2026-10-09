@@ -1,5 +1,15 @@
 # RepoFix V3 progress
 
+## Post-review follow-up (2026-10-09)
+
+- Restored the pre-dispatch checkpoint immediately after assistant messages and
+  pending_calls are recorded. F10 had incorrectly removed this recovery boundary;
+  only readonly-tool post-checkpoints remain omitted. Step-end and mutating-tool
+  checkpoints remain. A single bash interrupted by KeyboardInterrupt now resumes
+  with an interrupted tool observation, the pre-tool workspace and preserved
+  usage; no automatic tool replay. Updated checkpoint-count regression test.
+  Full offline pytest and unchanged V1 golden: PASS (120 passed, 2 Docker skips).
+
 Date: 2026-10-09 (Asia/Shanghai). Branch: `v3`. Base: `3fe3c0e`.
 Scope: M0–M13 followed by REPOFIX_V3_FIX.md F1–F12, offline only.
 First round was subsequently pushed at the user's explicit request; this repair
