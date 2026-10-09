@@ -122,8 +122,14 @@ class CheckpointStore:
                 continue
         raise ValueError("no complete valid checkpoint found")
 
+    @staticmethod
+    def require_resumable(state):
+        if state.termination not in {None, "interrupted", "provider_error"}:
+            raise ValueError(f"cannot resume terminal run: {state.termination}")
+
     def resume(self, env):
         state, snapshot = self.load()
+        self.require_resumable(state)
         restore_workspace(env, snapshot)
         for call in state.pending_calls:
             state.messages.append({"role": "tool", "tool_call_id": call["id"],

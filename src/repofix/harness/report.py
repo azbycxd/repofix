@@ -1,5 +1,6 @@
 import math
 import statistics
+from collections import Counter
 
 
 def percentile(values, quantile):
@@ -28,4 +29,7 @@ def render_report(rows):
             row = next((r for r in rows if (r["task"], r["repeat"], r["variant"]) == (task, repeat, variant)), None)
             cells.append("ERROR" if row and row.get("error") else "RESOLVED" if row and row["resolved"] else "UNRESOLVED" if row and row["resolved"] is False else "NOT_JUDGED")
         lines.append(f"| {task} / {repeat} | " + " | ".join(cells) + " |")
+    lines += ["", "## Termination reasons", "", "| Reason | Count |", "| --- | ---: |"]
+    for reason, count in sorted(Counter(r.get("termination_reason", "unknown") for r in rows).items()):
+        lines.append(f"| {reason} | {count} |")
     return "\n".join(lines) + "\n"

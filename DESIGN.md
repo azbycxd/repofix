@@ -1,5 +1,10 @@
 # RepoFix V3 design
 
+Second-round termination correction: two responses without tool calls produce
+`no_tool_call`, never `interrupted`. Completed/terminal runs cannot resume;
+only unfinished, genuinely interrupted or provider-error checkpoints can.
+Patch collection failures use `runtime_error`. Reports list termination counts.
+
 ## Compatibility and loop (M0)
 
 **Problem.** Long-task mechanisms must not change the historical v1 experiment.

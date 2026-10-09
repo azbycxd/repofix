@@ -135,7 +135,7 @@ def run_v3(agent):
             "budget": asdict(state.budget), "behavior": behavior.metrics(), "events": list(state.events)})
         if not calls and not state.termination:
             if state.metadata.get("nudge_used"):
-                state.termination = "interrupted"
+                state.termination = "no_tool_call"
             else:
                 state.messages.append({"role": "user", "content": "Continue using tools, or submit when done."})
                 state.metadata["nudge_used"] = True

@@ -1,7 +1,22 @@
 import json
+import pytest
 from repofix.harness.checkpoint import CheckpointStore
 from repofix.harness.fake import FakeEnv
 from repofix.harness.state import RunState
+
+
+def test_no_tool_call_is_terminal_and_not_resumable(tmp_path):
+    from repofix.agent import RepoFixAgent
+    from repofix.harness.config import HarnessConfig
+    from repofix.harness.model import FakeModelClient
+    from repofix.harness.resume import resume_run
+    agent = RepoFixAgent(FakeEnv(), "fix", tmp_path / "t.jsonl", "", "test",
+                        HarnessConfig.for_profile("v3"), FakeModelClient([{}, {}]))
+    assert agent.run().status == "no_tool_call"
+    with pytest.raises(ValueError, match="no_tool_call"):
+        CheckpointStore(tmp_path).resume(FakeEnv())
+    with pytest.raises(ValueError, match="no_tool_call"):
+        resume_run(tmp_path, "")
 
 
 def test_snapshot_pending_restore_and_corrupt_fallback(tmp_path):

@@ -15,6 +15,8 @@ from .config import HarnessConfig
 
 def resume_run(run_dir, api_key):
     run_dir = Path(run_dir).resolve()
+    state, _ = CheckpointStore(run_dir).load()
+    CheckpointStore.require_resumable(state)
     manifest = json.loads((run_dir / "resume.json").read_text())
     holdout = Path(__file__).resolve().parents[3] / "holdout.txt"
     if manifest.get("instance_id") in set(holdout.read_text().split()):

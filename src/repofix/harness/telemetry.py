@@ -13,6 +13,8 @@ class TerminationReason(StrEnum):
     CONTEXT_EXHAUSTED = "context_exhausted"
     PROVIDER_ERROR = "provider_error"
     INTERRUPTED = "interrupted"
+    NO_TOOL_CALL = "no_tool_call"
+    RUNTIME_ERROR = "runtime_error"
 
 
 def record_usage(budget, usage, config):
@@ -39,7 +41,7 @@ def finish(agent, state, runtime, wall):
         patch = agent.env.get_diff()
     except Exception as exc:
         patch = ""
-        state.termination = "interrupted"
+        state.termination = "runtime_error"
         state.events.append({"type": "runtime_error", "error": str(exc)})
     values.update(status=state.termination, submitted=state.submitted, patch=patch,
         steps=state.step, provider_calls=state.budget.provider_calls,

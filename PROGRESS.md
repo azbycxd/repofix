@@ -7,6 +7,10 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F4: Two responses without tools now terminate as no_tool_call, not interrupted.
+  Resume rejects terminal runs before Docker initialization; patch collection
+  errors are runtime_error. Reports enumerate terminal reasons. Full pytest PASS.
+
 - F3: Exit 1 is benign only for the explicit search/comparison command list,
   after wrappers and using the final pipeline command; pytest/tox/python
   failures remain failures. Full pytest PASS.
