@@ -101,6 +101,8 @@ class RepoFiles:
         source = PATH_HELPER + f"\nupdates = {updates!r}\n" + '''import subprocess, os
 targets = {name: resolve(name) for name in updates}
 saved = {name: (p.read_bytes(), p.stat().st_mode) if p.exists() else None for name,p in targets.items()}
+index_path = Path(subprocess.check_output(['git', 'rev-parse', '--git-path', 'index'], text=True).strip())
+index_data = index_path.read_bytes() if index_path.exists() else None
 try:
     for name, content in updates.items():
         p = targets[name]
@@ -111,14 +113,16 @@ try:
     for name, content in updates.items():
         if name.endswith('.py') and content is not None:
             subprocess.run(['python', '-m', 'py_compile', str(targets[name])], check=True)
+    added = [name for name, old in saved.items() if old is None and updates[name] is not None]
+    if added: subprocess.run(['git', 'add', '--', *added], check=True)
 except BaseException:
     for name, old in saved.items():
         p = targets[name]
         if old is None: p.unlink(missing_ok=True)
         else:
             p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(old[0]); p.chmod(old[1])
+    if index_data is None: index_path.unlink(missing_ok=True)
+    else: index_path.write_bytes(index_data)
     raise
-added = [name for name, old in saved.items() if old is None and updates[name] is not None]
-if added: subprocess.run(['git', 'add', '--', *added], check=True)
 '''
         run_python(self.env, source)

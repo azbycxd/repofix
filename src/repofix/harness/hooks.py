@@ -10,6 +10,27 @@ from repofix.reproduction import reproduction_key
 from .workspace import fingerprint
 
 
+def is_validation_command(command, patterns=()):
+    from .permissions import split_commands, unwrap
+    if any(re.search(pattern, command) for pattern in patterns):
+        return True
+    try:
+        commands = [unwrap(part) for part in split_commands(command)]
+    except ValueError:
+        return False
+    for tokens in commands:
+        if not tokens:
+            continue
+        if tokens[0] in {"pytest", "py.test", "tox"}:
+            return True
+        if tokens[0].startswith("python"):
+            if tokens[1:3] in (["-m", "pytest"], ["-m", "unittest"]):
+                return True
+            if len(tokens) > 1 and tokens[1] != "-c" and reproduction_key(" ".join(tokens)) is not None:
+                return True
+    return False
+
+
 @dataclass(frozen=True)
 class Allow:
     pass
@@ -35,13 +56,28 @@ class ExternalHook:
     def __init__(self, command, timeout=30):
         self.command, self.timeout = command, timeout
 
-    def __call__(self, call, state):
+    def __call__(self, *args):
+        result_value = None
+        if len(args) == 1:
+            state, = args
+            call, event = {"name": "submit"}, "PreSubmit"
+        elif len(args) == 3:
+            call, result_value, state = args
+            event = "PostToolUse"
+        else:
+            call, state = args
+            event = "PreToolUse"
         try:
-            result = subprocess.run(self.command, input=json.dumps({"call": call, "state": asdict(state)}),
+            result = subprocess.run(self.command, input=json.dumps({"event": event, "call": call, "state": asdict(state),
+                                    "result": asdict(result_value) if result_value else None}),
                 capture_output=True, text=True, timeout=self.timeout, check=False)
         except (OSError, subprocess.TimeoutExpired) as exc:
             return Deny(f"hook execution failed: {exc}")
         if result.returncode == 2:
+            if result_value is not None:
+                result_value.content += "\n[PostToolUse blocked] " + result.stderr.strip()
+                result_value.metadata["hook_blocked"] = True
+                return result_value
             return Deny(result.stderr.strip() or "blocked by external hook")
         if result.returncode:
             return Deny(f"hook failed ({result.returncode}): {result.stderr.strip()}")
@@ -52,7 +88,9 @@ class ExternalHook:
                 return Deny("external hook returned invalid JSON")
             if isinstance(data, dict) and isinstance(data.get("rewrite"), dict):
                 return Rewrite(data["rewrite"])
-        return Allow()
+            if result_value is not None and isinstance(data, dict) and isinstance(data.get("content"), str):
+                result_value.content = data["content"]
+        return result_value if result_value is not None else Allow()
 
 
 def command_policy(call, state, config, ask=None):
@@ -97,8 +135,18 @@ class HookEngine:
         self.pre_hooks, self.post_hooks, self.submit_hooks = list(pre), list(post), list(submit)
         self.lock = RLock()
         self.ask = ask
+        if config.hooks_file:
+            from pathlib import Path
+            data = json.loads(Path(config.hooks_file).read_text())
+            for event, target in (("PreToolUse", self.pre_hooks), ("PostToolUse", self.post_hooks), ("PreSubmit", self.submit_hooks)):
+                for item in data.get(event, []):
+                    command = item["command"]
+                    if not isinstance(command, list) or not command or any(not isinstance(v, str) for v in command):
+                        raise ValueError("hook command must be a nonempty argv list")
+                    target.append(ExternalHook(command, item.get("timeout", 30)))
 
     def pre(self, call):
+        rewritten = False
         for hook in [lambda c, s: command_policy(c, s, self.config, self.ask), *self.pre_hooks]:
             decision = hook(call, self.state)
             if isinstance(decision, (Deny, Block)):
@@ -107,10 +155,24 @@ class HookEngine:
                 return decision
             if isinstance(decision, Rewrite):
                 call["args"] = decision.args
+                rewritten = True
+                self.state.events.append({"type": "hook", "event": "PreToolUse", "tool": call["name"], "decision": "rewrite"})
+        self.state.events.append({"type": "hook", "event": "PreToolUse", "tool": call["name"], "decision": "allow"})
+        # A rewrite must not bypass the policy that checked the original args.
+        final_decision = command_policy(call, self.state, self.config, self.ask) if rewritten else Allow()
+        if isinstance(final_decision, Deny):
+            self.state.count("hook_blocks")
+            return final_decision
         return Allow()
 
     def before(self):
-        return fingerprint(self.env)
+        with self.lock:
+            current = fingerprint(self.env)
+            previous = self.state.metadata.get("workspace_fingerprint")
+            if previous is not None and previous != current:
+                self.state.workspace_version += 1
+            self.state.metadata["workspace_fingerprint"] = current
+            return current
 
     def post(self, call, result, before):
         with self.lock:
@@ -118,9 +180,10 @@ class HookEngine:
             changed = {p: after.get(p) for p in before.keys() | after.keys() if before.get(p) != after.get(p)}
             if changed:
                 self.state.workspace_version += 1
+            self.state.metadata["workspace_fingerprint"] = after
             result = syntax_check(self.env, changed, result)
             command = result.metadata.get("command", "")
-            valid = reproduction_key(command) is not None or any(re.search(p, command) for p in self.config.verification_patterns)
+            valid = is_validation_command(command, self.config.verification_patterns)
             if valid:
                 self.state.last_validation = {"command": command, "output": result.content,
                     "exit_code": result.exit_code, "step": self.state.step}
@@ -130,13 +193,21 @@ class HookEngine:
                     self.state.last_validation_version = -1
             for hook in self.post_hooks:
                 result = hook(call, result, self.state)
+            self.state.events.append({"type": "hook", "event": "PostToolUse", "tool": call["name"], "decision": "observed"})
             return result
 
     def pre_submit(self):
+        if self.state.submit_blocks >= 3:
+            self.state.metadata["submit_forced"] = True
+            return Allow()
         for hook in [*self.submit_hooks, verify_before_submit]:
+            blocks_before = self.state.submit_blocks
             decision = hook(self.state)
             if isinstance(decision, (Block, Deny)):
+                if self.state.submit_blocks == blocks_before:
+                    self.state.submit_blocks += 1
                 self.state.count("hook_blocks")
                 self.state.events.append({"type": "hook", "event": "PreSubmit", "decision": "block", "reason": decision.reason})
                 return decision
+        self.state.events.append({"type": "hook", "event": "PreSubmit", "decision": "allow"})
         return Allow()

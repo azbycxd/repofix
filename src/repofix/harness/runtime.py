@@ -105,10 +105,21 @@ class Runtime:
 
     def replace(self, args):
         path = self.files.resolve(args["path"])
-        self.read_guard(path, self.files.read(path))
-        result = self.env.str_replace_file(**args)
-        return ToolResult(result.output, metadata={"str_replace_failures": int(not result.success),
-                                                   "syntax_rollbacks": int(result.syntax_rollback)})
+        original = self.files.read(path)
+        self.read_guard(path, original)
+        old, new = args["old_str"], args["new_str"]
+        if not isinstance(old, str) or not isinstance(new, str) or not old or original.count(old) != 1:
+            raise ValueError("old_str must be nonempty and occur exactly once; strings required")
+        updated = original.replace(old, new, 1)
+        try:
+            self.files.apply({path: updated})
+        except (SyntaxError, RuntimeError) as exc:
+            return ToolResult(f"str_replace syntax check failed; original restored: {exc}",
+                              metadata={"str_replace_failures": 1, "syntax_rollbacks": 1})
+        lines = updated.splitlines()
+        line = updated[:updated.index(new)].count("\n") if new and new in updated else 0
+        context = "\n".join(f"{i + 1}: {lines[i]}" for i in range(max(0, line - 2), min(len(lines), line + new.count("\n") + 3)))
+        return ToolResult(f"Replacement successful: {path}\n{context}")
 
     def apply_patch(self, args):
         from .tools.patch import prepare_patch
@@ -190,15 +201,17 @@ class Runtime:
                 before = self.hooks.before()
             result = self.registry.execute(call["name"], hooked["args"])
             if getattr(self.agent, "subagent_mode", None) == "verify" and call["name"] == "bash":
-                from repofix.reproduction import reproduction_key
+                from .hooks import is_validation_command
                 self.state.metadata.setdefault("verification_commands", []).append({
                     "command": hooked["args"]["command"], "exit_code": result.exit_code,
-                    "verification": reproduction_key(hooked["args"]["command"]) is not None,
+                    "verification": is_validation_command(hooked["args"]["command"], self.config.verification_patterns),
                     "output": result.content})
             if self.hooks:
                 result = self.hooks.post(hooked, result, before)
         except Exception as exc:
             result = ToolResult(f"{call['name']} error: {exc}", metadata={"error": True})
+            if call["name"] == "str_replace":
+                result.metadata["str_replace_failures"] = 1
         path = None
         if len(result.content) > self.config.tool_output_max_chars:
             # Call IDs are provider-controlled. Never use them as filesystem paths.

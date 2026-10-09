@@ -7,6 +7,7 @@ class HarnessConfig(AgentConfig):
     profile: str = "v1"
     parallel_readonly: bool = False
     hooks_enabled: bool = False
+    hooks_file: str | None = None
     apply_patch_enabled: bool = False
     read_before_edit: bool = False
     background_shell: bool = False
@@ -27,6 +28,21 @@ class HarnessConfig(AgentConfig):
     verification_patterns: tuple[str, ...] = ()
     verify_on_submit: bool = False
     readonly_workers: int = 4
+
+    def __post_init__(self):
+        if self.profile not in {"v1", "v3"} or self.task_kind not in {"bugfix", "feature"}:
+            raise ValueError("invalid profile or task_kind")
+        if self.subagents not in {"none", "explore", "verify", "both"}:
+            raise ValueError("invalid subagents mode")
+        if self.context_window < 1 or not 0 < self.compact_threshold <= 1 or self.keep_recent_tool_results < 0:
+            raise ValueError("invalid context limits")
+        if self.max_steps < 1 or self.max_cost_usd <= 0 or self.readonly_workers < 1:
+            raise ValueError("invalid step/cost/worker limits")
+        if self.profile == "v1" and (self.task_kind != "bugfix" or self.subagents != "none" or any((
+            self.parallel_readonly, self.hooks_enabled, self.apply_patch_enabled, self.read_before_edit,
+            self.background_shell, self.context_management, self.plan_tool, self.checkpointing,
+            self.permissions_enabled, self.sandbox_hardening))):
+            raise ValueError("v1 cannot enable V3 mechanisms")
 
     @classmethod
     def for_profile(cls, profile="v1", **overrides):

@@ -27,6 +27,11 @@ def run_v3(agent):
     from repofix.tasks.prompts import task_messages
     state = getattr(agent, "state", None) or RunState(messages=task_messages(agent.config.task_kind, agent.issue))
     agent.state = state
+    from repofix.reproduction import ReproductionTelemetry
+    behavior_data = dict(state.metadata.get("reproduction", {}))
+    if "_failed_reproduction_keys" in behavior_data:
+        behavior_data["_failed_reproduction_keys"] = set(behavior_data["_failed_reproduction_keys"])
+    behavior = ReproductionTelemetry(**behavior_data)
     runtime = Runtime(agent, state)
     model = agent.client if hasattr(agent.client, "complete") else OpenAICompatibleClient(agent.client)
     from .context import ContextManager
@@ -45,7 +50,8 @@ def run_v3(agent):
                        "config": asdict(agent.config), "problem_statement": agent.issue})
     while state.step < agent.config.max_steps and not state.termination:
         if agent.config.context_management:
-            event = context.maybe_compact(state)
+            with agent.budget_lock:
+                event = context.maybe_compact(state) if state.budget.estimated_cost < agent.config.max_cost_usd else None
             if event:
                 agent.trace.write(event)
             if state.termination:
@@ -55,6 +61,7 @@ def run_v3(agent):
             break
         state.step += 1
         call_started = time.monotonic()
+        state.count("model_requests")
         try:
             with agent.budget_lock:
                 if state.budget.estimated_cost >= agent.config.max_cost_usd:
@@ -71,6 +78,7 @@ def run_v3(agent):
             break
         state.metadata["usage_anchor"] = {"tokens": getattr(response.usage, "prompt_tokens", 0) or 0,
                                            "messages": len(state.messages)}
+        model_latency = time.monotonic() - call_started
         choice = response.choices[0]
         message = choice.message
         calls = [{"id": call.id, "name": call.function.name, "arguments": call.function.arguments or "{}"}
@@ -81,6 +89,12 @@ def run_v3(agent):
                 {"name": c["name"], "arguments": c["arguments"]}} for c in calls]
         state.messages.append(payload)
         state.pending_calls = list(calls)
+        if state.budget.estimated_cost >= agent.config.max_cost_usd:
+            state.termination = "max_cost"
+            for call in calls:
+                state.messages.append({"role": "tool", "tool_call_id": call["id"], "content": "[not executed: max_cost]"})
+            state.pending_calls = []
+            calls = []
         if checkpoints:
             checkpoints.save(state, agent.env)
         observations = []
@@ -91,6 +105,15 @@ def run_v3(agent):
             state.count("truncations", int(result.metadata.get("truncated", False)))
             for counter in ("str_replace_failures", "syntax_rollbacks"):
                 state.count(counter, result.metadata.get(counter, 0))
+            try:
+                behavior.observe_changes(state.step, agent.env.get_tracked_changes())
+            except Exception:
+                behavior.telemetry_errors += 1
+            if call["name"] in {"bash", "job_output"} and result.metadata.get("command"):
+                behavior.observe_shell(state.step, result.metadata["command"], result.exit_code, result.content)
+            data = asdict(behavior)
+            data["_failed_reproduction_keys"] = sorted(data["_failed_reproduction_keys"])
+            state.metadata["reproduction"] = data
             state.messages.append({"role": "tool", "tool_call_id": call["id"], "content": result.content})
             state.pending_calls = state.pending_calls[1:]
             observations.append({"tool_call_id": call["id"], "name": call["name"], "content": result.content,
@@ -105,8 +128,12 @@ def run_v3(agent):
                 break
         agent.trace.write({"type": "step", "step": state.step, "tool_calls": calls,
             "observation": observations, "finish_reason": choice.finish_reason,
-            "latency_seconds": time.monotonic() - call_started, "budget": asdict(state.budget)})
-        if not calls:
+            "latency_seconds": time.monotonic() - call_started, "model_latency_seconds": model_latency,
+            "prompt_tokens": getattr(response.usage, "prompt_tokens", None),
+            "completion_tokens": getattr(response.usage, "completion_tokens", None),
+            "cache_hit_tokens": getattr(response.usage, "prompt_cache_hit_tokens", None),
+            "budget": asdict(state.budget), "behavior": behavior.metrics(), "events": list(state.events)})
+        if not calls and not state.termination:
             if state.metadata.get("nudge_used"):
                 state.termination = "interrupted"
             else:

@@ -9,6 +9,7 @@ class Budget:
     cache_hit_tokens: int = 0
     estimated_cost: float = 0.0
     provider_calls: int = 0
+    cache_hit_available: bool = True
 
 
 @dataclass

@@ -59,7 +59,7 @@ def run_subagent(runtime, mode, question="", thoroughness="medium"):
                 restore_workspace(runtime.env, snapshot)
         event = {"type": "subagent_end", "mode": mode, "number": number,
                  "workspace_restored": changed, "latency_seconds": time.monotonic() - started,
-                 "usage": {key: value - before_budget[key] for key, value in asdict(state.budget).items()}}
+                 "usage": {key: value - before_budget[key] for key, value in asdict(state.budget).items() if key != "cache_hit_available"}}
         state.events.append(event)
         parent.trace.write(event)
     report = child_state.metadata.get("report")

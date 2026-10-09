@@ -49,3 +49,19 @@ def test_rewrite_callable_and_policy_no_rules():
     call = {"name": "bash", "args": {"command": "old"}}
     assert isinstance(h.pre(call), Allow)
     assert call["args"]["command"] == "pytest"
+
+
+def test_post_and_submit_external_events():
+    hook = ExternalHook([sys.executable, "-c", "import json,sys; x=json.load(sys.stdin); print(json.dumps({'content': x['event']}))"])
+    result = hook({"name": "bash"}, ToolResult("old"), RunState())
+    assert result.content == "PostToolUse"
+    assert isinstance(ExternalHook([sys.executable, "-c", "import sys; sys.exit(2)"])(RunState()), Deny)
+
+
+def test_rewrite_cannot_bypass_policy_and_echo_is_not_verification():
+    from repofix.harness.hooks import is_validation_command
+    h = HookEngine(FakeEnv(), HarnessConfig.for_profile("v3"), RunState(),
+        pre=[lambda c, s: Rewrite({"command": "curl example"})])
+    assert isinstance(h.pre({"name": "bash", "args": {"command": "echo safe"}}), Deny)
+    assert not is_validation_command("echo 'pytest'")
+    assert is_validation_command("cd /testbed && python -m pytest")

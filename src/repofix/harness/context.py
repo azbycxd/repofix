@@ -39,9 +39,12 @@ class ContextManager:
     def facts(self, state):
         patch = self.env.get_diff()
         stat = self.env.execute("git diff --stat HEAD --").output
+        validation = dict(state.last_validation) if state.last_validation else None
+        if validation and isinstance(validation.get("output"), str):
+            validation["output"] = validation["output"][-2000:]
         return {"task": state.messages[1]["content"], "plan": state.plan,
                 "files_changed": list(changed_paths(patch)), "diff_stat": stat,
-                "last_validation": state.last_validation}
+                "last_validation": validation}
 
     def maybe_compact(self, state):
         threshold = self.config.context_window * self.config.compact_threshold

@@ -3,10 +3,13 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+import pytest
 from pathlib import Path
 
 from repofix.env import DockerEnv
 from repofix.python_sandbox import PythonSandboxImage
+
+pytestmark = pytest.mark.docker
 
 
 @unittest.skipUnless(

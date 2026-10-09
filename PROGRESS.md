@@ -159,3 +159,18 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Fake reports are prominently labeled and cannot be mistaken for model scores.
   v1 feature comparisons intentionally use the frozen bugfix prompt with the
   public feature description; only V3 receives the feature workflow prompt.
+
+### M12 — complete
+
+- Added explicit termination enum, per-request tokens/model latency, per-tool
+  duration/batch size, hook/permission decisions, child usage/latency and summary.
+  Missing cache usage remains null. Budget exhaustion suppresses tool execution.
+- V3 retains auxiliary reproduction telemetry, including across checkpoints.
+  External hooks can be configured for all three events through an argv JSON file.
+- Tests: 79 passed, 2 Docker skips; telemetry structure, cache absence and
+  over-budget tool suppression in addition to all milestone checks.
+- Accounting includes child/summary model requests. Estimated prices inherit v1
+  constants and are not claims about current provider billing.
+- Cross-cutting checks added: offline tests block socket connections; external
+  post/submit protocols work; rewritten shell arguments are rechecked by policy;
+  quoted mentions of pytest are not treated as verification commands.
