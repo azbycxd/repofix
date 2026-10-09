@@ -31,3 +31,12 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 - Design choice: isolate legacy execution in a compatibility adapter to avoid
   silently applying V3 ordering/hooks to frozen runs. V3 uses serializable RunState.
 - No outstanding M0 work; later profiles are built milestone by milestone.
+
+### M1 — complete
+
+- Added opt-in V3 loop, registry handlers, bounded read-only thread batches and
+  ordered observations. Writes form barriers on both sides. Added grep with rg
+  and grep fallback; output includes file/line and bounded matches.
+- Tests: parallel elapsed time/order, mixed write barriers, grep glob/limit,
+  complete offline V3 loop, v1 golden. 30 passed, 1 Docker skip.
+- No deviations or outstanding work. Read-only workers default 4 (project choice).
