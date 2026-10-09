@@ -32,6 +32,12 @@ def csv_write(path, rows):
 
 def main():
     DOCS.mkdir(parents=True, exist_ok=True)
+    previous_manifest = read_json(DOCS / 'evidence_manifest.json')
+    if previous_manifest:
+        history = OUT / 'audit-history'
+        history.mkdir(exist_ok=True)
+        write_json(history / f'{len(list(history.glob("*.json"))) + 1:04d}.json',
+                   dict(at=previous_manifest['created'], audit=previous_manifest['audit']))
     plan = read_json(OUT / 'plan.json')
     rows, evidence, cases = [], [], []
     for item in plan['order']:
@@ -59,6 +65,7 @@ def main():
             config_sha256=config_hash, seed='not_set; temperature=0',
             run_id=f'interview-real-20261009-{profile}-{task}',
             real_provider=provider, real_docker=docker,
+            provider_response_received=bool(steps),
             judge_status='JUDGED' if judge is not None else 'NOT_JUDGED',
             resolved=judge.get('resolved') if judge is not None else None,
             submitted=result.get('submitted'), termination_reason=result.get('status','NOT_RUN'),
@@ -88,8 +95,12 @@ def main():
             if p.exists():
                 evidence.append(dict(path=str(p.relative_to(ROOT)), sha256=sha(p), size_bytes=p.stat().st_size))
         tool_counts = Counter(c.get('name') or c.get('function',{}).get('name') for s in steps for c in s.get('tool_calls',[]))
+        tool_errors = [dict(step=s['step'],name=o.get('name'),content=o.get('content'))
+                       for s in steps for o in s.get('observation',[]) if o.get('error')]
         cases.append(dict(task_id=task,profile=profile,tool_counts=dict(tool_counts),
-                          errors=errors,summary_counters=summary.get('counters',{})))
+                          errors=errors,tool_errors=tool_errors,
+                          parallel_read_batches=sum(any(o.get('parallel_batch_size',1)>1 for o in s.get('observation',[])) for s in steps),
+                          summary_counters=summary.get('counters',{})))
     csv_write(DOCS / 'results.csv', rows)
     matrix = []
     for task in plan['tasks']:
@@ -100,7 +111,7 @@ def main():
     csv_write(DOCS / 'task_matrix.csv', matrix)
     holdout_ids = (ROOT / 'holdout.txt').read_text().split()
     key = load_key().encode()
-    findings, scanned = [], 0
+    findings, control_metadata_findings, scanned = [], [], 0
     scan_paths = [p for p in OUT.rglob('*') if p.is_file()]
     scan_paths += [p for p in (ROOT / 'logs/run_evaluation').glob('interview-real-20261009-*/*/**/*') if p.is_file()]
     for path in scan_paths:
@@ -113,19 +124,33 @@ def main():
         if key and any(key in part for part in parts):
             findings.append(dict(path=str(path.relative_to(ROOT)),kind='actual_api_key'))
         if any(h.encode() in part for h in holdout_ids for part in parts):
-            findings.append(dict(path=str(path.relative_to(ROOT)),kind='holdout_id'))
+            if path == OUT / 'plan.json':
+                permitted = ('protected_source','protected_eval','source_status')
+                non_control = json.dumps({k:v for k,v in plan.items() if k not in permitted}).encode()
+                assert not any(h.encode() in non_control for h in holdout_ids)
+                control_metadata_findings.append(dict(path=str(path.relative_to(ROOT)),
+                    kind='historical_artifact_filenames_only',
+                    reason='Hash inventory/status used to prove preservation; not model context or task content'))
+            else:
+                findings.append(dict(path=str(path.relative_to(ROOT)),kind='holdout_id'))
         if any(re.search(rb'(?:sk-[A-Za-z0-9_-]{24,}|gh[pousr]_[A-Za-z0-9_]{30,})', part) for part in parts):
             findings.append(dict(path=str(path.relative_to(ROOT)),kind='credential_pattern_requires_review'))
         scanned += 1
     commands = [dict(label=p.parent.name,**read_json(p)) for p in sorted((OUT/'commands').glob('*/command.json'))]
-    for p in (OUT / 'commands').glob('*/*'):
+    provenance = [p for p in (ROOT / '.cache/public-image-transfer').glob('*/*.json') if p.is_file()]
+    for p in [*scan_paths, *provenance]:
         if p.is_file():
             evidence.append(dict(path=str(p.relative_to(ROOT)),sha256=sha(p),size_bytes=p.stat().st_size))
+    evidence = list({row['path']:row for row in evidence}.values())
     audit = dict(scanned_files=scanned, findings=findings, passed=not findings,
+                 control_metadata_findings=control_metadata_findings,
                  source_protected_unchanged=protected(SOURCE)==plan['protected_source'],
                  eval_protected_unchanged=protected(ROOT)==plan['protected_eval'],
                  source_head_unchanged=capture(['git','rev-parse','HEAD'],SOURCE)==plan['source_sha'],
-                 source_status_unchanged=capture(['git','status','--porcelain'],SOURCE)==plan['source_status'])
+                 source_status_unchanged=capture(['git','status','--porcelain'],SOURCE)==plan['source_status'],
+                 main_head=capture(['git','rev-parse','main'],SOURCE),
+                 v3_head=capture(['git','rev-parse','v3'],SOURCE),
+                 frozen_business_code_unchanged=not capture(['git','diff',plan['base_sha'],'--','src','tests','scripts/run_agent.py']))
     manifest = dict(created=now(),base_git_sha=plan['base_sha'],
                     actual_run_git_shas=sorted({r['git_sha'] for r in rows if r['git_sha']}),
                     report_generator_git_sha=capture(['git','rev-parse','HEAD']),

@@ -265,7 +265,7 @@ def sanity():
             assert commit.exit_code == 0
             tree = env.execute('git rev-parse HEAD^{tree}')
             assert tree.exit_code == 0
-            # Current official images squash Git history. Validate source-tree
+            # Official image HEAD may differ from the dataset base. Validate source-tree
             # identity against the public upstream commit, not commit metadata.
             upstream = json.loads(request('https://api.github.com/repos/django/django/git/commits/' + row['base_commit']))
             upstream_tree = upstream['tree']['sha']
