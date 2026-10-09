@@ -18,6 +18,8 @@ def resume_run(run_dir, api_key):
     state, _ = CheckpointStore(run_dir).load()
     CheckpointStore.require_resumable(state)
     manifest = json.loads((run_dir / "resume.json").read_text())
+    if manifest.get("python_hooks_present"):
+        raise ValueError("Python hooks must be re-registered via the programmatic resume API")
     holdout = Path(__file__).resolve().parents[3] / "holdout.txt"
     if manifest.get("instance_id") in set(holdout.read_text().split()):
         raise ValueError("Refusing to resume a HOLDOUT task")

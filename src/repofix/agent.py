@@ -353,6 +353,15 @@ class RepoFixAgent:
         self.config = config or AgentConfig()
         self.client = client or create_deepseek_client(api_key, self.config)
         self.trace = TrajectoryWriter(trajectory_path, secrets=[api_key])
+        self.python_hooks = {"PreToolUse": [], "PostToolUse": [], "PreSubmit": []}
+
+    def register_hook(self, event: str, hook) -> None:
+        """Register a process-local Python hook before starting a V3 run."""
+        if not getattr(self.config, "hooks_enabled", False):
+            raise ValueError("Python hooks require v3 with hooks_enabled")
+        if event not in self.python_hooks or not callable(hook):
+            raise ValueError("expected a callable PreToolUse/PostToolUse/PreSubmit hook")
+        self.python_hooks[event].append(hook)
 
     @staticmethod
     def _usage_value(usage: Any, name: str) -> int | None:

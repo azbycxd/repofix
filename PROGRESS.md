@@ -7,6 +7,12 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F7: RepoFixAgent.register_hook exposes process-local Python hooks to run_v3.
+  Built-in policy/syntax/submit checks are registered in HookEngine; command
+  hooks remain supported. Full-loop rejection and three-block cap tests PASS.
+  CLI resume refuses callback-bearing manifests rather than silently dropping
+  hooks; programmatic callers must re-register before continuing.
+
 - F6: Prior verify behavior forced FAIL on any workspace change (a stricter
   deviation). It now restores the workspace, reports workspace_restored=true,
   and retains the verdict from test evidence. Passing-with-edits test PASS.

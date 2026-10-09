@@ -144,10 +144,21 @@ class HookEngine:
                     if not isinstance(command, list) or not command or any(not isinstance(v, str) for v in command):
                         raise ValueError("hook command must be a nonempty argv list")
                     target.append(ExternalHook(command, item.get("timeout", 30)))
+        if config.hooks_enabled:
+            self.pre_hooks.insert(0, self._command_policy)
+            self.post_hooks.insert(0, self._syntax_check)
+            self.submit_hooks.append(verify_before_submit)
+        self.changed = {}
+
+    def _command_policy(self, call, state):
+        return command_policy(call, state, self.config, self.ask)
+
+    def _syntax_check(self, call, result, state):
+        return syntax_check(self.env, self.changed, result)
 
     def pre(self, call):
         rewritten = False
-        for hook in [lambda c, s: command_policy(c, s, self.config, self.ask), *self.pre_hooks]:
+        for hook in self.pre_hooks:
             decision = hook(call, self.state)
             if isinstance(decision, (Deny, Block)):
                 self.state.count("hook_blocks")
@@ -181,7 +192,7 @@ class HookEngine:
             if changed:
                 self.state.workspace_version += 1
             self.state.metadata["workspace_fingerprint"] = after
-            result = syntax_check(self.env, changed, result)
+            self.changed = changed
             command = result.metadata.get("command", "")
             valid = is_validation_command(command, self.config.verification_patterns)
             if valid:
@@ -208,7 +219,7 @@ class HookEngine:
         if self.state.submit_blocks >= 3:
             self.state.metadata["submit_forced"] = True
             return Allow()
-        for hook in [*self.submit_hooks, verify_before_submit]:
+        for hook in self.submit_hooks:
             blocks_before = self.state.submit_blocks
             decision = hook(self.state)
             if not isinstance(decision, (Allow, Block, Deny)):

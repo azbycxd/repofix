@@ -40,7 +40,8 @@ def run_v3(agent):
     import json
     checkpoints = CheckpointStore(agent.trace.path.parent, agent.trace._redact, agent.trace.secrets) if agent.config.checkpointing else None
     if checkpoints:
-        manifest = {"config": asdict(agent.config), "issue": agent.issue, "git_commit": agent.git_commit,
+        manifest = {"python_hooks_present": any(agent.python_hooks.values()),
+                    "config": asdict(agent.config), "issue": agent.issue, "git_commit": agent.git_commit,
                     "trajectory": agent.trace.path.name,
                     **getattr(agent, "resume_metadata", {"kind": "docker", "image": getattr(agent.env, "image", ""),
                        "instance_id": getattr(agent.env, "instance_id", "")})}

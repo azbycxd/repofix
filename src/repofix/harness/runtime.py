@@ -26,7 +26,10 @@ class Runtime:
         from .tools.shell import JobManager
         self.jobs = JobManager(self.env)
         from .hooks import HookEngine
-        self.hooks = HookEngine(self.env, self.config, state, ask=getattr(agent, "permission_ask", None)) if self.config.hooks_enabled else None
+        self.hooks = HookEngine(self.env, self.config, state,
+            pre=agent.python_hooks["PreToolUse"], post=agent.python_hooks["PostToolUse"],
+            submit=agent.python_hooks["PreSubmit"],
+            ask=getattr(agent, "permission_ask", None)) if self.config.hooks_enabled else None
         self.index, self.index_stats = BM25Index.from_repository(self.env)
         handlers = {"bash": self.bash, "view": self.view, "str_replace": self.replace,
                     "search_code": self.search, "submit": self.submit}

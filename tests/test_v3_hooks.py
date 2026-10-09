@@ -73,3 +73,22 @@ def test_post_hook_failure_preserves_tool_result():
     h = HookEngine(env, HarnessConfig.for_profile("v3"), RunState(), post=[hook])
     result = h.post({"name": "bash"}, ToolResult("actual command output"), h.before())
     assert "actual command output" in result.content and "broken hook" in result.content
+
+
+def test_registered_python_hooks_run_in_real_loop_and_force_after_three(tmp_path):
+    from repofix.agent import RepoFixAgent
+    from repofix.harness.model import FakeModelClient
+    client = FakeModelClient([
+        {"calls": [("bash", {"command": "echo denied"})]},
+        *[{"calls": [("submit", {})]} for _ in range(4)],
+    ])
+    env = FakeEnv()
+    agent = RepoFixAgent(env, "fix", tmp_path / "t", "", "test",
+                        HarnessConfig.for_profile("v3"), client)
+    agent.register_hook("PreToolUse", lambda call, state:
+                        Deny("custom policy refusal") if call["name"] == "bash" else Allow())
+    agent.register_hook("PostToolUse", lambda call, result, state: result)
+    result = agent.run()
+    assert "custom policy refusal" in client.requests[1]["messages"][-1]["content"]
+    assert "echo denied" not in env.executed
+    assert result.status == "submit_forced" and agent.state.submit_blocks == 3
