@@ -7,6 +7,10 @@ Scope: REPOFIX_V3_TASK.md M0–M13, offline only, no push or merge.
 
 ## Second-round fixes (2026-10-09)
 
+- F5: Verify command outputs are sanitized and capped at 1,000 characters;
+  evidence is capped at 1,500 including its report prefix. Malicious role-like
+  lines and long-output regression tested through the full loop. Pytest PASS.
+
 - F4: Two responses without tools now terminate as no_tool_call, not interrupted.
   Resume rejects terminal runs before Docker initialization; patch collection
   errors are runtime_error. Reports enumerate terminal reasons. Full pytest PASS.

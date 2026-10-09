@@ -11,10 +11,10 @@ from .checkpoint import capture_workspace, restore_workspace
 EXPLORE_STEPS = {"quick": 8, "medium": 15, "thorough": 25}
 
 
-def clean_report(text):
+def clean_report(text, limit=1500):
     lines = [line for line in str(text).splitlines() if not re.search(
         r"(?i)(<\|(?:system|assistant|developer)|</?(?:system|developer)>|^\s*(?:system|developer|assistant)\s*:|ignore (?:all|previous)|override .*instructions)", line)]
-    return "[subagent report]\n" + "\n".join(lines)[:1500]
+    return ("[subagent report]\n" + "\n".join(lines))[:limit]
 
 
 def run_subagent(runtime, mode, question="", thoroughness="medium"):
@@ -74,5 +74,7 @@ def run_subagent(runtime, mode, question="", thoroughness="medium"):
     if changed:
         evidence += "\nChild modified /testbed; all workspace changes were restored."
         verdict = "FAIL"  # A pass measured on reverted code is not final evidence.
+    commands = [{"command": item["command"], "exit_code": item["exit_code"],
+                 "output": clean_report(item["output"], limit=1000)} for item in commands]
     result = {"verdict": verdict, "commands_run": commands, "evidence": clean_report(evidence), "workspace_restored": changed}
     return result
