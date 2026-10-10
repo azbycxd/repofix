@@ -1,6 +1,7 @@
 """V3 tool assembly and observation formatting, independent of model orchestration."""
 
 import hashlib
+import json
 import time
 from dataclasses import asdict
 
@@ -8,6 +9,7 @@ from repofix.core import TOOLS, format_tool_observation, parse_tool_arguments
 from repofix.search import BM25Index
 
 from .hooks import Block, Deny, HookEngine, command_policy, is_validation_command
+from .progress import digest, normalize_observation
 from .tools.agents import AgentTools
 from .tools.files import FileTools, grep
 from .tools.plan import update_plan
@@ -303,6 +305,18 @@ class Runtime:
             result.metadata["producer"] = "harness"
             result.metadata["validation_state"] = status["state"]
         path = None
+        if self.config.progress_monitor and call["name"] == "run_tests":
+            # Ignore UUIDs/artifact hashes/timings while retaining the actual failure output.
+            try:
+                validation_message = json.loads(result.content)
+                result.metadata["progress_observation_signature"] = digest(
+                    [
+                        validation_message.get("local_validation"),
+                        normalize_observation(validation_message.get("output", "")),
+                    ]
+                )
+            except ValueError:
+                pass
         if len(result.content) > self.config.tool_output_max_chars:
             # Call IDs are provider-controlled. Never use them as filesystem paths.
             key = hashlib.sha256(call["id"].encode()).hexdigest()[:16]

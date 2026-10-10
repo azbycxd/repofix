@@ -319,6 +319,7 @@ class ValidationRunner:
             if record["outcome"] == "PASS"
             else record["outcome"],
             "scope": "specified local tests only; never TASK_RESOLVED",
+            "output": self.agent.trace._redact_text(result.output),
             "evidence": safe,
         }
         return ToolResult(

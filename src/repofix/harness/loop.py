@@ -12,6 +12,7 @@ from .checkpoint import CheckpointStore, atomic_write
 from .config import serialize_config
 from .context import ContextManager
 from .model import OpenAICompatibleClient
+from .progress import ProgressMonitor
 from .runtime import Runtime
 from .state import RunState
 from .telemetry import finish, record_usage
@@ -38,6 +39,9 @@ def run_v3(agent):
         behavior_data["_failed_reproduction_keys"] = set(behavior_data["_failed_reproduction_keys"])
     behavior = ReproductionTelemetry(**behavior_data)
     runtime = Runtime(agent, state)
+    progress = (
+        ProgressMonitor(agent.config, agent.env, state) if agent.config.progress_monitor else None
+    )
     model = (
         agent.client if hasattr(agent.client, "complete") else OpenAICompatibleClient(agent.client)
     )
@@ -205,6 +209,8 @@ def run_v3(agent):
                     )
                 state.pending_calls = []
                 break
+        if progress:
+            agent.trace.write(progress.observe(calls, observations))
         agent.trace.write(
             {
                 "type": "step",
