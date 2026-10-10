@@ -1,0 +1,286 @@
+{
+  "status": "max_steps",
+  "submitted": false,
+  "patch": "",
+  "steps": 6,
+  "provider_calls": 6,
+  "tool_calls": 6,
+  "view_calls": 0,
+  "str_replace_calls": 0,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 1,
+  "index_chunk_count": 0,
+  "index_build_seconds": 7.070399988151621e-05,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "pre_fix_reproduced": false,
+  "post_fix_repro_passed": false,
+  "repro_flipped": false,
+  "first_production_edit_step": null,
+  "existing_test_modified": false,
+  "git_history_search_count": 0,
+  "network_attempt_count": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "reviewer_initial_patch": "",
+  "prompt_tokens": 600,
+  "cache_hit_tokens": 120,
+  "completion_tokens": 60,
+  "max_estimated_cost_usd": 0.00021672000000000003,
+  "wall_time_seconds": 0.6626468730000852,
+  "trajectory_path": "$WORKTREE/runs/v4-reliability-20261010/traces/M3-full-regression/test_disabled_monitor_preserve0/trace.jsonl",
+  "reliability": {
+    "checkpoint_generation": 12,
+    "snapshot_workspace_signature": "de6563cbc4b8427cdfe42b2b5dc5cbbd1d1edfed3f167f72c37c9d093ed75c9c",
+    "local_validation": {
+      "state": "UNVERIFIED",
+      "evidence_id": null
+    },
+    "submission_state": "max_steps",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness"
+  },
+  "termination_reason": "max_steps",
+  "counters": {
+    "model_requests": 6,
+    "tool_calls": 6,
+    "grep_calls": 6,
+    "truncations": 0,
+    "str_replace_failures": 0,
+    "syntax_rollbacks": 0
+  },
+  "events": [
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 1,
+      "checkpoint_generation": 1,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.03613933499991617,
+      "gc_duration": 0.014135773999896628,
+      "retained_generations": 1
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 1,
+      "checkpoint_generation": 2,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "end_step",
+      "checkpoint_duration": 0.034349724000094284,
+      "gc_duration": 0.019368397000107507,
+      "retained_generations": 2
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 2,
+      "checkpoint_generation": 3,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.040045776999704685,
+      "gc_duration": 0.024043287000040436,
+      "retained_generations": 3
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 2,
+      "checkpoint_generation": 4,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "end_step",
+      "checkpoint_duration": 0.0481767790001868,
+      "gc_duration": 0.03214328800004296,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 3,
+      "checkpoint_generation": 5,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.053596614000070986,
+      "gc_duration": 0.03856838499996229,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 3,
+      "checkpoint_generation": 6,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "end_step",
+      "checkpoint_duration": 0.05721513800017419,
+      "gc_duration": 0.04209790300001259,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 4,
+      "checkpoint_generation": 7,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.05891814300002807,
+      "gc_duration": 0.04360359600013908,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 4,
+      "checkpoint_generation": 8,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "end_step",
+      "checkpoint_duration": 0.0541202469999007,
+      "gc_duration": 0.03837577300009798,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 5,
+      "checkpoint_generation": 9,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.05454357300004631,
+      "gc_duration": 0.037700831000165635,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 5,
+      "checkpoint_generation": 10,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "end_step",
+      "checkpoint_duration": 0.05424455399997896,
+      "gc_duration": 0.03899491100037267,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 6,
+      "checkpoint_generation": 11,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.05557393699973545,
+      "gc_duration": 0.039230225999745016,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 6,
+      "checkpoint_generation": 12,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "end_step",
+      "checkpoint_duration": 0.05301097800020216,
+      "gc_duration": 0.03735701000005065,
+      "retained_generations": 4
+    }
+  ],
+  "subagent_calls": 0,
+  "compactions": 0,
+  "hook_blocks": 0
+}

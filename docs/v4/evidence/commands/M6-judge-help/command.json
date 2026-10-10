@@ -1,0 +1,13 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "swebench.harness.run_evaluation",
+    "--help"
+  ],
+  "started": "2026-10-10T11:54:51.191855+00:00",
+  "git_sha": "c5d868772feb0baf760e189204c1b6948f786f98",
+  "ended": "2026-10-10T11:54:52.425483+00:00",
+  "exit_code": 0,
+  "wall_seconds": 1.233646839999892
+}

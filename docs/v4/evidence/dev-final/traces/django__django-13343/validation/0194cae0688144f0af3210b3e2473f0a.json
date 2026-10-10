@@ -1,0 +1,47 @@
+{
+  "id": "0194cae0688144f0af3210b3e2473f0a",
+  "run_id": "django__django-13343",
+  "tool_call_id": "call_00_nyfEyrPAcgRNhFhgP87f3031",
+  "source": "harness_run_tests",
+  "runner": "pytest",
+  "argv": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/model_fields/test_filefield.py",
+    "tests/model_fields/test_imagefield.py",
+    "--junitxml=/tmp/repofix_validation/0194cae0688144f0af3210b3e2473f0a.xml"
+  ],
+  "cwd": "/testbed",
+  "test_targets": [
+    "tests/model_fields/test_filefield.py",
+    "tests/model_fields/test_imagefield.py"
+  ],
+  "started_at": "2026-10-10T12:11:26.400477+00:00",
+  "finished_at": "2026-10-10T12:11:27.038447+00:00",
+  "duration_seconds": 0.6379781799996636,
+  "workspace_signature_before": "ec2b36b2ec527be3700ef948c91afacf90af9ed84afab1d4a3d1fca1168a016c",
+  "workspace_signature_after": "ec2b36b2ec527be3700ef948c91afacf90af9ed84afab1d4a3d1fca1168a016c",
+  "completed": true,
+  "exit_code": 1,
+  "timed_out": false,
+  "cancelled": false,
+  "execution_state": "EXITED",
+  "tests_collected": null,
+  "tests_passed": null,
+  "tests_failed": null,
+  "tests_errors": null,
+  "tests_skipped": null,
+  "outcome": "INCONCLUSIVE",
+  "output_artifact": {
+    "stdout.txt": "validation/0194cae0688144f0af3210b3e2473f0a.stdout.txt",
+    "stderr.txt": "validation/0194cae0688144f0af3210b3e2473f0a.stderr.txt"
+  },
+  "report_artifact": null,
+  "artifact_hashes": {
+    "0194cae0688144f0af3210b3e2473f0a.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "0194cae0688144f0af3210b3e2473f0a.stderr.txt": "8840bae3e8ca2278792dca956a4c959ed92eac317ee2b0a1612b73c21d72c74c"
+  },
+  "parse_error": "ENV_ERROR: pytest/runtime unavailable; inspect testbed interpreter and artifacts",
+  "evidence_hash": "f049e8fabd98a5e32ffcfa1fc6f49dc09c6ad3ee7af9781259ba5408bab7f4fa"
+}

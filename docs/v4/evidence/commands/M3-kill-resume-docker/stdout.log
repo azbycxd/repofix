@@ -1,0 +1,665 @@
+FFFFFF..F                                                                [100%]
+=================================== FAILURES ===================================
+_______ test_real_process_kill_and_independent_resume[pre_dispatch-None] _______
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-14/test_real_process_kill_and_ind0')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=23.23202666399993, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+phase = 'pre_dispatch', corruption = None
+record_property = <function record_property.<locals>.append_property at 0x7d0979393060>
+
+    @pytest.mark.parametrize(
+        "phase,corruption",
+        [
+            ("pre_dispatch", None),
+            ("post_edit", None),
+            ("mid_write", None),
+            ("active_job", None),
+            ("post_edit", "manifest"),
+            ("post_edit", "blob"),
+        ],
+    )
+    def test_real_process_kill_and_independent_resume(
+        tmp_path, v4_docker_image, phase, corruption, record_property
+    ):
+        folder = artifact_dir(tmp_path)
+        argv = [
+            sys.executable,
+            str(FIXTURE),
+            "run",
+            "--phase",
+            phase,
+            "--image",
+            v4_docker_image.image,
+            "--folder",
+            str(folder),
+        ]
+        client = docker.from_env()
+        old = None
+        with (folder / "killed-process.log").open("wb") as log:
+            process = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
+            try:
+                deadline = time.monotonic() + 90
+                ready = False
+                while time.monotonic() < deadline:
+                    if (folder / "container.json").exists() and old is None:
+                        old = client.containers.get(
+                            json.loads((folder / "container.json").read_text())["id"]
+                        )
+                    if phase == "mid_write" and old is not None:
+                        ready = old.exec_run(["test", "-f", "/tmp/v4-mid-write"]).exit_code == 0
+                    else:
+                        ready = (folder / "kill-ready.json").exists()
+                    if ready or process.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                assert ready and process.poll() is None, (folder / "killed-process.log").read_text()
+                process.kill()
+                assert process.wait(timeout=10) == -signal.SIGKILL
+                if phase == "mid_write":
+                    assert b"VALUE = 2" in old.exec_run(["cat", "/testbed/module.py"]).output
+                if corruption:
+                    latest = sorted((folder / "checkpoints").glob("generation-*.json"))[-1]
+                    target = (
+                        latest
+                        if corruption == "manifest"
+                        else latest.parent / json.loads(latest.read_text())["workspace"]
+                    )
+                    target.write_text("injected corruption")
+                argv[2] = "resume"
+                completed = subprocess.run(argv, capture_output=True, timeout=90)
+                (folder / "resume-process.stdout").write_bytes(completed.stdout)
+                (folder / "resume-process.stderr").write_bytes(completed.stderr)
+>               assert completed.returncode == 0, completed.stderr.decode()
+E               AssertionError: Traceback (most recent call last):
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 97, in <module>
+E                     main()
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 44, in main
+E                     (args.folder / "resumed.json").write_text(json.dumps(evidence, indent=2))
+E                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+E                     **kw).encode(obj)
+E                           ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+E                     chunks = list(chunks)
+E                              ^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+E                     yield from _iterencode_dict(o, _current_indent_level)
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+E                     o = _default(o)
+E                         ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+E                     raise TypeError(f'Object of type {o.__class__.__name__} '
+E                 TypeError: Object of type Budget is not JSON serializable
+E                 
+E               assert 1 == 0
+E                +  where 1 = CompletedProcess(args=['$HOME/venvs/repofix/bin/python', '$SOURCE/.cache/v4-...se TypeError(f\'Object of type {o.__class__.__name__} \'\nTypeError: Object of type Budget is not JSON serializable\n').returncode
+
+tests/test_v4_resume_docker.py:91: AssertionError
+________ test_real_process_kill_and_independent_resume[post_edit-None] _________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-14/test_real_process_kill_and_ind1')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=23.23202666399993, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+phase = 'post_edit', corruption = None
+record_property = <function record_property.<locals>.append_property at 0x7d09793f2d40>
+
+    @pytest.mark.parametrize(
+        "phase,corruption",
+        [
+            ("pre_dispatch", None),
+            ("post_edit", None),
+            ("mid_write", None),
+            ("active_job", None),
+            ("post_edit", "manifest"),
+            ("post_edit", "blob"),
+        ],
+    )
+    def test_real_process_kill_and_independent_resume(
+        tmp_path, v4_docker_image, phase, corruption, record_property
+    ):
+        folder = artifact_dir(tmp_path)
+        argv = [
+            sys.executable,
+            str(FIXTURE),
+            "run",
+            "--phase",
+            phase,
+            "--image",
+            v4_docker_image.image,
+            "--folder",
+            str(folder),
+        ]
+        client = docker.from_env()
+        old = None
+        with (folder / "killed-process.log").open("wb") as log:
+            process = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
+            try:
+                deadline = time.monotonic() + 90
+                ready = False
+                while time.monotonic() < deadline:
+                    if (folder / "container.json").exists() and old is None:
+                        old = client.containers.get(
+                            json.loads((folder / "container.json").read_text())["id"]
+                        )
+                    if phase == "mid_write" and old is not None:
+                        ready = old.exec_run(["test", "-f", "/tmp/v4-mid-write"]).exit_code == 0
+                    else:
+                        ready = (folder / "kill-ready.json").exists()
+                    if ready or process.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                assert ready and process.poll() is None, (folder / "killed-process.log").read_text()
+                process.kill()
+                assert process.wait(timeout=10) == -signal.SIGKILL
+                if phase == "mid_write":
+                    assert b"VALUE = 2" in old.exec_run(["cat", "/testbed/module.py"]).output
+                if corruption:
+                    latest = sorted((folder / "checkpoints").glob("generation-*.json"))[-1]
+                    target = (
+                        latest
+                        if corruption == "manifest"
+                        else latest.parent / json.loads(latest.read_text())["workspace"]
+                    )
+                    target.write_text("injected corruption")
+                argv[2] = "resume"
+                completed = subprocess.run(argv, capture_output=True, timeout=90)
+                (folder / "resume-process.stdout").write_bytes(completed.stdout)
+                (folder / "resume-process.stderr").write_bytes(completed.stderr)
+>               assert completed.returncode == 0, completed.stderr.decode()
+E               AssertionError: Traceback (most recent call last):
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 97, in <module>
+E                     main()
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 44, in main
+E                     (args.folder / "resumed.json").write_text(json.dumps(evidence, indent=2))
+E                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+E                     **kw).encode(obj)
+E                           ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+E                     chunks = list(chunks)
+E                              ^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+E                     yield from _iterencode_dict(o, _current_indent_level)
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+E                     o = _default(o)
+E                         ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+E                     raise TypeError(f'Object of type {o.__class__.__name__} '
+E                 TypeError: Object of type Budget is not JSON serializable
+E                 
+E               assert 1 == 0
+E                +  where 1 = CompletedProcess(args=['$HOME/venvs/repofix/bin/python', '$SOURCE/.cache/v4-...se TypeError(f\'Object of type {o.__class__.__name__} \'\nTypeError: Object of type Budget is not JSON serializable\n').returncode
+
+tests/test_v4_resume_docker.py:91: AssertionError
+________ test_real_process_kill_and_independent_resume[mid_write-None] _________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-14/test_real_process_kill_and_ind2')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=23.23202666399993, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+phase = 'mid_write', corruption = None
+record_property = <function record_property.<locals>.append_property at 0x7d09793f3060>
+
+    @pytest.mark.parametrize(
+        "phase,corruption",
+        [
+            ("pre_dispatch", None),
+            ("post_edit", None),
+            ("mid_write", None),
+            ("active_job", None),
+            ("post_edit", "manifest"),
+            ("post_edit", "blob"),
+        ],
+    )
+    def test_real_process_kill_and_independent_resume(
+        tmp_path, v4_docker_image, phase, corruption, record_property
+    ):
+        folder = artifact_dir(tmp_path)
+        argv = [
+            sys.executable,
+            str(FIXTURE),
+            "run",
+            "--phase",
+            phase,
+            "--image",
+            v4_docker_image.image,
+            "--folder",
+            str(folder),
+        ]
+        client = docker.from_env()
+        old = None
+        with (folder / "killed-process.log").open("wb") as log:
+            process = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
+            try:
+                deadline = time.monotonic() + 90
+                ready = False
+                while time.monotonic() < deadline:
+                    if (folder / "container.json").exists() and old is None:
+                        old = client.containers.get(
+                            json.loads((folder / "container.json").read_text())["id"]
+                        )
+                    if phase == "mid_write" and old is not None:
+                        ready = old.exec_run(["test", "-f", "/tmp/v4-mid-write"]).exit_code == 0
+                    else:
+                        ready = (folder / "kill-ready.json").exists()
+                    if ready or process.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                assert ready and process.poll() is None, (folder / "killed-process.log").read_text()
+                process.kill()
+                assert process.wait(timeout=10) == -signal.SIGKILL
+                if phase == "mid_write":
+                    assert b"VALUE = 2" in old.exec_run(["cat", "/testbed/module.py"]).output
+                if corruption:
+                    latest = sorted((folder / "checkpoints").glob("generation-*.json"))[-1]
+                    target = (
+                        latest
+                        if corruption == "manifest"
+                        else latest.parent / json.loads(latest.read_text())["workspace"]
+                    )
+                    target.write_text("injected corruption")
+                argv[2] = "resume"
+                completed = subprocess.run(argv, capture_output=True, timeout=90)
+                (folder / "resume-process.stdout").write_bytes(completed.stdout)
+                (folder / "resume-process.stderr").write_bytes(completed.stderr)
+>               assert completed.returncode == 0, completed.stderr.decode()
+E               AssertionError: Traceback (most recent call last):
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 97, in <module>
+E                     main()
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 44, in main
+E                     (args.folder / "resumed.json").write_text(json.dumps(evidence, indent=2))
+E                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+E                     **kw).encode(obj)
+E                           ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+E                     chunks = list(chunks)
+E                              ^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+E                     yield from _iterencode_dict(o, _current_indent_level)
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+E                     o = _default(o)
+E                         ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+E                     raise TypeError(f'Object of type {o.__class__.__name__} '
+E                 TypeError: Object of type Budget is not JSON serializable
+E                 
+E               assert 1 == 0
+E                +  where 1 = CompletedProcess(args=['$HOME/venvs/repofix/bin/python', '$SOURCE/.cache/v4-...se TypeError(f\'Object of type {o.__class__.__name__} \'\nTypeError: Object of type Budget is not JSON serializable\n').returncode
+
+tests/test_v4_resume_docker.py:91: AssertionError
+________ test_real_process_kill_and_independent_resume[active_job-None] ________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-14/test_real_process_kill_and_ind3')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=23.23202666399993, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+phase = 'active_job', corruption = None
+record_property = <function record_property.<locals>.append_property at 0x7d0979240180>
+
+    @pytest.mark.parametrize(
+        "phase,corruption",
+        [
+            ("pre_dispatch", None),
+            ("post_edit", None),
+            ("mid_write", None),
+            ("active_job", None),
+            ("post_edit", "manifest"),
+            ("post_edit", "blob"),
+        ],
+    )
+    def test_real_process_kill_and_independent_resume(
+        tmp_path, v4_docker_image, phase, corruption, record_property
+    ):
+        folder = artifact_dir(tmp_path)
+        argv = [
+            sys.executable,
+            str(FIXTURE),
+            "run",
+            "--phase",
+            phase,
+            "--image",
+            v4_docker_image.image,
+            "--folder",
+            str(folder),
+        ]
+        client = docker.from_env()
+        old = None
+        with (folder / "killed-process.log").open("wb") as log:
+            process = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
+            try:
+                deadline = time.monotonic() + 90
+                ready = False
+                while time.monotonic() < deadline:
+                    if (folder / "container.json").exists() and old is None:
+                        old = client.containers.get(
+                            json.loads((folder / "container.json").read_text())["id"]
+                        )
+                    if phase == "mid_write" and old is not None:
+                        ready = old.exec_run(["test", "-f", "/tmp/v4-mid-write"]).exit_code == 0
+                    else:
+                        ready = (folder / "kill-ready.json").exists()
+                    if ready or process.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                assert ready and process.poll() is None, (folder / "killed-process.log").read_text()
+                process.kill()
+                assert process.wait(timeout=10) == -signal.SIGKILL
+                if phase == "mid_write":
+                    assert b"VALUE = 2" in old.exec_run(["cat", "/testbed/module.py"]).output
+                if corruption:
+                    latest = sorted((folder / "checkpoints").glob("generation-*.json"))[-1]
+                    target = (
+                        latest
+                        if corruption == "manifest"
+                        else latest.parent / json.loads(latest.read_text())["workspace"]
+                    )
+                    target.write_text("injected corruption")
+                argv[2] = "resume"
+                completed = subprocess.run(argv, capture_output=True, timeout=90)
+                (folder / "resume-process.stdout").write_bytes(completed.stdout)
+                (folder / "resume-process.stderr").write_bytes(completed.stderr)
+>               assert completed.returncode == 0, completed.stderr.decode()
+E               AssertionError: Traceback (most recent call last):
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 97, in <module>
+E                     main()
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 44, in main
+E                     (args.folder / "resumed.json").write_text(json.dumps(evidence, indent=2))
+E                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+E                     **kw).encode(obj)
+E                           ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+E                     chunks = list(chunks)
+E                              ^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+E                     yield from _iterencode_dict(o, _current_indent_level)
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+E                     o = _default(o)
+E                         ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+E                     raise TypeError(f'Object of type {o.__class__.__name__} '
+E                 TypeError: Object of type Budget is not JSON serializable
+E                 
+E               assert 1 == 0
+E                +  where 1 = CompletedProcess(args=['$HOME/venvs/repofix/bin/python', '$SOURCE/.cache/v4-...se TypeError(f\'Object of type {o.__class__.__name__} \'\nTypeError: Object of type Budget is not JSON serializable\n').returncode
+
+tests/test_v4_resume_docker.py:91: AssertionError
+______ test_real_process_kill_and_independent_resume[post_edit-manifest] _______
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-14/test_real_process_kill_and_ind4')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=23.23202666399993, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+phase = 'post_edit', corruption = 'manifest'
+record_property = <function record_property.<locals>.append_property at 0x7d0979240540>
+
+    @pytest.mark.parametrize(
+        "phase,corruption",
+        [
+            ("pre_dispatch", None),
+            ("post_edit", None),
+            ("mid_write", None),
+            ("active_job", None),
+            ("post_edit", "manifest"),
+            ("post_edit", "blob"),
+        ],
+    )
+    def test_real_process_kill_and_independent_resume(
+        tmp_path, v4_docker_image, phase, corruption, record_property
+    ):
+        folder = artifact_dir(tmp_path)
+        argv = [
+            sys.executable,
+            str(FIXTURE),
+            "run",
+            "--phase",
+            phase,
+            "--image",
+            v4_docker_image.image,
+            "--folder",
+            str(folder),
+        ]
+        client = docker.from_env()
+        old = None
+        with (folder / "killed-process.log").open("wb") as log:
+            process = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
+            try:
+                deadline = time.monotonic() + 90
+                ready = False
+                while time.monotonic() < deadline:
+                    if (folder / "container.json").exists() and old is None:
+                        old = client.containers.get(
+                            json.loads((folder / "container.json").read_text())["id"]
+                        )
+                    if phase == "mid_write" and old is not None:
+                        ready = old.exec_run(["test", "-f", "/tmp/v4-mid-write"]).exit_code == 0
+                    else:
+                        ready = (folder / "kill-ready.json").exists()
+                    if ready or process.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                assert ready and process.poll() is None, (folder / "killed-process.log").read_text()
+                process.kill()
+                assert process.wait(timeout=10) == -signal.SIGKILL
+                if phase == "mid_write":
+                    assert b"VALUE = 2" in old.exec_run(["cat", "/testbed/module.py"]).output
+                if corruption:
+                    latest = sorted((folder / "checkpoints").glob("generation-*.json"))[-1]
+                    target = (
+                        latest
+                        if corruption == "manifest"
+                        else latest.parent / json.loads(latest.read_text())["workspace"]
+                    )
+                    target.write_text("injected corruption")
+                argv[2] = "resume"
+                completed = subprocess.run(argv, capture_output=True, timeout=90)
+                (folder / "resume-process.stdout").write_bytes(completed.stdout)
+                (folder / "resume-process.stderr").write_bytes(completed.stderr)
+>               assert completed.returncode == 0, completed.stderr.decode()
+E               AssertionError: Traceback (most recent call last):
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 97, in <module>
+E                     main()
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 44, in main
+E                     (args.folder / "resumed.json").write_text(json.dumps(evidence, indent=2))
+E                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+E                     **kw).encode(obj)
+E                           ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+E                     chunks = list(chunks)
+E                              ^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+E                     yield from _iterencode_dict(o, _current_indent_level)
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+E                     o = _default(o)
+E                         ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+E                     raise TypeError(f'Object of type {o.__class__.__name__} '
+E                 TypeError: Object of type Budget is not JSON serializable
+E                 
+E               assert 1 == 0
+E                +  where 1 = CompletedProcess(args=['$HOME/venvs/repofix/bin/python', '$SOURCE/.cache/v4-...se TypeError(f\'Object of type {o.__class__.__name__} \'\nTypeError: Object of type Budget is not JSON serializable\n').returncode
+
+tests/test_v4_resume_docker.py:91: AssertionError
+________ test_real_process_kill_and_independent_resume[post_edit-blob] _________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-14/test_real_process_kill_and_ind5')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=23.23202666399993, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+phase = 'post_edit', corruption = 'blob'
+record_property = <function record_property.<locals>.append_property at 0x7d0979240c20>
+
+    @pytest.mark.parametrize(
+        "phase,corruption",
+        [
+            ("pre_dispatch", None),
+            ("post_edit", None),
+            ("mid_write", None),
+            ("active_job", None),
+            ("post_edit", "manifest"),
+            ("post_edit", "blob"),
+        ],
+    )
+    def test_real_process_kill_and_independent_resume(
+        tmp_path, v4_docker_image, phase, corruption, record_property
+    ):
+        folder = artifact_dir(tmp_path)
+        argv = [
+            sys.executable,
+            str(FIXTURE),
+            "run",
+            "--phase",
+            phase,
+            "--image",
+            v4_docker_image.image,
+            "--folder",
+            str(folder),
+        ]
+        client = docker.from_env()
+        old = None
+        with (folder / "killed-process.log").open("wb") as log:
+            process = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT, env=dict(os.environ))
+            try:
+                deadline = time.monotonic() + 90
+                ready = False
+                while time.monotonic() < deadline:
+                    if (folder / "container.json").exists() and old is None:
+                        old = client.containers.get(
+                            json.loads((folder / "container.json").read_text())["id"]
+                        )
+                    if phase == "mid_write" and old is not None:
+                        ready = old.exec_run(["test", "-f", "/tmp/v4-mid-write"]).exit_code == 0
+                    else:
+                        ready = (folder / "kill-ready.json").exists()
+                    if ready or process.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                assert ready and process.poll() is None, (folder / "killed-process.log").read_text()
+                process.kill()
+                assert process.wait(timeout=10) == -signal.SIGKILL
+                if phase == "mid_write":
+                    assert b"VALUE = 2" in old.exec_run(["cat", "/testbed/module.py"]).output
+                if corruption:
+                    latest = sorted((folder / "checkpoints").glob("generation-*.json"))[-1]
+                    target = (
+                        latest
+                        if corruption == "manifest"
+                        else latest.parent / json.loads(latest.read_text())["workspace"]
+                    )
+                    target.write_text("injected corruption")
+                argv[2] = "resume"
+                completed = subprocess.run(argv, capture_output=True, timeout=90)
+                (folder / "resume-process.stdout").write_bytes(completed.stdout)
+                (folder / "resume-process.stderr").write_bytes(completed.stderr)
+>               assert completed.returncode == 0, completed.stderr.decode()
+E               AssertionError: Traceback (most recent call last):
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 97, in <module>
+E                     main()
+E                   File "$WORKTREE/tests/v4_process_fixture.py", line 44, in main
+E                     (args.folder / "resumed.json").write_text(json.dumps(evidence, indent=2))
+E                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+E                     **kw).encode(obj)
+E                           ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 202, in encode
+E                     chunks = list(chunks)
+E                              ^^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+E                     yield from _iterencode_dict(o, _current_indent_level)
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+E                     yield from chunks
+E                   File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+E                     o = _default(o)
+E                         ^^^^^^^^^^^
+E                   File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+E                     raise TypeError(f'Object of type {o.__class__.__name__} '
+E                 TypeError: Object of type Budget is not JSON serializable
+E                 
+E               assert 1 == 0
+E                +  where 1 = CompletedProcess(args=['$HOME/venvs/repofix/bin/python', '$SOURCE/.cache/v4-...se TypeError(f\'Object of type {o.__class__.__name__} \'\nTypeError: Object of type Budget is not JSON serializable\n').returncode
+
+tests/test_v4_resume_docker.py:91: AssertionError
+_____________ test_actual_python36_helpers_edit_rollback_snapshot ______________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-14/test_actual_python36_helpers_e0')
+record_property = <function record_property.<locals>.append_property at 0x7d0979242d40>
+
+    def test_actual_python36_helpers_edit_rollback_snapshot(tmp_path, record_property):
+        image = "swebench/sweb.eval.x86_64.django_1776_django-13343:latest"
+        folder = artifact_dir(tmp_path)
+        with DockerEnv("v4-py36", image, uuid.uuid4().hex[:12]) as env:
+            env.v4_helpers = True
+            version = env.execute("python --version").output.strip()
+            assert version.startswith("Python 3.6"), version
+            files = RepoFiles(env)
+            files.apply({"v4_compat_probe.py": "VALUE = 1\n"})
+            assert files.read("v4_compat_probe.py") == "VALUE = 1\n"
+            with pytest.raises(RuntimeError):
+                files.apply({"v4_compat_probe.py": "broken(\n"})
+            assert files.read("v4_compat_probe.py") == "VALUE = 1\n"
+            assert "v4_compat_probe.py" in fingerprint(env)
+            store = V4CheckpointStore(folder)
+>           event = store.save(RunState(), env)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_v4_resume_docker.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repofix/harness/checkpoint_v4.py:139: in save
+    return json.loads(run_python(env, CAPTURE_SOURCE.replace("{limit}", str(self.max_bytes))))
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = <repofix.env.DockerEnv object at 0x7d097924bbc0>
+
+    def workspace_signature(env):
+        if hasattr(env, "files"):
+            return json_hash({"baseline": env.baseline, "files": env.files, "symlinks": env.symlinks})
+        result = env.execute_argv(["python", "-c", SIGNATURE_SOURCE], timeout=60)
+        value = result.stdout.strip()
+        if (
+            result.execution_state != "EXITED"
+            or result.exit_code
+            or not re.fullmatch(r"[0-9a-f]{64}", value)
+        ):
+>           raise RuntimeError("workspace signature unavailable: " + result.output[:1000])
+E           RuntimeError: workspace signature unavailable: Traceback (most recent call last):
+E             File "<string>", line 12, in <module>
+E           UnicodeEncodeError: 'ascii' codec can't encode character '\u2297' in position 55: ordinal not in range(128)
+
+src/repofix/harness/validation.py:72: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/test_v4_resume_docker.py::test_real_process_kill_and_independent_resume[pre_dispatch-None]
+FAILED tests/test_v4_resume_docker.py::test_real_process_kill_and_independent_resume[post_edit-None]
+FAILED tests/test_v4_resume_docker.py::test_real_process_kill_and_independent_resume[mid_write-None]
+FAILED tests/test_v4_resume_docker.py::test_real_process_kill_and_independent_resume[active_job-None]
+FAILED tests/test_v4_resume_docker.py::test_real_process_kill_and_independent_resume[post_edit-manifest]
+FAILED tests/test_v4_resume_docker.py::test_real_process_kill_and_independent_resume[post_edit-blob]
+FAILED tests/test_v4_resume_docker.py::test_actual_python36_helpers_edit_rollback_snapshot
+7 failed, 2 passed in 157.06s (0:02:37)

@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: $PYTEST_TMP/pytest-8/test_real_local_pytest_pass_an0/repository
+collected 1 item
+
+test_sample.py F                                                         [100%]
+
+=================================== FAILURES ===================================
+___________________________________ test_one ___________________________________
+
+>   def test_one(): assert False
+                    ^^^^^^^^^^^^
+E   assert False
+
+test_sample.py:1: AssertionError
+- generated xml file: $PYTEST_TMP/pytest-8/test_real_local_pytest_pass_an0/artifacts/validation/2c34878099b642c39bf543332cb171a2.xml -
+=========================== short test summary info ============================
+FAILED test_sample.py::test_one - assert False
+============================== 1 failed in 0.01s ===============================

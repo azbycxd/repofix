@@ -1,0 +1,9 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-8.3.5, pluggy-1.6.0
+rootdir: /testbed
+collected 1 item
+
+tests/test_skip.py s                                                     [100%]
+
+- generated xml file: /tmp/repofix_validation/e8a6a0045cd34c9ab0f99ea9dbfe6f8b.xml -
+============================== 1 skipped in 0.01s ==============================

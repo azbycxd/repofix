@@ -1,0 +1,384 @@
+{
+  "status": "stuck",
+  "submitted": false,
+  "patch": "",
+  "steps": 25,
+  "provider_calls": 25,
+  "tool_calls": 25,
+  "view_calls": 0,
+  "str_replace_calls": 0,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 1,
+  "index_chunk_count": 0,
+  "index_build_seconds": 6.090399983804673e-05,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "pre_fix_reproduced": false,
+  "post_fix_repro_passed": false,
+  "repro_flipped": false,
+  "first_production_edit_step": null,
+  "existing_test_modified": false,
+  "git_history_search_count": 0,
+  "network_attempt_count": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "reviewer_initial_patch": "",
+  "prompt_tokens": 2500,
+  "cache_hit_tokens": 500,
+  "completion_tokens": 250,
+  "max_estimated_cost_usd": 0.0009030000000000007,
+  "wall_time_seconds": 1.273856915000124,
+  "trajectory_path": "$WORKTREE/runs/v4-reliability-20261010/traces/M2-progress-offline/test_repeated_grep_warn_replan0/trace.jsonl",
+  "reliability": {
+    "progress": {
+      "workspace": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "reads": {},
+      "seen_results": [
+        "50a8a8051e278cecb0c14883ebd25ba46303ff1cfe759a090008511fe9964f83"
+      ],
+      "no_progress": 8,
+      "replans": 2,
+      "polls": {},
+      "duration_seconds": 0.0019029240002055303,
+      "feedback_bytes": 498,
+      "samples": 25,
+      "repeat_count": 25,
+      "repeat": "ef5f230170dc87149c0b65dedd36c6a6dd6085f656e61a1cf0e6456c4c197c0d",
+      "test_signature": "bab8e165016b9e9afecb2009351f146d2b1d4e9df427f621eb9d7eca0328f0e9"
+    },
+    "local_validation": {
+      "state": "UNVERIFIED",
+      "evidence_id": null
+    },
+    "submission_state": "stuck",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness"
+  },
+  "termination_reason": "stuck",
+  "counters": {
+    "model_requests": 25,
+    "tool_calls": 25,
+    "grep_calls": 25,
+    "truncations": 0,
+    "str_replace_failures": 0,
+    "syntax_rollbacks": 0
+  },
+  "events": [
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    }
+  ],
+  "subagent_calls": 0,
+  "compactions": 0,
+  "hook_blocks": 0
+}

@@ -1,0 +1,9 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-8.3.5, pluggy-1.6.0
+rootdir: /testbed
+collected 1 item
+
+tests/test_pass.py .                                                     [100%]
+
+- generated xml file: /tmp/repofix_validation/af76e994518a4d2db60f164e7f6fb7e2.xml -
+============================== 1 passed in 0.01s ===============================

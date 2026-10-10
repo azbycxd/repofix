@@ -1,0 +1,22 @@
+................................F............                            [100%]
+=================================== FAILURES ===================================
+___________________ test_real_local_pytest_pass_and_failure ____________________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-5/test_real_local_pytest_pass_an0')
+record_property = <function record_property.<locals>.append_property at 0x768339e45300>
+
+    def test_real_local_pytest_pass_and_failure(tmp_path, record_property):
+        env = LocalValidationEnv(tmp_path)
+        (env.root / "test_sample.py").write_text("def test_one(): assert True\n")
+        runtime = make_runtime(tmp_path, env)
+>       assert (
+            "LOCAL_TESTS_PASSED" in call(runtime, "run_tests", {"targets": ["test_sample.py"]}).content
+        )
+E       assert 'LOCAL_TESTS_PASSED' in '{"local_validation": "INCONCLUSIVE", "scope": "specified local tests only; never TASK_RESOLVED", "evidence": {"id": "...LIDATION: source bytes changed", "evidence_hash": "d7cf001ebe4d9b0a56db65c5c5684dee06c74b587d1231d4a4e8ba96441e6316"}}'
+E        +  where '{"local_validation": "INCONCLUSIVE", "scope": "specified local tests only; never TASK_RESOLVED", "evidence": {"id": "...LIDATION: source bytes changed", "evidence_hash": "d7cf001ebe4d9b0a56db65c5c5684dee06c74b587d1231d4a4e8ba96441e6316"}}' = ToolResult(content='{"local_validation": "INCONCLUSIVE", "scope": "specified local tests only; never TASK_RESOLVED", "... 1779, 'original_lines': 1, 'returned_chars': 1779, 'full_output_path': None, 'duration_seconds': 0.47055486999988716}).content
+E        +    where ToolResult(content='{"local_validation": "INCONCLUSIVE", "scope": "specified local tests only; never TASK_RESOLVED", "... 1779, 'original_lines': 1, 'returned_chars': 1779, 'full_output_path': None, 'duration_seconds': 0.47055486999988716}) = call(<repofix.harness.runtime.Runtime object at 0x76833c15a5d0>, 'run_tests', {'targets': ['test_sample.py']})
+
+tests/test_v4_run_tests.py:64: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_v4_run_tests.py::test_real_local_pytest_pass_and_failure - ...
+1 failed, 44 passed in 2.63s

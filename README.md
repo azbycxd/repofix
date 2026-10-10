@@ -100,7 +100,7 @@ V3 在独立 `v3` 分支开发。上述 V1/V2/最终评测记录保留原样；�
 默认 profile 仍为 `v1`，其金标准覆盖冻结 prompt、五个工具、回填和统计。
 
 ```bash
-source /home/jiusi/venvs/repofix/bin/activate
+source "$HOME/venvs/repofix/bin/activate"
 python -m pip install -r requirements-dev.txt
 python -m pip install -e .
 pytest -q
@@ -213,3 +213,9 @@ V4 复用现有 Loop/Runtime，逐里程碑实现结构化本地验证、无进�
 候选补丁（submission）、指定测试通过（local validation）、独立官方判分
 （task acceptance）是三个不同结果，不能合并称为 success。
 实现与实测进度见 `docs/v4/V4_PROGRESS.md`；未完成机制不得视为已验收。
+
+V4 工程材料：[设计](docs/v4/REPOFIX_V4_DESIGN.md)、
+[真实证据报告](docs/v4/REPOFIX_V4_EVIDENCE_REPORT.md)、
+[配置合同](docs/v4/V4_CONFIG.md)、[源码学习索引](docs/v4/V4_SOURCE_WALKTHROUGH.md)。
+一键机制验收：`python scripts/run_v4_reliability.py --output runs/<new-name> --docker`。
+它运行真实 pytest/JUnit 与 Docker 故障夹具，不调用 Provider，也不运行 HOLDOUT。

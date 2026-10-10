@@ -1,0 +1,4 @@
+{"instance_id": "django__django-16429", "status": "no_tool_call", "steps": 18, "estimated_usd": 0.005288628000000001}
+{"instance_id": "django__django-15277", "status": "no_tool_call", "steps": 20, "estimated_usd": 0.006399444}
+{"instance_id": "django__django-13343", "status": "no_tool_call", "steps": 25, "estimated_usd": 0.007369368}
+{"command": "official-judge", "exit_code": 0, "wall_seconds": 75.53808473699974}

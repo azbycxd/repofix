@@ -1,0 +1,16 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_v4_checkpoint.py",
+    "tests/test_v3_checkpoint.py",
+    "tests/test_v3_readability.py"
+  ],
+  "started": "2026-10-10T11:20:05.485718+00:00",
+  "git_sha": "aae1868556fab2a4df19b653a2bf22fecad414e6",
+  "ended": "2026-10-10T11:20:07.974408+00:00",
+  "exit_code": 0,
+  "wall_seconds": 2.4887112979999984
+}

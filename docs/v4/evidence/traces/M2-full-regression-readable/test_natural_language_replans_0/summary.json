@@ -1,0 +1,190 @@
+{
+  "status": "stuck",
+  "submitted": false,
+  "patch": "",
+  "steps": 9,
+  "provider_calls": 9,
+  "tool_calls": 9,
+  "view_calls": 0,
+  "str_replace_calls": 0,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 1,
+  "index_chunk_count": 0,
+  "index_build_seconds": 6.400399979611393e-05,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "pre_fix_reproduced": false,
+  "post_fix_repro_passed": false,
+  "repro_flipped": false,
+  "first_production_edit_step": null,
+  "existing_test_modified": false,
+  "git_history_search_count": 0,
+  "network_attempt_count": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "reviewer_initial_patch": "",
+  "prompt_tokens": 900,
+  "cache_hit_tokens": 180,
+  "completion_tokens": 90,
+  "max_estimated_cost_usd": 0.00032508000000000005,
+  "wall_time_seconds": 0.46118801500006157,
+  "trajectory_path": "$WORKTREE/runs/v4-reliability-20261010/traces/M2-full-regression-readable/test_natural_language_replans_0/trace.jsonl",
+  "reliability": {
+    "progress": {
+      "workspace": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "reads": {},
+      "seen_results": [],
+      "no_progress": 3,
+      "replans": 2,
+      "polls": {},
+      "duration_seconds": 0.0005989349997435056,
+      "feedback_bytes": 375,
+      "samples": 9,
+      "repeat_count": 1,
+      "repeat": "bf8a55ed0e425472a039857b2b7d982318a7ce04fa7a6fdee6a15a4059571095",
+      "test_signature": "bab8e165016b9e9afecb2009351f146d2b1d4e9df427f621eb9d7eca0328f0e9"
+    },
+    "local_validation": {
+      "state": "UNVERIFIED",
+      "evidence_id": null
+    },
+    "submission_state": "stuck",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness"
+  },
+  "termination_reason": "stuck",
+  "counters": {
+    "model_requests": 9,
+    "tool_calls": 9,
+    "update_plan_calls": 9,
+    "truncations": 0,
+    "str_replace_failures": 0,
+    "syntax_rollbacks": 0
+  },
+  "events": [
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "update_plan",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "update_plan",
+      "decision": "observed"
+    }
+  ],
+  "subagent_calls": 0,
+  "compactions": 0,
+  "hook_blocks": 0
+}

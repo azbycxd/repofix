@@ -1,0 +1,14 @@
+{
+  "command": [
+    "docker",
+    "image",
+    "ls",
+    "--format",
+    "{{.Repository}}:{{.Tag}}"
+  ],
+  "started": "2026-10-10T10:53:01.910969+00:00",
+  "git_sha": "e9f3157498d0d80197f9c6ae56df4c5bdc1273d6",
+  "ended": "2026-10-10T10:53:02.050575+00:00",
+  "exit_code": 0,
+  "wall_seconds": 0.13962131600010252
+}

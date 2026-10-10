@@ -1,0 +1,15 @@
+{
+  "python": "Python 3.6.13 :: Anaconda, Inc.",
+  "checkpoint": {
+    "type": "checkpoint",
+    "producer": "harness",
+    "step": 0,
+    "checkpoint_generation": 1,
+    "snapshot_bytes": 10407,
+    "snapshot_sha256": "52d416bea6e75272e9a63fe3f06390210831325b763f88ab039396cd9a49c922",
+    "reason": "end_step",
+    "checkpoint_duration": 1.315628050999294,
+    "gc_duration": 0.01906221200079017,
+    "retained_generations": 1
+  }
+}

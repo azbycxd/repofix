@@ -1,0 +1,8 @@
+{
+  "phase": "mid_write",
+  "corruption": null,
+  "process_exit": -9,
+  "resume_exit": 0,
+  "old_container_removed": true,
+  "state_matches_snapshot": true
+}

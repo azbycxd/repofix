@@ -1,0 +1,362 @@
+{
+  "status": "stuck",
+  "submitted": false,
+  "patch": "diff --git a/example.py b/example.py\n--- a/example.py\n+++ b/example.py\n@@ -1 +1 @@\n-VALUE = 1\n+VALUE = 2\n",
+  "steps": 7,
+  "provider_calls": 7,
+  "tool_calls": 7,
+  "view_calls": 1,
+  "str_replace_calls": 1,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 1,
+  "index_chunk_count": 0,
+  "index_build_seconds": 7.610499960719608e-05,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "pre_fix_reproduced": false,
+  "post_fix_repro_passed": false,
+  "repro_flipped": false,
+  "first_production_edit_step": 2,
+  "existing_test_modified": false,
+  "git_history_search_count": 0,
+  "network_attempt_count": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "reviewer_initial_patch": "",
+  "prompt_tokens": 700,
+  "cache_hit_tokens": 140,
+  "completion_tokens": 70,
+  "max_estimated_cost_usd": 0.00025284000000000005,
+  "wall_time_seconds": 10.429309025000293,
+  "trajectory_path": "$WORKTREE/runs/v4-reliability-20261010/matrix-m5/traces/offline/test_stuck_retains_unsubmitted0/trace.jsonl",
+  "reliability": {
+    "deadline_epoch": 1791634185.3603451,
+    "progress": {
+      "workspace": "868c73c95a53337e900bae41ebba26f04bc2ae50e21fef030867d6a14d49e7fd",
+      "reads": {
+        "example.py": "3da6c4b355804b265ecef19dfe5945fe2790a8cc38dc9d0547fb1634c94cbbe7"
+      },
+      "seen_results": [
+        "a8f033b14edbd23169836fa3afc5f468ffc2d6f3d32fca99c5ccc3f4b71e4e03",
+        "c12670a563d73d54b80b64894a558b4e4b4505feb2b02ffd87462a198da3e0fa"
+      ],
+      "no_progress": 2,
+      "replans": 1,
+      "polls": {},
+      "duration_seconds": 0.0005117279997648438,
+      "feedback_bytes": 232,
+      "samples": 7,
+      "repeat_count": 5,
+      "repeat": "7fef5a71d706efe683e74768358918f38545ccdd62ad8faad0619217358f6cd0",
+      "test_signature": "bab8e165016b9e9afecb2009351f146d2b1d4e9df427f621eb9d7eca0328f0e9"
+    },
+    "logical_provider_requests": 7,
+    "checkpoint_generation": 15,
+    "snapshot_workspace_signature": "ee4792f70c0f05c2b6f1ba88e94528d69bee2c26342e6ec66aecb4fee55483a0",
+    "local_validation": {
+      "state": "UNVERIFIED",
+      "evidence_id": null
+    },
+    "last_progress_signal": "SAME_RESULT",
+    "submission_state": "stuck",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness",
+    "candidate_patch_sha256": "5724dfaa998d52bfb575fa38b23804f6275eff2bfa9764d4d3fe8e10c68b33b0",
+    "estimated_total_usd": 0.00025284000000000005,
+    "completed_provider_responses": 7,
+    "model_requests": 7
+  },
+  "termination_reason": "stuck",
+  "counters": {
+    "model_requests": 7,
+    "tool_calls": 7,
+    "view_calls": 1,
+    "truncations": 0,
+    "str_replace_failures": 0,
+    "syntax_rollbacks": 0,
+    "str_replace_calls": 1,
+    "grep_calls": 5
+  },
+  "events": [
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 1,
+      "checkpoint_generation": 1,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.11919989200032433,
+      "gc_duration": 0.025187192999510444,
+      "retained_generations": 1
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "view",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "view",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 1,
+      "checkpoint_generation": 2,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "end_step",
+      "checkpoint_duration": 0.19968934299959074,
+      "gc_duration": 0.03670613000031153,
+      "retained_generations": 2
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 2,
+      "checkpoint_generation": 3,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "646b31046c08d0138c539d3cd2eb51ea74b4af1d0dd9e897f2418e422ad9b1f9",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.26164076900022337,
+      "gc_duration": 0.050268080000023474,
+      "retained_generations": 3
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "str_replace",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "str_replace",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 2,
+      "checkpoint_generation": 4,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "post_mutation",
+      "checkpoint_duration": 0.3234144850002849,
+      "gc_duration": 0.06466037600057462,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 2,
+      "checkpoint_generation": 5,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "end_step",
+      "checkpoint_duration": 0.3535683529999005,
+      "gc_duration": 0.08395744300014485,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 3,
+      "checkpoint_generation": 6,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.489219454000704,
+      "gc_duration": 0.08561843499956012,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 3,
+      "checkpoint_generation": 7,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "end_step",
+      "checkpoint_duration": 0.43810422600017773,
+      "gc_duration": 0.07993601999987732,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 4,
+      "checkpoint_generation": 8,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.4852467330001673,
+      "gc_duration": 0.08057305600050313,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 4,
+      "checkpoint_generation": 9,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "end_step",
+      "checkpoint_duration": 0.5612960389998989,
+      "gc_duration": 0.07996812199962733,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 5,
+      "checkpoint_generation": 10,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.573443209999823,
+      "gc_duration": 0.07486294000045746,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 5,
+      "checkpoint_generation": 11,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "end_step",
+      "checkpoint_duration": 0.6482045439997819,
+      "gc_duration": 0.07720366899957298,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 6,
+      "checkpoint_generation": 12,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.689162509000198,
+      "gc_duration": 0.08292608600004314,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 6,
+      "checkpoint_generation": 13,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "end_step",
+      "checkpoint_duration": 0.718207214999893,
+      "gc_duration": 0.07844033799938188,
+      "retained_generations": 4
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 7,
+      "checkpoint_generation": 14,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "pre_dispatch",
+      "checkpoint_duration": 0.7772769820003305,
+      "gc_duration": 0.08801086699986627,
+      "retained_generations": 4
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "checkpoint",
+      "producer": "harness",
+      "step": 7,
+      "checkpoint_generation": 15,
+      "snapshot_bytes": 99,
+      "snapshot_sha256": "f36ebc7f7bff14e32b87303458145ab69dcc2e917203d7ec96342fc5b8de74b2",
+      "reason": "end_step",
+      "checkpoint_duration": 0.8518241040001158,
+      "gc_duration": 0.0812902950001444,
+      "retained_generations": 4
+    }
+  ],
+  "subagent_calls": 0,
+  "compactions": 0,
+  "hook_blocks": 0
+}

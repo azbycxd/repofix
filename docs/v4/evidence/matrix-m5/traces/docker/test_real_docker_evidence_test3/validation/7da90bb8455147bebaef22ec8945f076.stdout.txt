@@ -1,0 +1,7 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-8.3.5, pluggy-1.6.0
+rootdir: /testbed
+collected 0 items
+
+- generated xml file: /tmp/repofix_validation/7da90bb8455147bebaef22ec8945f076.xml -
+============================ no tests ran in 0.00s =============================

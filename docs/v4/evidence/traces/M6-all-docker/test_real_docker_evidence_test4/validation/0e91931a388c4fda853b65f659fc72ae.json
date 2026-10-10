@@ -1,0 +1,45 @@
+{
+  "id": "0e91931a388c4fda853b65f659fc72ae",
+  "run_id": "test_real_docker_evidence_test4",
+  "tool_call_id": "call-1",
+  "source": "harness_run_tests",
+  "runner": "pytest",
+  "argv": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_timeout.py",
+    "--junitxml=/tmp/repofix_validation/0e91931a388c4fda853b65f659fc72ae.xml"
+  ],
+  "cwd": "/testbed",
+  "test_targets": [
+    "tests/test_timeout.py"
+  ],
+  "started_at": "2026-10-10T11:53:35.200532+00:00",
+  "finished_at": "2026-10-10T11:53:36.552907+00:00",
+  "duration_seconds": 1.3523668849993555,
+  "workspace_signature_before": "488aca315b448d08d960b2bdc02cde2b1066544ad2ef80a98c57d33aaa8df337",
+  "workspace_signature_after": "488aca315b448d08d960b2bdc02cde2b1066544ad2ef80a98c57d33aaa8df337",
+  "completed": true,
+  "exit_code": 124,
+  "timed_out": true,
+  "cancelled": false,
+  "execution_state": "TIMEOUT",
+  "tests_collected": null,
+  "tests_passed": null,
+  "tests_failed": null,
+  "tests_errors": null,
+  "tests_skipped": null,
+  "outcome": "INCONCLUSIVE",
+  "output_artifact": {
+    "stdout.txt": "validation/0e91931a388c4fda853b65f659fc72ae.stdout.txt",
+    "stderr.txt": "validation/0e91931a388c4fda853b65f659fc72ae.stderr.txt"
+  },
+  "report_artifact": null,
+  "artifact_hashes": {
+    "0e91931a388c4fda853b65f659fc72ae.stdout.txt": "68779aef29f92ee18b864573f33ebbe58b8ae7e927549b23e295db3ee6d3f36e",
+    "0e91931a388c4fda853b65f659fc72ae.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "parse_error": "REPORT_UNAVAILABLE_OR_INVALID: 404 Client Error for http+docker://localhost/v1.54/containers/8a073b66380e7660c151e38f7d9a5073a376fb6499c15d84191b7a39a901479d/archive?path=%2Ftmp%2Frepofix_validation%2F0e91931a388c4fda853b65f659fc72ae.xml: Not Found (\"Could not find the file /tmp/repofix_validation/0e91931a388c4fda853b65f659fc72ae.xml in container 8a073b66380e7660c151e38f7d9a5073a376fb6499c15d84191b7a39a901479d\")",
+  "evidence_hash": "ecbf934796c9dff05616be97b64a7d191695b4691cf6625ee3a193a377be9c40"
+}

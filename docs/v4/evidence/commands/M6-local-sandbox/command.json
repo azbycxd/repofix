@@ -1,0 +1,18 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--docker",
+    "tests/test_local_sandbox_integration.py",
+    "--junitxml=runs/v4-reliability-20261010/junit/M6-local-sandbox.xml",
+    "-o",
+    "junit_family=xunit1"
+  ],
+  "started": "2026-10-10T11:54:06.162448+00:00",
+  "git_sha": "c5d868772feb0baf760e189204c1b6948f786f98",
+  "ended": "2026-10-10T11:54:47.219198+00:00",
+  "exit_code": 0,
+  "wall_seconds": 41.19652197300002
+}

@@ -87,7 +87,7 @@
 - 边界：Python 无法强杀请求线程，迟到响应会丢弃；网络线程可能待 SDK 自身 timeout 后退出。
   任务时限后允许有限的清理/patch 收集宽限；不是硬实时调度或多租户安全隔离。
 
-## M5 — PASS
+## M5 — PASS / c5d868772feb0baf760e189204c1b6948f786f98
 
 - V4 Trace 增加 schema/producer/代码与配置哈希、独立 validation/submission/Judge 状态；
   模型 tool_calls 为建议，tool_execution 为实际宿主执行。未知 usage/cost 保留 null。
@@ -109,6 +109,34 @@
   已检查实际 help，预览 exit 0；累计估算预算 $1，未知费用时不发后续请求。
 - 无真实 Provider/HOLDOUT 调用。M6 将先用已提交代码再次完整回归，再执行真实任务。
 
-## Pending
+## M6 — PASS（限定本任务工程验收范围，不代表生产可靠性）
 
-M6 real DEV/Judge/docs。
+- 被测 Runtime/code commit=c5d868772feb0baf760e189204c1b6948f786f98；仅新增报告/只读汇总脚本。
+  真运行前后确认 src、run_agent.py、run_v4_dev.py 无 diff。实验期间未修改 Agent。
+- 实际按顺序执行：全量离线 210 passed / 26 skipped / 5 subtests（exit 0，165.991s wall）；
+  七文件 V4 专项 78 passed（exit 0，159.709s）；全部 Docker 25 passed / 1 skipped
+  （exit 0，220.027s）；显式 REPOFIX_DOCKER_INTEGRATION=1 补验 1 passed（41.197s）。
+  因而 26 个不同 Docker 用例实际均已执行；原 skip 日志不改。
+- 同一已提交运行时代码，真实 DeepSeek 三个固定 DEV 各一次，官方 Harness 一次性判分。
+  16429/15277/13343 全部 RESOLVED；各 18/20/25 步，全部 no_tool_call/submitted=false，
+  本地结构化状态全部 INCONCLUSIVE（pytest 缺失）；候选 patch 均非空。
+- 总 63 responses、64 tool calls、prompt 362188/cache hit 339840/completion 8595，
+  总 token 370783，估算 $0.019057440。Agent 阶段 1265.885s，官方 Judge 75.538s，
+  完整 live 命令 1347.549s。价格为既有配置估算，不是账单；内部 SDK retry 未单独采集。
+- 真实 DEV checkpoint 176 次，累计 471.998s；这是明显开销，未因成绩调参数。
+  13343 最后一步发出一次 REPLAN，但同时 no_tool_call 终止，不能声称真实纠偏改善。
+- 没有官方 UNRESOLVED；仍明确记录验证 runner 环境支持和提交可用性不足。
+  不安装 pytest 改官方镜像、不改 gate、不改 Prompt、不重跑。
+- 原始根：runs/v4-reliability-20261010/；官方报告及完整 stdout 在 dev-final/judge*。
+  scripts/summarize_v4_dev.py 只读生成 analysis；scripts/export_v4_evidence.py 生成
+  脱敏审查副本、原始/发布双哈希 manifest、实际 JUnit metrics/fault_results。
+- 新证据约 17 MiB 原始数据、约 8.8 MB 审查副本（导出时统计）；不把 snapshot blob 提交。
+  沿用原项目对 patch fixture 的做法，仅对 docs/v4/evidence 原始数据禁用 whitespace lint，
+  避免为了 Git 检查改写 patch 的空白上下文或诊断输出。源代码、测试、人工文档仍正常检查。
+  所有原始/审查文件 SHA 保留；refresh-reports 仅刷新派生清单，先校验原证据未变化。
+- 工程设计、证据报告、中文口述、配置、blockers 和实测源码索引独立放 docs/v4。
+  没有 Docker/Provider/Judge 外部阻塞；本地结构化 pytest 能力缺口与未验证范围单列。
+- 本轮 HOLDOUT_AGENT_RUNS=0；未 push、未 merge；原 v3 dirty status 和历史材料按 M0 哈希核对。
+- M6 提交名：`v4(M6): record real dev judge and reliability evidence`。
+  自身 commit SHA 无法写进自身 tree 形成自引用，准确 SHA 由最终交付回复和
+  `git log -1 --format=%H --grep='v4(M6)'` 给出；M0–M5 SHA 已逐项写在上文。

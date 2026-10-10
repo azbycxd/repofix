@@ -1,0 +1,8 @@
+{
+  "phase": "post_edit",
+  "corruption": "manifest",
+  "process_exit": -9,
+  "resume_exit": 0,
+  "old_container_removed": true,
+  "state_matches_snapshot": true
+}

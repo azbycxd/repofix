@@ -1,0 +1,14 @@
+{
+  "command": [
+    "docker",
+    "inspect",
+    "--format",
+    "{{json .HostConfig}}",
+    "776a0ab11e1f"
+  ],
+  "started": "2026-10-10T11:56:34.620759+00:00",
+  "git_sha": "c5d868772feb0baf760e189204c1b6948f786f98",
+  "ended": "2026-10-10T11:56:34.690985+00:00",
+  "exit_code": 0,
+  "wall_seconds": 0.07024607499988633
+}

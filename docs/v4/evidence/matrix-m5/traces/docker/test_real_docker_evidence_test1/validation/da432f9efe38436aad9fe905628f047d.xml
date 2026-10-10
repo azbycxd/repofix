@@ -1,0 +1,5 @@
+<testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.016" timestamp="2026-10-10T11:43:19.262333+00:00" hostname="d48f2e24398d"><testcase classname="tests.test_fail" name="test_fail" time="0.000"><failure message="AssertionError: injected failure&#10;assert False">&gt;   def test_fail(): assert False, 'injected failure'
+E   AssertionError: injected failure
+E   assert False
+
+tests/test_fail.py:1: AssertionError</failure></testcase></testsuite></testsuites>

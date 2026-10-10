@@ -1,0 +1,1 @@
+<testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="0.007" timestamp="2026-10-10T19:47:12.534324+08:00" hostname="DESKTOP-JRKV1T9"><testcase classname="test_sample" name="test_one" time="0.000" /></testsuite></testsuites>

@@ -1,0 +1,323 @@
+{
+  "instance_id": "django__django-15277",
+  "status": "no_tool_call",
+  "submitted": false,
+  "steps": 20,
+  "provider_calls": 20,
+  "tool_calls": 23,
+  "view_calls": 1,
+  "str_replace_calls": 1,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 3237,
+  "index_chunk_count": 33376,
+  "index_build_seconds": 5.576471889999993,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "PRE_FIX_REPRODUCED": true,
+  "POST_FIX_REPRO_PASSED": true,
+  "REPRO_FLIPPED": true,
+  "FIRST_PRODUCTION_EDIT_STEP": 4,
+  "EXISTING_TEST_MODIFIED": false,
+  "GIT_HISTORY_SEARCH_COUNT": 1,
+  "NETWORK_ATTEMPT_COUNT": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "prompt_tokens": 117111,
+  "cache_hit_tokens": 109824,
+  "completion_tokens": 2962,
+  "max_estimated_cost_usd": 0.006399444,
+  "wall_time_seconds": 475.12458025699925,
+  "patch_nonempty": true,
+  "trajectory_path": "runs/v4-reliability-20261010/dev-final/traces/django__django-15277/trajectory.jsonl",
+  "reliability": {
+    "deadline_epoch": 1791635495.5139203,
+    "container": {
+      "id": "8778df1f948047f5947514d3c509f04423fa7a756a5a39124fda5fed9624f1f2",
+      "run_id": "dev-final-django__django-15277",
+      "instance_id": "django__django-15277"
+    },
+    "progress": {
+      "workspace": "0818e56e40f73fc17312e9fb3b88311ca33664fe6cbf44b33966133e8f9822df",
+      "reads": {
+        "django/db/models/fields/__init__.py": "9b225372cb92bec1b04aa9164140a3c057f2063a0fd8e069f8236e28408ca05d"
+      },
+      "seen_results": [
+        "5e629ad44f31cc2fff9ed58c84a3d20b2d44e4bb69957d4a7b98b70c3f54015b",
+        "b477539f0720ce55cb6736cda17c060e72df754619bc9f8d547e95b0a5d4e80a",
+        "64359fe5723e50ac66a5f671ee8fc46bf651f10e2d665bb1cc72d2fd67611277",
+        "48f51a90aba59bb7c34f6c851d993c7b719a9ab5c81b20b66135421bf86d7601",
+        "cec581c5d83dab328706fd6125746d3361bda8493b44b3d4e43e49830a80036a",
+        "b2c1cc1b0ff7051f58506fe41775ae9315a49f02c499c15d065630093b9384c7",
+        "80201a16f7952298da4cafffff9e1f94bd158d60442a358f10d1a98998f8d1e1"
+      ],
+      "no_progress": 4,
+      "replans": 0,
+      "polls": {},
+      "duration_seconds": 0.005925475002186431,
+      "feedback_bytes": 0,
+      "samples": 20,
+      "repeat_count": 1,
+      "repeat": "352a899a3c7aa145eddea8590a525cfc47a67480be77994182fcf6ab08854608",
+      "test_signature": "f05a5a8c2679833f8d15127584c6b9e09cd4fafd67b6d2001100d792253c10be"
+    },
+    "logical_provider_requests": 20,
+    "checkpoint_generation": 59,
+    "snapshot_workspace_signature": "848ab9b0639b29bbb59b45dc87705b1d05bf7768d78d17e461e1942eb100d74e",
+    "local_validation": {
+      "state": "INCONCLUSIVE",
+      "evidence_id": "bfa9ae72db874f7b9df5dc3e12b84167",
+      "evidence_hash": "fc0ea791df6b5558e4343da8153d7e1bb335ff0d476fd5a87c6fcf8c124d0d0c",
+      "workspace_signature": "848ab9b0639b29bbb59b45dc87705b1d05bf7768d78d17e461e1942eb100d74e",
+      "runner": "pytest",
+      "targets": [
+        "tests/model_fields/test_charfield.py"
+      ],
+      "tests_collected": null
+    },
+    "background_jobs": [
+      {
+        "id": "004464c89d1144ae",
+        "command": "cd /testbed && git log --oneline -3 && python -c \"import django; print(django.__version__)\"",
+        "state": "EXITED"
+      },
+      {
+        "id": "914dfc603adb42a3",
+        "command": "cd /testbed && grep -n \"class CharField\" django/db/models/fields/__init__.py",
+        "state": "EXITED"
+      },
+      {
+        "id": "f2564883a79b465d",
+        "command": "cd /testbed && grep -n \"class BinaryField\" -A 30 django/db/models/fields/__init__.py | head -50",
+        "state": "EXITED"
+      },
+      {
+        "id": "3511189313564e06",
+        "command": "cd /testbed && cat > /tmp/repofix_repro.py << 'EOF'\nimport django\nfrom django.conf import settings\nsettings.configure(INSTALLED_APPS=['django.contrib.contenttypes', 'django.contrib.auth'], DATABASES={})\ndjango.setup()\n\nfrom django.db.models import Value\n\nx = Value('test')\ny = x._resolve_output_field()\nprint(\"validators:\", y.validators)\nassert y.validators == [], f\"Expected no validators, got {y.validators}\"\ntry:\n    y.clean('1', model_instance=None)\n    print(\"clean OK\")\nexcept TypeError as e:\n    print(\"clean raised TypeError:\", e)\n    raise\nEOF\npython /tmp/repofix_repro.py",
+        "state": "EXITED"
+      },
+      {
+        "id": "26d8f2efe26d4f01",
+        "command": "cd /testbed && python /tmp/repofix_repro.py",
+        "state": "EXITED"
+      },
+      {
+        "id": "9704bd44ce1c49e5",
+        "command": "cd /testbed && grep -rn \"MaxLengthValidator\" tests/ | head -30",
+        "state": "EXITED"
+      },
+      {
+        "id": "fff5633297194dbc",
+        "command": "cd /testbed && python tests/runtests.py model_fields.test_charfield validators model_fields.test_binaryfield --parallel=1 2>&1 | tail -20",
+        "state": "EXITED"
+      },
+      {
+        "id": "2e657db78307413d",
+        "command": "cd /testbed && python tests/runtests.py model_fields model_forms forms_tests.tests.test_validators --parallel=1 2>&1 | tail -15",
+        "state": "EXITED"
+      },
+      {
+        "id": "7d7da2cf8297492f",
+        "command": "cd /testbed && git diff",
+        "state": "EXITED"
+      },
+      {
+        "id": "c775bf3b444243d7",
+        "command": "cd /testbed && python -c \"\nimport django, timeit\nfrom django.conf import settings\nsettings.configure(INSTALLED_APPS=['django.contrib.contenttypes','django.contrib.auth'], DATABASES={})\ndjango.setup()\nfrom django.db.models import Value\nx = Value('test')\nprint('%.2f us' % (timeit.timeit(x._resolve_output_field, number=100000)/100000*1e6))\n\"",
+        "state": "EXITED"
+      },
+      {
+        "id": "4bb098dfb3794270",
+        "command": "rm -f /tmp/repofix_repro.py && cd /testbed && git status --short",
+        "state": "EXITED"
+      },
+      {
+        "id": "b170f83f83d04f34",
+        "command": "cd /testbed && ls /opt/miniconda3/envs/*/bin/pytest 2>/dev/null; which pytest; python -c \"import pytest\" 2>&1",
+        "state": "EXITED"
+      },
+      {
+        "id": "39ea0e443a544297",
+        "command": "cd /testbed && python tests/runtests.py model_fields validators model_forms forms_tests.tests.test_validators --parallel=1 2>&1 | tail -8",
+        "state": "EXITED"
+      },
+      {
+        "id": "270dc444c3a94aee",
+        "command": "cd /testbed && git diff --stat",
+        "state": "EXITED"
+      },
+      {
+        "id": "3c1cd3f2a36a40ed",
+        "command": "ls /opt/miniconda3/envs/ 2>/dev/null; find / -name \"pytest\" -type f 2>/dev/null | head; find / -name \"_pytest\" -maxdepth 8 -type d 2>/dev/null | head",
+        "state": "EXITED"
+      }
+    ],
+    "last_progress_signal": "NONE",
+    "validation_evidence": {
+      "id": "bfa9ae72db874f7b9df5dc3e12b84167",
+      "run_id": "django__django-15277",
+      "tool_call_id": "call_00_p9DpURPzSWfnPoJtCyZ44908",
+      "source": "harness_run_tests",
+      "runner": "pytest",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/model_fields/test_charfield.py",
+        "--junitxml=/tmp/repofix_validation/bfa9ae72db874f7b9df5dc3e12b84167.xml"
+      ],
+      "cwd": "/testbed",
+      "test_targets": [
+        "tests/model_fields/test_charfield.py"
+      ],
+      "started_at": "2026-10-10T12:07:34.783745+00:00",
+      "finished_at": "2026-10-10T12:07:35.252177+00:00",
+      "duration_seconds": 0.46843257199998334,
+      "workspace_signature_before": "848ab9b0639b29bbb59b45dc87705b1d05bf7768d78d17e461e1942eb100d74e",
+      "workspace_signature_after": "848ab9b0639b29bbb59b45dc87705b1d05bf7768d78d17e461e1942eb100d74e",
+      "completed": true,
+      "exit_code": 1,
+      "timed_out": false,
+      "cancelled": false,
+      "execution_state": "EXITED",
+      "tests_collected": null,
+      "tests_passed": null,
+      "tests_failed": null,
+      "tests_errors": null,
+      "tests_skipped": null,
+      "outcome": "INCONCLUSIVE",
+      "output_artifact": {
+        "stdout.txt": "validation/bfa9ae72db874f7b9df5dc3e12b84167.stdout.txt",
+        "stderr.txt": "validation/bfa9ae72db874f7b9df5dc3e12b84167.stderr.txt"
+      },
+      "report_artifact": null,
+      "artifact_hashes": {
+        "bfa9ae72db874f7b9df5dc3e12b84167.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bfa9ae72db874f7b9df5dc3e12b84167.stderr.txt": "8840bae3e8ca2278792dca956a4c959ed92eac317ee2b0a1612b73c21d72c74c"
+      },
+      "parse_error": "ENV_ERROR: pytest/runtime unavailable; inspect testbed interpreter and artifacts",
+      "evidence_hash": "fc0ea791df6b5558e4343da8153d7e1bb335ff0d476fd5a87c6fcf8c124d0d0c"
+    },
+    "cleanup_events": [
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "004464c89d1144ae",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "914dfc603adb42a3",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "f2564883a79b465d",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "3511189313564e06",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "26d8f2efe26d4f01",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "9704bd44ce1c49e5",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "fff5633297194dbc",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "2e657db78307413d",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "7d7da2cf8297492f",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "c775bf3b444243d7",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "4bb098dfb3794270",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "b170f83f83d04f34",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "39ea0e443a544297",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "270dc444c3a94aee",
+        "status": "EXITED"
+      },
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "3c1cd3f2a36a40ed",
+        "status": "EXITED"
+      },
+      {
+        "producer": "harness",
+        "type": "container_cleanup",
+        "status": "REMOVED",
+        "container_id": "8778df1f948047f5947514d3c509f04423fa7a756a5a39124fda5fed9624f1f2"
+      }
+    ],
+    "submission_state": "no_tool_call",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness",
+    "candidate_patch_sha256": "8512d6bc5111e1339c1786cd5be241461e34fd8ee13a81a04afa5257ef244aae",
+    "estimated_total_usd": 0.006399444,
+    "completed_provider_responses": 20,
+    "model_requests": 20
+  },
+  "patch_path": "runs/v4-reliability-20261010/dev-final/django__django-15277.patch",
+  "evaluation_patch_path": "runs/v4-reliability-20261010/dev-final/django__django-15277.evaluation.patch",
+  "evaluation_patch_nonempty": true,
+  "filtered_test_paths": []
+}

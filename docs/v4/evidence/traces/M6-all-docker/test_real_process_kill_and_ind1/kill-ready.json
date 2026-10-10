@@ -1,0 +1,12 @@
+{
+  "type": "checkpoint",
+  "producer": "harness",
+  "step": 1,
+  "checkpoint_generation": 2,
+  "snapshot_bytes": 10371,
+  "snapshot_sha256": "3d167a797272b474d03fbe122996ff7118004576805bb6e789bd876a21e5aac9",
+  "reason": "post_mutation",
+  "checkpoint_duration": 0.7349558619998788,
+  "gc_duration": 0.029973451999467216,
+  "retained_generations": 2
+}

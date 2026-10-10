@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-8.3.5, pluggy-1.6.0
+rootdir: /testbed
+collected 1 item
+
+tests/test_fail.py F                                                     [100%]
+
+=================================== FAILURES ===================================
+__________________________________ test_fail ___________________________________
+
+>   def test_fail(): assert False, 'injected failure'
+E   AssertionError: injected failure
+E   assert False
+
+tests/test_fail.py:1: AssertionError
+- generated xml file: /tmp/repofix_validation/94451c7282f64d36b12b9941f6ef2358.xml -
+=========================== short test summary info ============================
+FAILED tests/test_fail.py::test_fail - AssertionError: injected failure
+============================== 1 failed in 0.02s ===============================

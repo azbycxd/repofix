@@ -1,0 +1,15 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--docker",
+    "tests/test_v4_shell_docker.py"
+  ],
+  "started": "2026-10-10T11:24:27.149696+00:00",
+  "git_sha": "c4d96ba474db7e98a067a02aac19c9dc21e6bda6",
+  "ended": "2026-10-10T11:25:31.047129+00:00",
+  "exit_code": 1,
+  "wall_seconds": 63.901932681999824
+}

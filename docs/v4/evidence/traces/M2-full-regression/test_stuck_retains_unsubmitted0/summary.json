@@ -1,0 +1,173 @@
+{
+  "status": "stuck",
+  "submitted": false,
+  "patch": "diff --git a/example.py b/example.py\n--- a/example.py\n+++ b/example.py\n@@ -1 +1 @@\n-VALUE = 1\n+VALUE = 2\n",
+  "steps": 7,
+  "provider_calls": 7,
+  "tool_calls": 7,
+  "view_calls": 1,
+  "str_replace_calls": 1,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 1,
+  "index_chunk_count": 0,
+  "index_build_seconds": 0.00024011599998630118,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "pre_fix_reproduced": false,
+  "post_fix_repro_passed": false,
+  "repro_flipped": false,
+  "first_production_edit_step": 2,
+  "existing_test_modified": false,
+  "git_history_search_count": 0,
+  "network_attempt_count": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "reviewer_initial_patch": "",
+  "prompt_tokens": 700,
+  "cache_hit_tokens": 140,
+  "completion_tokens": 70,
+  "max_estimated_cost_usd": 0.00025284000000000005,
+  "wall_time_seconds": 0.3698788520000562,
+  "trajectory_path": "$WORKTREE/runs/v4-reliability-20261010/traces/M2-full-regression/test_stuck_retains_unsubmitted0/trace.jsonl",
+  "reliability": {
+    "progress": {
+      "workspace": "868c73c95a53337e900bae41ebba26f04bc2ae50e21fef030867d6a14d49e7fd",
+      "reads": {
+        "example.py": "3da6c4b355804b265ecef19dfe5945fe2790a8cc38dc9d0547fb1634c94cbbe7"
+      },
+      "seen_results": [
+        "a8f033b14edbd23169836fa3afc5f468ffc2d6f3d32fca99c5ccc3f4b71e4e03",
+        "c12670a563d73d54b80b64894a558b4e4b4505feb2b02ffd87462a198da3e0fa"
+      ],
+      "no_progress": 2,
+      "replans": 1,
+      "polls": {},
+      "duration_seconds": 0.00044412899978851783,
+      "feedback_bytes": 232,
+      "samples": 7,
+      "repeat_count": 5,
+      "repeat": "7fef5a71d706efe683e74768358918f38545ccdd62ad8faad0619217358f6cd0",
+      "test_signature": "bab8e165016b9e9afecb2009351f146d2b1d4e9df427f621eb9d7eca0328f0e9"
+    },
+    "local_validation": {
+      "state": "UNVERIFIED",
+      "evidence_id": null
+    },
+    "submission_state": "stuck",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness"
+  },
+  "termination_reason": "stuck",
+  "counters": {
+    "model_requests": 7,
+    "tool_calls": 7,
+    "view_calls": 1,
+    "truncations": 0,
+    "str_replace_failures": 0,
+    "syntax_rollbacks": 0,
+    "str_replace_calls": 1,
+    "grep_calls": 5
+  },
+  "events": [
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "view",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "view",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "str_replace",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "str_replace",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "grep",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "grep",
+      "decision": "observed"
+    }
+  ],
+  "subagent_calls": 0,
+  "compactions": 0,
+  "hook_blocks": 0
+}

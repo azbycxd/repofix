@@ -1,0 +1,9 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: $PYTEST_TMP/pytest-10/test_real_local_pytest_pass_an0/repository
+collected 1 item
+
+test_sample.py .                                                         [100%]
+
+- generated xml file: $PYTEST_TMP/pytest-10/test_real_local_pytest_pass_an0/artifacts/validation/ece56e3f11fd4fe8a14647c15ae035c7.xml -
+============================== 1 passed in 0.01s ===============================

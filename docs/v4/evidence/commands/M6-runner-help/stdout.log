@@ -1,0 +1,26 @@
+usage: run_agent.py [-h] [--profile {v1,v3,v4}] [--resume RESUME]
+                    [--instance-id INSTANCE_ID | --all-dev] [--run-id RUN_ID]
+                    [--output-dir OUTPUT_DIR] [--reviewer]
+                    [--trajectory-dir TRAJECTORY_DIR] [--offline-check]
+                    [--retrieval-mode {bm25,dense_rrf}]
+
+options:
+  -h, --help            show this help message and exit
+  --profile {v1,v3,v4}
+  --resume RESUME
+  --instance-id INSTANCE_ID
+  --all-dev
+  --run-id RUN_ID
+  --output-dir OUTPUT_DIR
+                        Experiment output directory; defaults to runs/<run-
+                        id>.
+  --reviewer            Enable one independent review on the first submit
+                        call.
+  --trajectory-dir TRAJECTORY_DIR
+                        Optional single canonical directory for review
+                        trajectories.
+  --offline-check       Validate selected DEV containers without a Provider
+                        call.
+  --retrieval-mode {bm25,dense_rrf}
+                        Retrieval backend; dense_rrf requires requirements-
+                        dense.txt.

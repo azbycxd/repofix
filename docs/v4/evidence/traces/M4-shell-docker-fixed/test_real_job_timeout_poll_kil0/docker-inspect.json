@@ -1,0 +1,12 @@
+{
+  "NetworkMode": "none",
+  "PidsLimit": 512,
+  "Memory": 4294967296,
+  "NanoCpus": 2000000000,
+  "CapDrop": [
+    "ALL"
+  ],
+  "SecurityOpt": [
+    "no-new-privileges"
+  ]
+}

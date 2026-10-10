@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "swebench.harness.run_evaluation",
+    "--dataset_name",
+    "SWE-bench/SWE-bench_Verified",
+    "--split",
+    "test",
+    "--predictions_path",
+    "$WORKTREE/runs/v4-reliability-20261010/dev-final/predictions.json",
+    "--run_id",
+    "dev-final-official",
+    "--max_workers",
+    "1",
+    "--report_dir",
+    "$WORKTREE/runs/v4-reliability-20261010/dev-final/judge",
+    "--instance_ids",
+    "django__django-16429",
+    "django__django-15277",
+    "django__django-13343"
+  ],
+  "started": "2026-10-10T12:16:35.446154+00:00",
+  "code_sha": "c5d868772feb0baf760e189204c1b6948f786f98",
+  "source_tree_sha256": "7dc285c664ef6bb08c81d5b32a857fb98967fdc92fca55a7c065c557d451ab8b",
+  "exit_code": 0,
+  "wall_seconds": 75.53808473699974,
+  "ended": "2026-10-10T12:17:50.339718+00:00"
+}

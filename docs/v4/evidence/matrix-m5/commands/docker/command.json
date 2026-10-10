@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--docker",
+    "-m",
+    "docker",
+    "tests/test_v4_progress_docker.py",
+    "tests/test_v4_reliability_docker.py",
+    "tests/test_v4_resume_docker.py",
+    "tests/test_v4_shell_docker.py",
+    "tests/test_v4_validation_docker.py",
+    "--junitxml=$WORKTREE/runs/v4-reliability-20261010/matrix-m5/junit/docker.xml",
+    "-o",
+    "junit_family=xunit1"
+  ],
+  "started": "2026-10-10T11:40:15.695000+00:00",
+  "code_sha": "75b0d32814e73e262d7e925d471e3a18753a3854",
+  "source_tree_sha256": "e006fb2f774d995a40932ea4da3745f1b1c6d886257d39c5c0c736435f890f4d",
+  "exit_code": 0,
+  "wall_seconds": 206.73650705399996,
+  "ended": "2026-10-10T11:43:42.419719+00:00"
+}

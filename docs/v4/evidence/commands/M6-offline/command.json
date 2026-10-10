@@ -1,0 +1,16 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--junitxml=runs/v4-reliability-20261010/junit/M6-offline.xml",
+    "-o",
+    "junit_family=xunit1"
+  ],
+  "started": "2026-10-10T11:44:38.509217+00:00",
+  "git_sha": "c5d868772feb0baf760e189204c1b6948f786f98",
+  "ended": "2026-10-10T11:47:24.308883+00:00",
+  "exit_code": 0,
+  "wall_seconds": 165.99050424100005
+}

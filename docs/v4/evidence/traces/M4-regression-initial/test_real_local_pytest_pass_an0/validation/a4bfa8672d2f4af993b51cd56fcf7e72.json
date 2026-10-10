@@ -1,0 +1,46 @@
+{
+  "id": "a4bfa8672d2f4af993b51cd56fcf7e72",
+  "run_id": "test_real_local_pytest_pass_an0",
+  "tool_call_id": "call-1",
+  "source": "harness_run_tests",
+  "runner": "pytest",
+  "argv": [
+    "python",
+    "-m",
+    "pytest",
+    "test_sample.py",
+    "--junitxml=/tmp/repofix_validation/a4bfa8672d2f4af993b51cd56fcf7e72.xml"
+  ],
+  "cwd": "/testbed",
+  "test_targets": [
+    "test_sample.py"
+  ],
+  "started_at": "2026-10-10T11:22:56.584238+00:00",
+  "finished_at": "2026-10-10T11:22:56.832024+00:00",
+  "duration_seconds": 0.24778209600026457,
+  "workspace_signature_before": "bc6abdaafe20363a2714d985224e90d1a779c947a2fff917c98768f6b5e1174a",
+  "workspace_signature_after": "bc6abdaafe20363a2714d985224e90d1a779c947a2fff917c98768f6b5e1174a",
+  "completed": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "cancelled": false,
+  "execution_state": "EXITED",
+  "tests_collected": 1,
+  "tests_passed": 1,
+  "tests_failed": 0,
+  "tests_errors": 0,
+  "tests_skipped": 0,
+  "outcome": "PASS",
+  "output_artifact": {
+    "stdout.txt": "validation/a4bfa8672d2f4af993b51cd56fcf7e72.stdout.txt",
+    "stderr.txt": "validation/a4bfa8672d2f4af993b51cd56fcf7e72.stderr.txt"
+  },
+  "report_artifact": "validation/a4bfa8672d2f4af993b51cd56fcf7e72.xml",
+  "artifact_hashes": {
+    "a4bfa8672d2f4af993b51cd56fcf7e72.stdout.txt": "761769045d29beb1055fe6e2d3575c45ebf29c936a22286e435c087cbe42fbcd",
+    "a4bfa8672d2f4af993b51cd56fcf7e72.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "a4bfa8672d2f4af993b51cd56fcf7e72.xml": "69e22cae7f8c42c5ba1d21c3d1457d21981570392b61e5e91840d653b9e71511"
+  },
+  "parse_error": null,
+  "evidence_hash": "a5d8eb03da3a729ce2c86fdf87e51a3c61d1be4fda5f987a86a59d51a613a140"
+}

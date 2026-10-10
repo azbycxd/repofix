@@ -1,0 +1,46 @@
+{
+  "id": "51bc405dbd7c45309decb14dbd419e1c",
+  "run_id": "test_real_docker_evidence_test2",
+  "tool_call_id": "call-1",
+  "source": "harness_run_tests",
+  "runner": "pytest",
+  "argv": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_skip.py",
+    "--junitxml=/tmp/repofix_validation/51bc405dbd7c45309decb14dbd419e1c.xml"
+  ],
+  "cwd": "/testbed",
+  "test_targets": [
+    "tests/test_skip.py"
+  ],
+  "started_at": "2026-10-10T11:04:11.097486+00:00",
+  "finished_at": "2026-10-10T11:04:11.853028+00:00",
+  "duration_seconds": 0.75553833999993,
+  "workspace_signature_before": "488aca315b448d08d960b2bdc02cde2b1066544ad2ef80a98c57d33aaa8df337",
+  "workspace_signature_after": "488aca315b448d08d960b2bdc02cde2b1066544ad2ef80a98c57d33aaa8df337",
+  "completed": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "cancelled": false,
+  "execution_state": "EXITED",
+  "tests_collected": 1,
+  "tests_passed": 0,
+  "tests_failed": 0,
+  "tests_errors": 0,
+  "tests_skipped": 1,
+  "outcome": "INCONCLUSIVE",
+  "output_artifact": {
+    "stdout.txt": "validation/51bc405dbd7c45309decb14dbd419e1c.stdout.txt",
+    "stderr.txt": "validation/51bc405dbd7c45309decb14dbd419e1c.stderr.txt"
+  },
+  "report_artifact": "validation/51bc405dbd7c45309decb14dbd419e1c.xml",
+  "artifact_hashes": {
+    "51bc405dbd7c45309decb14dbd419e1c.stdout.txt": "2fcfc61b6b88da0375ab8916979dbd3e0093059b7d0661f87f2e6621db998357",
+    "51bc405dbd7c45309decb14dbd419e1c.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "51bc405dbd7c45309decb14dbd419e1c.xml": "b632d26a00b9b4b870787629f948561715a4aefe21b3e1b5aefeb3c0f45b9c32"
+  },
+  "parse_error": null,
+  "evidence_hash": "a73cf43d7cc4c2c643585a1997feae2197770a1875d4180552907450ee3bc1d2"
+}

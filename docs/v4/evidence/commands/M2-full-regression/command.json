@@ -1,0 +1,13 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "pytest",
+    "-q"
+  ],
+  "started": "2026-10-10T11:08:21.338401+00:00",
+  "git_sha": "d8ddf4678ade2080bb6e13852c1835f13b9cbed5",
+  "ended": "2026-10-10T11:08:41.863003+00:00",
+  "exit_code": 1,
+  "wall_seconds": 20.52462431799995
+}

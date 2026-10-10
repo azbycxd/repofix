@@ -1,0 +1,6 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-8.3.5, pluggy-1.6.0
+rootdir: /testbed
+collected 1 item
+
+tests/test_timeout.py 

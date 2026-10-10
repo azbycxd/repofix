@@ -1,0 +1,3 @@
+{"type": "job_cleanup", "producer": "harness", "job_id": "1e33fd17cc3d4255", "status": "CANCELLED"}
+{"type": "job_cleanup", "producer": "harness", "job_id": "722cc085dd274319", "status": "CANCELLED"}
+{"producer": "harness", "type": "container_cleanup", "status": "REMOVED", "container_id": "f51038156e85b346396ac28e871f34bac5b64d77e6dd26961a3374c79fe4be66"}

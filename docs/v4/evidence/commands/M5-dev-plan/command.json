@@ -1,0 +1,13 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "scripts/run_v4_dev.py",
+    "--output",
+    "runs/v4-reliability-20261010/dev-final"
+  ],
+  "started": "2026-10-10T11:41:34.191877+00:00",
+  "git_sha": "75b0d32814e73e262d7e925d471e3a18753a3854",
+  "ended": "2026-10-10T11:41:36.261022+00:00",
+  "exit_code": 0,
+  "wall_seconds": 2.0691612629998417
+}

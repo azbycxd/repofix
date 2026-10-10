@@ -1,0 +1,17 @@
+{
+  "command": [
+    "docker",
+    "image",
+    "inspect",
+    "--format",
+    "{{.Id}} {{.RepoTags}} {{.RepoDigests}}",
+    "swebench/sweb.eval.x86_64.django_1776_django-16429:latest",
+    "swebench/sweb.eval.x86_64.django_1776_django-15277:latest",
+    "swebench/sweb.eval.x86_64.django_1776_django-13343:latest"
+  ],
+  "started": "2026-10-10T11:57:56.944761+00:00",
+  "git_sha": "c5d868772feb0baf760e189204c1b6948f786f98",
+  "ended": "2026-10-10T11:57:57.082730+00:00",
+  "exit_code": 0,
+  "wall_seconds": 0.13800278100006835
+}

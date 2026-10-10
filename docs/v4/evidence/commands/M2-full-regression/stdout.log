@@ -1,0 +1,19 @@
+...........s....................................................... [ 35%]
+.............................F..................s....................... [ 73%]
+........s..................................ssssss                        [100%]
+=================================== FAILURES ===================================
+_______________ test_source_line_bounds_and_no_function_imports ________________
+
+    def test_source_line_bounds_and_no_function_imports():
+        root = Path(__file__).resolve().parents[1] / "src"
+        for path in root.rglob("*.py"):
+            text = path.read_text()
+>           assert all(len(line) <= 120 for line in text.splitlines()), path
+E           AssertionError: PosixPath('$WORKTREE/src/repofix/harness/progress.py')
+E           assert False
+E            +  where False = all(<generator object test_source_line_bounds_and_no_function_imports.<locals>.<genexpr> at 0x73ec53f23030>)
+
+tests/test_v3_readability.py:11: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_v3_readability.py::test_source_line_bounds_and_no_function_imports
+1 failed, 178 passed, 9 skipped, 5 subtests passed in 15.19s

@@ -1,0 +1,45 @@
+{
+  "id": "8aa27975b3bf45e5b9f640736606bff8",
+  "run_id": "django__django-16429",
+  "tool_call_id": "call_00_OZYvANEzOdpWvrHtH2pp3759",
+  "source": "harness_run_tests",
+  "runner": "pytest",
+  "argv": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/utils_tests/test_timesince.py",
+    "--junitxml=/tmp/repofix_validation/8aa27975b3bf45e5b9f640736606bff8.xml"
+  ],
+  "cwd": "/testbed",
+  "test_targets": [
+    "tests/utils_tests/test_timesince.py"
+  ],
+  "started_at": "2026-10-10T12:00:51.887015+00:00",
+  "finished_at": "2026-10-10T12:00:52.347750+00:00",
+  "duration_seconds": 0.46074887400027364,
+  "workspace_signature_before": "61ea9740e4965a52a7eceae726556c7cb50b9a7b3383c98a617e670a4a83c07a",
+  "workspace_signature_after": "61ea9740e4965a52a7eceae726556c7cb50b9a7b3383c98a617e670a4a83c07a",
+  "completed": true,
+  "exit_code": 1,
+  "timed_out": false,
+  "cancelled": false,
+  "execution_state": "EXITED",
+  "tests_collected": null,
+  "tests_passed": null,
+  "tests_failed": null,
+  "tests_errors": null,
+  "tests_skipped": null,
+  "outcome": "INCONCLUSIVE",
+  "output_artifact": {
+    "stdout.txt": "validation/8aa27975b3bf45e5b9f640736606bff8.stdout.txt",
+    "stderr.txt": "validation/8aa27975b3bf45e5b9f640736606bff8.stderr.txt"
+  },
+  "report_artifact": null,
+  "artifact_hashes": {
+    "8aa27975b3bf45e5b9f640736606bff8.stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "8aa27975b3bf45e5b9f640736606bff8.stderr.txt": "8840bae3e8ca2278792dca956a4c959ed92eac317ee2b0a1612b73c21d72c74c"
+  },
+  "parse_error": "ENV_ERROR: pytest/runtime unavailable; inspect testbed interpreter and artifacts",
+  "evidence_hash": "0946ecca115e3713c0b08bb01c4c0f612f8e7595eee8020b7df2aabb8a0c7371"
+}

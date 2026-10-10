@@ -1,0 +1,207 @@
+{
+  "status": "submitted",
+  "submitted": true,
+  "patch": "",
+  "steps": 3,
+  "provider_calls": 3,
+  "tool_calls": 3,
+  "view_calls": 0,
+  "str_replace_calls": 0,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 6,
+  "index_chunk_count": 4,
+  "index_build_seconds": 0.0003116180005235947,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "pre_fix_reproduced": false,
+  "post_fix_repro_passed": false,
+  "repro_flipped": false,
+  "first_production_edit_step": null,
+  "existing_test_modified": false,
+  "git_history_search_count": 0,
+  "network_attempt_count": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "reviewer_initial_patch": "",
+  "prompt_tokens": 300,
+  "cache_hit_tokens": 60,
+  "completion_tokens": 30,
+  "max_estimated_cost_usd": 0.00010836000000000003,
+  "wall_time_seconds": 3.769814564999251,
+  "trajectory_path": "$WORKTREE/runs/v4-reliability-20261010/traces/M4-shell-docker-fixed/test_real_terminal_cleanup_sub0/trace.jsonl",
+  "reliability": {
+    "deadline_epoch": 1791631687.432762,
+    "container": {
+      "id": "5d83fd9f4dbda7992f416a35a6f6121b8fb76a73ade3e7690d935b58a822bcab",
+      "run_id": "bdf167506e72",
+      "instance_id": "v4-end"
+    },
+    "progress": {
+      "workspace": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "reads": {},
+      "seen_results": [
+        "e1977f32dd932e83a9894ad333560cea0435a4337560e27d63f2fbfd2636cbef"
+      ],
+      "no_progress": 1,
+      "replans": 0,
+      "polls": {
+        "cbfce877c503443c": 1
+      },
+      "duration_seconds": 0.0003766229992834269,
+      "feedback_bytes": 0,
+      "samples": 3,
+      "repeat_count": 1,
+      "repeat": "09032f05230d85f81cab58a17f465355f66245593b2b33372f9008402dd680a9",
+      "test_signature": "ba197a3f3d07476f4a303e29a178a5a892848c241fc10b984e8181428a5abfa7"
+    },
+    "validation_evidence": {
+      "id": "af76e994518a4d2db60f164e7f6fb7e2",
+      "run_id": "test_real_terminal_cleanup_sub0",
+      "tool_call_id": "call_1_0",
+      "source": "harness_run_tests",
+      "runner": "pytest",
+      "argv": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/test_pass.py",
+        "--junitxml=/tmp/repofix_validation/af76e994518a4d2db60f164e7f6fb7e2.xml"
+      ],
+      "cwd": "/testbed",
+      "test_targets": [
+        "tests/test_pass.py"
+      ],
+      "started_at": "2026-10-10T11:27:08.257159+00:00",
+      "finished_at": "2026-10-10T11:27:09.010738+00:00",
+      "duration_seconds": 0.7535765109996646,
+      "workspace_signature_before": "488aca315b448d08d960b2bdc02cde2b1066544ad2ef80a98c57d33aaa8df337",
+      "workspace_signature_after": "488aca315b448d08d960b2bdc02cde2b1066544ad2ef80a98c57d33aaa8df337",
+      "completed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "cancelled": false,
+      "execution_state": "EXITED",
+      "tests_collected": 1,
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "tests_errors": 0,
+      "tests_skipped": 0,
+      "outcome": "PASS",
+      "output_artifact": {
+        "stdout.txt": "validation/af76e994518a4d2db60f164e7f6fb7e2.stdout.txt",
+        "stderr.txt": "validation/af76e994518a4d2db60f164e7f6fb7e2.stderr.txt"
+      },
+      "report_artifact": "validation/af76e994518a4d2db60f164e7f6fb7e2.xml",
+      "artifact_hashes": {
+        "af76e994518a4d2db60f164e7f6fb7e2.stdout.txt": "7884f156219fbea5564bd09ad3ef95aa56eeb533bcd55c8fc9beb8098b7affd2",
+        "af76e994518a4d2db60f164e7f6fb7e2.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "af76e994518a4d2db60f164e7f6fb7e2.xml": "41eab3768d8cab31cfefaf1ee3c712769d3ccb2a11e7e34b80f2d2f8b8c0bec3"
+      },
+      "parse_error": null,
+      "evidence_hash": "3bef16713745a9a0532bd1a699d8a2634385b25781d05f0d6062d00d5c8b4e3d"
+    },
+    "local_validation": {
+      "state": "LOCAL_TESTS_PASSED",
+      "evidence_id": "af76e994518a4d2db60f164e7f6fb7e2",
+      "evidence_hash": "3bef16713745a9a0532bd1a699d8a2634385b25781d05f0d6062d00d5c8b4e3d",
+      "workspace_signature": "488aca315b448d08d960b2bdc02cde2b1066544ad2ef80a98c57d33aaa8df337",
+      "runner": "pytest",
+      "targets": [
+        "tests/test_pass.py"
+      ],
+      "tests_collected": 1
+    },
+    "cleanup_events": [
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "cbfce877c503443c",
+        "status": "CANCELLED"
+      }
+    ],
+    "submission_state": "submitted",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness"
+  },
+  "termination_reason": "submitted",
+  "counters": {
+    "model_requests": 3,
+    "tool_calls": 3,
+    "run_tests_calls": 1,
+    "truncations": 0,
+    "str_replace_failures": 0,
+    "syntax_rollbacks": 0,
+    "bash_calls": 1,
+    "submit_calls": 1
+  },
+  "events": [
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "run_tests",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "run_tests",
+      "decision": "observed"
+    },
+    {
+      "type": "permission",
+      "decision": "allow",
+      "reason": "allowed by policy"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "bash",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "bash",
+      "decision": "observed"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "submit",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PreSubmit",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "submit",
+      "decision": "observed"
+    },
+    {
+      "type": "job_cleanup",
+      "producer": "harness",
+      "job_id": "cbfce877c503443c",
+      "status": "CANCELLED"
+    }
+  ],
+  "subagent_calls": 0,
+  "compactions": 0,
+  "hook_blocks": 0
+}

@@ -1,0 +1,195 @@
+..FFFF                                                                   [100%]
+=================================== FAILURES ===================================
+__________ test_real_job_timeout_poll_kill_limit_and_resource_inspect __________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-21/test_real_job_timeout_poll_kil0')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=29.394363098000213, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+record_property = <function record_property.<locals>.append_property at 0x7d563005bba0>
+
+    def test_real_job_timeout_poll_kill_limit_and_resource_inspect(
+        tmp_path, v4_docker_image, record_property
+    ):
+        folder = artifact_dir(tmp_path)
+        with DockerEnv(
+            "v4-jobs", v4_docker_image.image, uuid.uuid4().hex[:12], sandbox_hardening=True
+        ) as env:
+            runtime = make_runtime(tmp_path, env)
+            first = call(runtime, "bash", {"command": "sleep 30", "timeout": 1})
+            assert first.metadata["execution_state"] == "RUNNING" and first.exit_code is None
+            second = call(runtime, "bash", {"command": "sleep 30", "run_in_background": True})
+            third = call(runtime, "bash", {"command": "sleep 30", "run_in_background": True})
+            assert second.metadata["execution_state"] == "RUNNING" and "limit" in third.content
+            polled = call(runtime, "job_output", {"job_id": first.metadata["job_id"]})
+            assert polled.metadata["execution_state"] == "RUNNING"
+            cancelled = call(runtime, "job_kill", {"job_id": first.metadata["job_id"]})
+            assert cancelled.metadata["execution_state"] == "CANCELLED"
+            runtime.cleanup()
+            assert not any(runtime.jobs.output(j)["still_running"] for j in runtime.jobs.jobs)
+            env.container.reload()
+            host = env.container.attrs["HostConfig"]
+            resources = {
+                key: host[key]
+                for key in ["NetworkMode", "PidsLimit", "Memory", "NanoCpus", "CapDrop", "SecurityOpt"]
+            }
+            assert resources["NetworkMode"] == "none" and resources["PidsLimit"] == 512
+            assert resources["Memory"] == 4 * 1024**3 and resources["NanoCpus"] == 2_000_000_000
+            assert "ALL" in resources["CapDrop"] and "no-new-privileges" in resources["SecurityOpt"]
+            (folder / "docker-inspect.json").write_text(json.dumps(resources, indent=2))
+            container_id = env.container.id
+>       with docker.from_env() as client:
+E       TypeError: 'DockerClient' object does not support the context manager protocol
+
+tests/test_v4_shell_docker.py:66: TypeError
+_____________________ test_real_terminal_cleanup[deadline] _____________________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-21/test_real_terminal_cleanup_dea0')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=29.394363098000213, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+ending = 'deadline'
+record_property = <function record_property.<locals>.append_property at 0x7d562f71dbc0>
+
+    @pytest.mark.parametrize("ending", ["deadline", "interrupt", "provider"])
+    def test_real_terminal_cleanup(tmp_path, v4_docker_image, ending, record_property):
+        with DockerEnv("v4-end", v4_docker_image.image, uuid.uuid4().hex[:12]) as env:
+            config = HarnessConfig.for_profile(
+                "v4", task_deadline_seconds=2 if ending == "deadline" else 60, checkpointing=False
+            )
+            script = (
+                [{"calls": [("bash", {"command": "sleep 30", "timeout": 10})]}]
+                if ending == "deadline"
+                else [
+                    {"calls": [("bash", {"command": "sleep 30", "run_in_background": True})]},
+                    KeyboardInterrupt()
+                    if ending == "interrupt"
+                    else RuntimeError("injected provider outage"),
+                ]
+            )
+            agent = RepoFixAgent(
+                env,
+                "fixture",
+                artifact_dir(tmp_path) / "trace.jsonl",
+                "",
+                "fixture",
+                config,
+                FakeModelClient(script),
+            )
+            result = agent.run()
+            assert (
+                result.status
+                == {
+                    "deadline": "task_deadline",
+                    "interrupt": "interrupted",
+                    "provider": "provider_error",
+                }[ending]
+            )
+            assert any(
+                e["type"] == "job_cleanup" and e["status"] == "CANCELLED" for e in agent.state.events
+            )
+            container_id = env.container.id
+>       with docker.from_env() as client:
+E       TypeError: 'DockerClient' object does not support the context manager protocol
+
+tests/test_v4_shell_docker.py:112: TypeError
+____________________ test_real_terminal_cleanup[interrupt] _____________________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-21/test_real_terminal_cleanup_int0')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=29.394363098000213, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+ending = 'interrupt'
+record_property = <function record_property.<locals>.append_property at 0x7d56300ccc20>
+
+    @pytest.mark.parametrize("ending", ["deadline", "interrupt", "provider"])
+    def test_real_terminal_cleanup(tmp_path, v4_docker_image, ending, record_property):
+        with DockerEnv("v4-end", v4_docker_image.image, uuid.uuid4().hex[:12]) as env:
+            config = HarnessConfig.for_profile(
+                "v4", task_deadline_seconds=2 if ending == "deadline" else 60, checkpointing=False
+            )
+            script = (
+                [{"calls": [("bash", {"command": "sleep 30", "timeout": 10})]}]
+                if ending == "deadline"
+                else [
+                    {"calls": [("bash", {"command": "sleep 30", "run_in_background": True})]},
+                    KeyboardInterrupt()
+                    if ending == "interrupt"
+                    else RuntimeError("injected provider outage"),
+                ]
+            )
+            agent = RepoFixAgent(
+                env,
+                "fixture",
+                artifact_dir(tmp_path) / "trace.jsonl",
+                "",
+                "fixture",
+                config,
+                FakeModelClient(script),
+            )
+            result = agent.run()
+            assert (
+                result.status
+                == {
+                    "deadline": "task_deadline",
+                    "interrupt": "interrupted",
+                    "provider": "provider_error",
+                }[ending]
+            )
+            assert any(
+                e["type"] == "job_cleanup" and e["status"] == "CANCELLED" for e in agent.state.events
+            )
+            container_id = env.container.id
+>       with docker.from_env() as client:
+E       TypeError: 'DockerClient' object does not support the context manager protocol
+
+tests/test_v4_shell_docker.py:112: TypeError
+_____________________ test_real_terminal_cleanup[provider] _____________________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-21/test_real_terminal_cleanup_pro0')
+v4_docker_image = SandboxBuild(image='repofix-local:v4-reliability-pytest-fixture', build_seconds=29.394363098000213, install_commands=('python -m pip install --no-cache-dir pytest==8.3.5',))
+ending = 'provider'
+record_property = <function record_property.<locals>.append_property at 0x7d56324fc180>
+
+    @pytest.mark.parametrize("ending", ["deadline", "interrupt", "provider"])
+    def test_real_terminal_cleanup(tmp_path, v4_docker_image, ending, record_property):
+        with DockerEnv("v4-end", v4_docker_image.image, uuid.uuid4().hex[:12]) as env:
+            config = HarnessConfig.for_profile(
+                "v4", task_deadline_seconds=2 if ending == "deadline" else 60, checkpointing=False
+            )
+            script = (
+                [{"calls": [("bash", {"command": "sleep 30", "timeout": 10})]}]
+                if ending == "deadline"
+                else [
+                    {"calls": [("bash", {"command": "sleep 30", "run_in_background": True})]},
+                    KeyboardInterrupt()
+                    if ending == "interrupt"
+                    else RuntimeError("injected provider outage"),
+                ]
+            )
+            agent = RepoFixAgent(
+                env,
+                "fixture",
+                artifact_dir(tmp_path) / "trace.jsonl",
+                "",
+                "fixture",
+                config,
+                FakeModelClient(script),
+            )
+            result = agent.run()
+            assert (
+                result.status
+                == {
+                    "deadline": "task_deadline",
+                    "interrupt": "interrupted",
+                    "provider": "provider_error",
+                }[ending]
+            )
+            assert any(
+                e["type"] == "job_cleanup" and e["status"] == "CANCELLED" for e in agent.state.events
+            )
+            container_id = env.container.id
+>       with docker.from_env() as client:
+E       TypeError: 'DockerClient' object does not support the context manager protocol
+
+tests/test_v4_shell_docker.py:112: TypeError
+=========================== short test summary info ============================
+FAILED tests/test_v4_shell_docker.py::test_real_job_timeout_poll_kill_limit_and_resource_inspect
+FAILED tests/test_v4_shell_docker.py::test_real_terminal_cleanup[deadline] - ...
+FAILED tests/test_v4_shell_docker.py::test_real_terminal_cleanup[interrupt]
+FAILED tests/test_v4_shell_docker.py::test_real_terminal_cleanup[provider] - ...
+4 failed, 2 passed in 63.35s (0:01:03)

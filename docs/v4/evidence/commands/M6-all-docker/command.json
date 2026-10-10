@@ -1,0 +1,19 @@
+{
+  "command": [
+    "$HOME/venvs/repofix/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--docker",
+    "-m",
+    "docker",
+    "--junitxml=runs/v4-reliability-20261010/junit/M6-all-docker.xml",
+    "-o",
+    "junit_family=xunit1"
+  ],
+  "started": "2026-10-10T11:50:05.464012+00:00",
+  "git_sha": "c5d868772feb0baf760e189204c1b6948f786f98",
+  "ended": "2026-10-10T11:53:45.365181+00:00",
+  "exit_code": 0,
+  "wall_seconds": 220.02739216099963
+}

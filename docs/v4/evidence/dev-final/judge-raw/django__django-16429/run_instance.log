@@ -1,0 +1,46 @@
+2026-10-10 20:17:28,875 - INFO - Creating container for django__django-16429...
+2026-10-10 20:17:28,927 - INFO - Container for django__django-16429 created: e49474eda1b3fbbb4fd8819f323ac08e6be4c816073aef5810fd443778fe1976
+2026-10-10 20:17:29,103 - INFO - Container for django__django-16429 started: e49474eda1b3fbbb4fd8819f323ac08e6be4c816073aef5810fd443778fe1976
+2026-10-10 20:17:29,105 - INFO - Intermediate patch for django__django-16429 written to logs/run_evaluation/dev-final-official/deepseek-flash/django__django-16429/patch.diff, now applying to container...
+2026-10-10 20:17:29,272 - INFO - >>>>> Applied Patch:
+Checking patch django/utils/timesince.py...
+Applied patch django/utils/timesince.py cleanly.
+
+2026-10-10 20:17:29,912 - INFO - Git diff before:
+diff --git a/django/utils/timesince.py b/django/utils/timesince.py
+index 701c49bab9..f052116849 100644
+--- a/django/utils/timesince.py
++++ b/django/utils/timesince.py
+@@ -97,6 +97,8 @@ def timesince(d, now=None, reversed=False, time_strings=None, depth=2):
+             d.hour,
+             d.minute,
+             d.second,
++            d.microsecond,
++            d.tzinfo,
+         )
+     else:
+         pivot = d
+2026-10-10 20:17:29,913 - INFO - Eval script for django__django-16429 written to logs/run_evaluation/dev-final-official/deepseek-flash/django__django-16429/eval.sh; copying to container...
+2026-10-10 20:17:33,977 - INFO - Test runtime: 3.96 seconds
+2026-10-10 20:17:33,980 - INFO - Test output for django__django-16429 written to logs/run_evaluation/dev-final-official/deepseek-flash/django__django-16429/test_output.txt
+2026-10-10 20:17:34,091 - INFO - Git diff after:
+diff --git a/django/utils/timesince.py b/django/utils/timesince.py
+index 701c49bab9..f052116849 100644
+--- a/django/utils/timesince.py
++++ b/django/utils/timesince.py
+@@ -97,6 +97,8 @@ def timesince(d, now=None, reversed=False, time_strings=None, depth=2):
+             d.hour,
+             d.minute,
+             d.second,
++            d.microsecond,
++            d.tzinfo,
+         )
+     else:
+         pivot = d
+2026-10-10 20:17:34,091 - INFO - Grading answer for django__django-16429...
+2026-10-10 20:17:34,093 - INFO - report: {'django__django-16429': {'patch_is_None': False, 'patch_exists': True, 'patch_successfully_applied': True, 'resolved': True, 'infra_failure': False, 'tests_status': {'FAIL_TO_PASS': {'success': ['test_depth (utils_tests.test_timesince.TZAwareTimesinceTests)', 'test_depth_invalid (utils_tests.test_timesince.TZAwareTimesinceTests)', 'Test other units.', 'test_thousand_years_ago (utils_tests.test_timesince.TZAwareTimesinceTests)'], 'failure': []}, 'PASS_TO_PASS': {'success': ['Timesince should work with both date objects (#9672)', 'Both timesince and timeuntil should work on date objects (#17937).', 'When using two different timezones.', "If the two differing units aren't adjacent, only the first unit is", 'When the second date occurs before the first, we should always', 'equal datetimes.', 'Microseconds and seconds are ignored.', 'test_leap_year (utils_tests.test_timesince.TZAwareTimesinceTests)', 'test_leap_year_new_years_eve (utils_tests.test_timesince.TZAwareTimesinceTests)', 'test_months_edge (utils_tests.test_timesince.TZAwareTimesinceTests)', 'Test multiple units.', 'test_naive_datetime_with_tzinfo_attribute (utils_tests.test_timesince.TZAwareTimesinceTests)', 'test_second_before_equal_first_humanize_time_strings (utils_tests.test_timesince.TZAwareTimesinceTests)', 'test_depth (utils_tests.test_timesince.TimesinceTests)', 'test_depth_invalid (utils_tests.test_timesince.TimesinceTests)', 'test_leap_year (utils_tests.test_timesince.TimesinceTests)', 'test_leap_year_new_years_eve (utils_tests.test_timesince.TimesinceTests)', 'test_months_edge (utils_tests.test_timesince.TimesinceTests)', 'test_naive_datetime_with_tzinfo_attribute (utils_tests.test_timesince.TimesinceTests)', 'test_second_before_equal_first_humanize_time_strings (utils_tests.test_timesince.TimesinceTests)', 'test_thousand_years_ago (utils_tests.test_timesince.TimesinceTests)'], 'failure': []}, 'FAIL_TO_FAIL': {'success': [], 'failure': []}, 'PASS_TO_FAIL': {'success': [], 'failure': []}}}}
+Result for django__django-16429: resolved: True
+2026-10-10 20:17:34,095 - INFO - Attempting to stop container sweb.eval.django__django-16429.dev-final-official...
+2026-10-10 20:17:49,357 - INFO - Container sweb.eval.django__django-16429.dev-final-official stopped successfully.
+2026-10-10 20:17:49,358 - INFO - Attempting to remove container sweb.eval.django__django-16429.dev-final-official...
+2026-10-10 20:17:49,402 - INFO - Container sweb.eval.django__django-16429.dev-final-official removed successfully.

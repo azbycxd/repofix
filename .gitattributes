@@ -1,1 +1,5 @@
 dev_artifacts/**/*.patch -whitespace
+# Generated audit copies retain raw diagnostic/patch whitespace; source/docs stay checked.
+docs/v4/evidence/** -whitespace
+# csv.DictWriter emits standard CRLF records; keep those bytes and their audit hash.
+docs/v4/metrics.csv whitespace=cr-at-eol

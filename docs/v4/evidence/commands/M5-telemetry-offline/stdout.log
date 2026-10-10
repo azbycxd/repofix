@@ -1,0 +1,273 @@
+.FFF.......................                                              [100%]
+=================================== FAILURES ===================================
+_____________ test_model_proposals_are_not_harness_execution_facts _____________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-24/test_model_proposals_are_not_h0')
+
+    def test_model_proposals_are_not_harness_execution_facts(tmp_path):
+>       agent, result, _ = run_script(
+            tmp_path, [{"calls": [("grep", {"pattern": "VALUE"})]}], max_steps=1
+        )
+
+tests/test_v4_reliability.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_v4_progress.py:24: in run_script
+    result = agent.run()
+             ^^^^^^^^^^^
+src/repofix/agent.py:91: in run
+    return run_agent(self)
+           ^^^^^^^^^^^^^^^
+src/repofix/harness/loop.py:28: in run_agent
+    return run_v3(agent)
+           ^^^^^^^^^^^^^
+src/repofix/harness/loop.py:62: in run_v3
+    return finish(agent, state, runtime, wall)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repofix/harness/telemetry.py:126: in finish
+    agent.trace.write({"type": "summary", **summary})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <repofix.harness.reliability.ReliabilityTrace object at 0x70ae5d7d8d40>
+record = {'type': 'summary', 'status': 'max_steps', 'submitted': False, 'patch': '', ...}
+
+    def write(self, record):
+        self.sequence += 1
+        facts = self.state.metadata.get("v4", {})
+        validation = facts.get("local_validation", {})
+        progress = facts.get("progress", {})
+        env = self.agent.env
+        backend = (
+            "fake"
+            if hasattr(env, "files")
+            else "docker"
+            if getattr(env, "container", None)
+            else "local-subprocess"
+        )
+        model_backend = (
+            "fake"
+            if isinstance(self.agent.client, FakeModelClient)
+            else "provider"
+            if type(self.agent.client).__module__.startswith("openai")
+            else "test-double"
+        )
+        enriched = {
+            "schema_version": 4,
+            "producer": "harness",
+            "sequence": self.sequence,
+            "run_id": getattr(env, "run_id", self.path.parent.name),
+            "task_id": getattr(env, "instance_id", None),
+            "code_sha": self.agent.git_commit,
+            "config_hash": self.config_hash,
+            "model": self.agent.config.model,
+            "execution_backend": backend,
+            "model_backend": model_backend,
+            "step": self.state.step,
+            "tool_call_id": None,
+            "tool_name": None,
+            "execution_state": None,
+            "workspace_signature": validation.get("workspace_signature"),
+            "validation_evidence_id": validation.get("evidence_id"),
+            "validation_state": validation.get("state", "UNVERIFIED"),
+            "submission_state": self.state.termination,
+            "judge_verdict": "NOT_JUDGED",
+            "progress_signal": facts.get("last_progress_signal"),
+            "repeat_count": progress.get("repeat_count"),
+            "nudge_count": int(self.state.metadata.get("nudge_used", False)),
+            "replan_count": progress.get("replans"),
+            "checkpoint_generation": facts.get("checkpoint_generation"),
+            "snapshot_bytes": None,
+            "checkpoint_duration": None,
+            **record,
+        }
+        if "tool_calls" in enriched:
+            producer = "subagent" if self.state.depth else "assistant"
+>           enriched["tool_calls"] = [
+                {**call, "producer": producer} for call in enriched["tool_calls"]
+            ]
+E           TypeError: 'int' object is not iterable
+
+src/repofix/harness/reliability.py:82: TypeError
+_________________ test_provider_error_cost_is_unknown_not_zero _________________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-24/test_provider_error_cost_is_un0')
+
+    def test_provider_error_cost_is_unknown_not_zero(tmp_path):
+>       _, result, _ = run_script(tmp_path, [RuntimeError("connection lost")])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_v4_reliability.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_v4_progress.py:24: in run_script
+    result = agent.run()
+             ^^^^^^^^^^^
+src/repofix/agent.py:91: in run
+    return run_agent(self)
+           ^^^^^^^^^^^^^^^
+src/repofix/harness/loop.py:28: in run_agent
+    return run_v3(agent)
+           ^^^^^^^^^^^^^
+src/repofix/harness/loop.py:62: in run_v3
+    return finish(agent, state, runtime, wall)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repofix/harness/telemetry.py:126: in finish
+    agent.trace.write({"type": "summary", **summary})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <repofix.harness.reliability.ReliabilityTrace object at 0x70ae5d603110>
+record = {'type': 'summary', 'status': 'provider_error', 'submitted': False, 'patch': '', ...}
+
+    def write(self, record):
+        self.sequence += 1
+        facts = self.state.metadata.get("v4", {})
+        validation = facts.get("local_validation", {})
+        progress = facts.get("progress", {})
+        env = self.agent.env
+        backend = (
+            "fake"
+            if hasattr(env, "files")
+            else "docker"
+            if getattr(env, "container", None)
+            else "local-subprocess"
+        )
+        model_backend = (
+            "fake"
+            if isinstance(self.agent.client, FakeModelClient)
+            else "provider"
+            if type(self.agent.client).__module__.startswith("openai")
+            else "test-double"
+        )
+        enriched = {
+            "schema_version": 4,
+            "producer": "harness",
+            "sequence": self.sequence,
+            "run_id": getattr(env, "run_id", self.path.parent.name),
+            "task_id": getattr(env, "instance_id", None),
+            "code_sha": self.agent.git_commit,
+            "config_hash": self.config_hash,
+            "model": self.agent.config.model,
+            "execution_backend": backend,
+            "model_backend": model_backend,
+            "step": self.state.step,
+            "tool_call_id": None,
+            "tool_name": None,
+            "execution_state": None,
+            "workspace_signature": validation.get("workspace_signature"),
+            "validation_evidence_id": validation.get("evidence_id"),
+            "validation_state": validation.get("state", "UNVERIFIED"),
+            "submission_state": self.state.termination,
+            "judge_verdict": "NOT_JUDGED",
+            "progress_signal": facts.get("last_progress_signal"),
+            "repeat_count": progress.get("repeat_count"),
+            "nudge_count": int(self.state.metadata.get("nudge_used", False)),
+            "replan_count": progress.get("replans"),
+            "checkpoint_generation": facts.get("checkpoint_generation"),
+            "snapshot_bytes": None,
+            "checkpoint_duration": None,
+            **record,
+        }
+        if "tool_calls" in enriched:
+            producer = "subagent" if self.state.depth else "assistant"
+>           enriched["tool_calls"] = [
+                {**call, "producer": producer} for call in enriched["tool_calls"]
+            ]
+E           TypeError: 'int' object is not iterable
+
+src/repofix/harness/reliability.py:82: TypeError
+___________ test_trace_redacts_keys_jwt_authorization_and_host_paths ___________
+
+tmp_path = PosixPath('$PYTEST_TMP/pytest-24/test_trace_redacts_keys_jwt_au0')
+
+    def test_trace_redacts_keys_jwt_authorization_and_host_paths(tmp_path):
+        key = "synthetic-private-value-for-test"
+        jwt = "[REDACTED_JWT]"
+        agent = RepoFixAgent(
+            FakeEnv(),
+            key + " " + jwt + " Authorization: Bearer [REDACTED] " + str(Path.home()),
+            artifact_dir(tmp_path) / "trace.jsonl",
+            key,
+            "fixture",
+            HarnessConfig.for_profile("v4"),
+            FakeModelClient([{}, {}]),
+        )
+>       agent.run()
+
+tests/test_v4_reliability.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/repofix/agent.py:91: in run
+    return run_agent(self)
+           ^^^^^^^^^^^^^^^
+src/repofix/harness/loop.py:28: in run_agent
+    return run_v3(agent)
+           ^^^^^^^^^^^^^
+src/repofix/harness/loop.py:62: in run_v3
+    return finish(agent, state, runtime, wall)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repofix/harness/telemetry.py:126: in finish
+    agent.trace.write({"type": "summary", **summary})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <repofix.harness.reliability.ReliabilityTrace object at 0x70ae5f9771a0>
+record = {'type': 'summary', 'status': 'no_tool_call', 'submitted': False, 'patch': '', ...}
+
+    def write(self, record):
+        self.sequence += 1
+        facts = self.state.metadata.get("v4", {})
+        validation = facts.get("local_validation", {})
+        progress = facts.get("progress", {})
+        env = self.agent.env
+        backend = (
+            "fake"
+            if hasattr(env, "files")
+            else "docker"
+            if getattr(env, "container", None)
+            else "local-subprocess"
+        )
+        model_backend = (
+            "fake"
+            if isinstance(self.agent.client, FakeModelClient)
+            else "provider"
+            if type(self.agent.client).__module__.startswith("openai")
+            else "test-double"
+        )
+        enriched = {
+            "schema_version": 4,
+            "producer": "harness",
+            "sequence": self.sequence,
+            "run_id": getattr(env, "run_id", self.path.parent.name),
+            "task_id": getattr(env, "instance_id", None),
+            "code_sha": self.agent.git_commit,
+            "config_hash": self.config_hash,
+            "model": self.agent.config.model,
+            "execution_backend": backend,
+            "model_backend": model_backend,
+            "step": self.state.step,
+            "tool_call_id": None,
+            "tool_name": None,
+            "execution_state": None,
+            "workspace_signature": validation.get("workspace_signature"),
+            "validation_evidence_id": validation.get("evidence_id"),
+            "validation_state": validation.get("state", "UNVERIFIED"),
+            "submission_state": self.state.termination,
+            "judge_verdict": "NOT_JUDGED",
+            "progress_signal": facts.get("last_progress_signal"),
+            "repeat_count": progress.get("repeat_count"),
+            "nudge_count": int(self.state.metadata.get("nudge_used", False)),
+            "replan_count": progress.get("replans"),
+            "checkpoint_generation": facts.get("checkpoint_generation"),
+            "snapshot_bytes": None,
+            "checkpoint_duration": None,
+            **record,
+        }
+        if "tool_calls" in enriched:
+            producer = "subagent" if self.state.depth else "assistant"
+>           enriched["tool_calls"] = [
+                {**call, "producer": producer} for call in enriched["tool_calls"]
+            ]
+E           TypeError: 'int' object is not iterable
+
+src/repofix/harness/reliability.py:82: TypeError
+=========================== short test summary info ============================
+FAILED tests/test_v4_reliability.py::test_model_proposals_are_not_harness_execution_facts
+FAILED tests/test_v4_reliability.py::test_provider_error_cost_is_unknown_not_zero
+FAILED tests/test_v4_reliability.py::test_trace_redacts_keys_jwt_authorization_and_host_paths
+3 failed, 24 passed in 10.22s

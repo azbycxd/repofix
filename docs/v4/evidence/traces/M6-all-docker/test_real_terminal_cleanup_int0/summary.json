@@ -1,0 +1,128 @@
+{
+  "status": "interrupted",
+  "submitted": false,
+  "patch": "",
+  "steps": 2,
+  "provider_calls": 1,
+  "tool_calls": 1,
+  "view_calls": 0,
+  "str_replace_calls": 0,
+  "str_replace_failures": 0,
+  "syntax_rollbacks": 0,
+  "search_calls": 0,
+  "truncations": 0,
+  "index_file_count": 6,
+  "index_chunk_count": 4,
+  "index_build_seconds": 0.0003244459994675708,
+  "dense_build_seconds": 0,
+  "dense_cache_hit": false,
+  "dense_cache_hit_count": 0,
+  "dense_embedded_count": 0,
+  "pre_fix_reproduced": false,
+  "post_fix_repro_passed": false,
+  "repro_flipped": false,
+  "first_production_edit_step": null,
+  "existing_test_modified": false,
+  "git_history_search_count": 0,
+  "network_attempt_count": 0,
+  "reviewer_verdict": null,
+  "reviewer_reject_reason": null,
+  "reviewer_returned": false,
+  "patch_changed_after_reject": false,
+  "reviewer_calls": 0,
+  "reviewer_prompt_tokens": 0,
+  "reviewer_cache_hit_tokens": null,
+  "reviewer_completion_tokens": 0,
+  "reviewer_cost_usd": 0,
+  "reviewer_latency_seconds": 0,
+  "reviewer_initial_patch": "",
+  "prompt_tokens": 100,
+  "cache_hit_tokens": 20,
+  "completion_tokens": 10,
+  "max_estimated_cost_usd": 3.6120000000000007e-05,
+  "wall_time_seconds": 1.3654473550004695,
+  "trajectory_path": "$WORKTREE/runs/v4-reliability-20261010/traces/M6-all-docker/test_real_terminal_cleanup_int0/trace.jsonl",
+  "reliability": {
+    "deadline_epoch": 1791633235.7415354,
+    "container": {
+      "id": "7b0a11bbd8fc044ad0e070b755bc0814d702e76550c5c48ec106bd5233439c72",
+      "run_id": "953c1cc000a7",
+      "instance_id": "v4-end"
+    },
+    "progress": {
+      "workspace": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "reads": {},
+      "seen_results": [],
+      "no_progress": 0,
+      "replans": 0,
+      "polls": {
+        "e1e39cac0b45427c": 1
+      },
+      "duration_seconds": 0.0001250770001206547,
+      "feedback_bytes": 0,
+      "samples": 1,
+      "repeat_count": 1,
+      "repeat": "0f5db5ec5ba0431990b48a0332ecd5f274aa0bdddcf2cc60078576da402dc8a2",
+      "test_signature": "bab8e165016b9e9afecb2009351f146d2b1d4e9df427f621eb9d7eca0328f0e9"
+    },
+    "logical_provider_requests": 2,
+    "local_validation": {
+      "state": "UNVERIFIED",
+      "evidence_id": null
+    },
+    "last_progress_signal": "WAITING_FOR_JOB",
+    "provider_usage_incomplete": true,
+    "cleanup_events": [
+      {
+        "type": "job_cleanup",
+        "producer": "harness",
+        "job_id": "e1e39cac0b45427c",
+        "status": "CANCELLED"
+      }
+    ],
+    "submission_state": "interrupted",
+    "judge_verdict": "NOT_JUDGED",
+    "producer": "harness",
+    "candidate_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "estimated_total_usd": null,
+    "completed_provider_responses": 1,
+    "model_requests": 2
+  },
+  "termination_reason": "interrupted",
+  "counters": {
+    "model_requests": 2,
+    "tool_calls": 1,
+    "bash_calls": 1,
+    "truncations": 0,
+    "str_replace_failures": 0,
+    "syntax_rollbacks": 0
+  },
+  "events": [
+    {
+      "type": "permission",
+      "decision": "allow",
+      "reason": "allowed by policy"
+    },
+    {
+      "type": "hook",
+      "event": "PreToolUse",
+      "tool": "bash",
+      "decision": "allow"
+    },
+    {
+      "type": "hook",
+      "event": "PostToolUse",
+      "tool": "bash",
+      "decision": "observed"
+    },
+    {
+      "type": "job_cleanup",
+      "producer": "harness",
+      "job_id": "e1e39cac0b45427c",
+      "status": "CANCELLED"
+    }
+  ],
+  "subagent_calls": 0,
+  "compactions": 0,
+  "hook_blocks": 0
+}

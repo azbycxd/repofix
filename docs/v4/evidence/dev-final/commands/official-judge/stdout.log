@@ -1,0 +1,15 @@
+Running 3 instances...
+All instances run.
+Total instances: 3
+Instances submitted: 3
+Instances completed: 3
+Instances incomplete: 0
+Instances resolved: 3
+Instances unresolved: 0
+Instances with likely infrastructure failures: 0
+Instances with ambiguous failures: 0
+Instances with empty patches: 0
+Instances with errors: 0
+Unstopped containers: 0
+Unremoved images: 3
+Report written to $WORKTREE/runs/v4-reliability-20261010/dev-final/judge/deepseek-flash.dev-final-official.json
