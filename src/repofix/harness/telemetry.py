@@ -1,6 +1,7 @@
 """Legacy-compatible result plus extensible V3 summary."""
 
 import json
+import hashlib
 from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 
@@ -22,6 +23,9 @@ class TerminationReason(StrEnum):
     INTERRUPTED = "interrupted"
     NO_TOOL_CALL = "no_tool_call"
     RUNTIME_ERROR = "runtime_error"
+    STUCK = "stuck"
+    CHECKPOINT_ERROR = "checkpoint_error"
+    TASK_DEADLINE = "task_deadline"
 
 
 def record_usage(budget, usage, config):
@@ -100,6 +104,12 @@ def finish(agent, state, runtime, wall):
             "submission_state": state.termination,
             "judge_verdict": "NOT_JUDGED",
             "producer": "harness",
+            "candidate_patch_sha256": hashlib.sha256(patch.encode()).hexdigest(),
+            "estimated_total_usd": None
+            if state.metadata.get("v4", {}).get("provider_usage_incomplete")
+            else state.budget.estimated_cost,
+            "completed_provider_responses": state.budget.provider_calls,
+            "model_requests": state.metadata.get("v4", {}).get("logical_provider_requests", 0),
         }
         result = ReliableAgentResult(**values, reliability=reliability)
     else:

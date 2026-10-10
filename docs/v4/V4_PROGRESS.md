@@ -69,7 +69,7 @@
 - 约束：快照为乐观双签名一致性检查，不宣称任意恶意并发写者下的文件系统级原子快照。
   restore 仅作用于可丢弃容器 /testbed，宿主不 reset。旧 schema 不隐式迁移。
 
-## M4 — PASS
+## M4 — PASS / 75b0d32814e73e262d7e925d471e3a18753a3854
 
 - V4 前台/后台 bash 均 pipefail，保留真实退出码；grep benign 仅展示提示，SIGPIPE 141
   明示可能因 head 提前关闭；bash 永不生成 ValidationEvidence。
@@ -87,6 +87,28 @@
 - 边界：Python 无法强杀请求线程，迟到响应会丢弃；网络线程可能待 SDK 自身 timeout 后退出。
   任务时限后允许有限的清理/patch 收集宽限；不是硬实时调度或多租户安全隔离。
 
+## M5 — PASS
+
+- V4 Trace 增加 schema/producer/代码与配置哈希、独立 validation/submission/Judge 状态；
+  模型 tool_calls 为建议，tool_execution 为实际宿主执行。未知 usage/cost 保留 null。
+- 一条命令实际执行 pytest/JUnit 后生成 fault_results.jsonl、metrics.csv、summary 和
+  evidence_manifest；每项自己的测量分母，未测量项 NOT_MEASURED，保留失败/跳过。
+- 命令：`python scripts/run_v4_reliability.py --output runs/v4-reliability-20261010/matrix-m5 --docker`。
+  全量离线 210 passed / 26 skipped / 5 subtests；V4 Docker 24 passed（205.98s pytest）。
+  该 suite 在 M4 HEAD + M5 未提交代码上验收，manifest 额外保存实际 source_tree_sha256。
+- 汇总：false_local_pass 0/21；false_rejection 0/3；recovery_correct 12/12；
+  false_stuck 0/2；cleanup_correct 5/5。混合协议与 Docker 的小样本故障矩阵，非模型成功率。
+- 真 Docker 自有隐藏测试夹具：本地 PASS + 独立 Judge UNRESOLVED，Judge 信息未进 Agent。
+  这是自有 fixture Judge，不冒充官方 SWE-bench；官方 Judge 留到 M6。
+- Docker checkpoint 29 个样本 median 0.803214s、最大 snapshot 10371 bytes；
+  progress 9 个样本 median 0.000132208s。逐次值及 backend 在 summary 中，未宣称 P99。
+- 首次 telemetry 专项 3 failed / 24 passed：summary 的 tool_calls 是计数而不是列表，
+  已修正仅给列表标 producer；修后 27 passed。所有初次日志继续保留。
+- DEV 驱动固定三个 ID，各一次；先裁剪 dataset 到选中实例的公开字段，Agent 不读取
+  gold/test patch/官方测试列表；官方 Judge 在无 Provider key 的独立进程运行。
+  已检查实际 help，预览 exit 0；累计估算预算 $1，未知费用时不发后续请求。
+- 无真实 Provider/HOLDOUT 调用。M6 将先用已提交代码再次完整回归，再执行真实任务。
+
 ## Pending
 
-M5 fault suite/metrics；M6 real DEV/Judge/docs。
+M6 real DEV/Judge/docs。

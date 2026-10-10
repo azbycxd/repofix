@@ -38,6 +38,8 @@ class DeadlineModel:
 
     def complete(self, messages, tools, config):
         self.deadline.check()
+        facts = self.deadline.state.metadata.setdefault("v4", {})
+        facts["logical_provider_requests"] = facts.get("logical_provider_requests", 0) + 1
         remaining = self.deadline.remaining()
         bounded = replace(
             config, provider_timeout_seconds=min(config.provider_timeout_seconds, remaining)
@@ -59,6 +61,13 @@ class DeadlineModel:
             facts["unobserved_provider_requests"] = facts.get("unobserved_provider_requests", 0) + 1
             raise TaskDeadline("provider request exceeded total task deadline; usage is unknown")
         if "error" in value:
+            facts = self.deadline.state.metadata.setdefault("v4", {})
+            facts["provider_usage_incomplete"] = True
             raise value["error"]
         self.deadline.check()
+        usage = getattr(value["response"], "usage", None)
+        if usage is None or any(
+            getattr(usage, name, None) is None for name in ("prompt_tokens", "completion_tokens")
+        ):
+            facts["provider_usage_incomplete"] = True
         return value["response"]

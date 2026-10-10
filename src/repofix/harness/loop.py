@@ -249,7 +249,9 @@ def drive(agent, state, runtime, behavior):
                 state.pending_calls = []
                 break
         if progress:
-            agent.trace.write(progress.observe(calls, observations))
+            sample = progress.observe(calls, observations)
+            state.metadata["v4"]["last_progress_signal"] = sample["signal"]
+            agent.trace.write(sample)
         agent.trace.write(
             {
                 "type": "step",

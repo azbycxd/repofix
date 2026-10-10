@@ -59,13 +59,34 @@ def validate_selected_ids(
         raise RuntimeError("RepoFix 1.3 permits only IDs listed in tasks.txt")
 
 
-def load_instances(selected_ids: list[str]) -> dict[str, dict[str, Any]]:
+def load_instances(selected_ids: list[str], public_only: bool = False) -> dict[str, dict[str, Any]]:
     wanted = set(selected_ids)
     found: dict[str, dict[str, Any]] = {}
-    for row in load_dataset(DATASET, split=SPLIT):
+    dataset = load_dataset(DATASET, split=SPLIT)
+    if public_only:
+        indices = [
+            i for i, instance_id in enumerate(dataset["instance_id"]) if instance_id in wanted
+        ]
+        allowed = {
+            "instance_id",
+            "problem_statement",
+            "image",
+            "repo",
+            "version",
+            "base_commit",
+            "log_parser",
+            "eval_type",
+        }
+        dataset = dataset.select(indices).select_columns(
+            [c for c in dataset.column_names if c in allowed]
+        )
+    for row in dataset:
         instance_id = row["instance_id"]
         if instance_id in wanted:
             found[instance_id] = dict(row)
+            if public_only:
+                # Agent needs the image, never Judge criteria or evaluation script.
+                found[instance_id].update(FAIL_TO_PASS=[], PASS_TO_PASS=[], eval_script="true")
     missing = wanted - set(found)
     if missing:
         raise RuntimeError(f"Missing selected DEV instances: {sorted(missing)}")
@@ -358,6 +379,7 @@ def run_instance(
         trajectory_path = trajectory_dir / instance_id / "trajectory.jsonl"
     patch = ""
     reviewer_initial_patch = ""
+    agent, result = None, None
     try:
         with DockerEnv(
             instance_id,
@@ -366,14 +388,15 @@ def run_instance(
             sandbox_hardening=getattr(config, "sandbox_hardening", False),
             sandbox_user=getattr(config, "sandbox_user", None),
         ) as env:
-            result = RepoFixAgent(
+            agent = RepoFixAgent(
                 env=env,
                 issue=instance["problem_statement"],
                 trajectory_path=trajectory_path,
                 api_key=api_key,
                 git_commit=git_commit,
                 config=config,
-            ).run()
+            )
+            result = agent.run()
         patch = result.patch
         reviewer_initial_patch = result.reviewer_initial_patch
         summary = result_summary(instance_id, result, trajectory_path)
@@ -438,7 +461,34 @@ def run_instance(
             "trajectory_path": str(trajectory_path.relative_to(PROJECT_ROOT)),
             "error": safe_error,
         }
-        trace.write({"type": "summary", **summary, "patch": ""})
+        if getattr(config, "profile", "v1") == "v4":
+            if result is not None:
+                patch = result.patch
+                summary = result_summary(instance_id, result, trajectory_path)
+                summary["error"] = safe_error
+            else:
+                state = getattr(agent, "state", None)
+                for name in (
+                    "steps",
+                    "provider_calls",
+                    "tool_calls",
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "max_estimated_cost_usd",
+                    "wall_time_seconds",
+                ):
+                    summary[name] = None
+                summary["reliability"] = {
+                    **(state.metadata.get("v4", {}) if state else {}),
+                    "producer": "harness",
+                    "validation_state": "UNVERIFIED",
+                    "submission_state": "runner_error",
+                    "judge_verdict": "NOT_JUDGED",
+                    "estimated_total_usd": None,
+                }
+            trace.write({"type": "summary", "producer": "harness", **summary, "patch": patch})
+        else:
+            trace.write({"type": "summary", **summary, "patch": ""})
 
     patch_path = run_dir / f"{instance_id}.patch"
     patch_path.write_text(patch, encoding="utf-8")
@@ -530,7 +580,7 @@ def main() -> int:
 
     load_dotenv(PROJECT_ROOT / ".env", override=False)
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
-    instances = load_instances(selected_ids)
+    instances = load_instances(selected_ids, public_only=args.profile == "v4")
     run_id = args.run_id or make_run_id(args.all_dev)
 
     if args.offline_check:

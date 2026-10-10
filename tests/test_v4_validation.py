@@ -11,13 +11,16 @@ from v4_helpers import call, junit, make_runtime, scripted_pytest
 @pytest.mark.parametrize(
     "command", ["echo 'pytest passed'", "pytest tests | tee log", "pytest || true"]
 )
-def test_bash_text_cannot_create_evidence(tmp_path, command):
+def test_bash_text_cannot_create_evidence(tmp_path, command, record_property):
     runtime = make_runtime(tmp_path, background_shell=False)
     runtime.env.commands[command] = ("1 passed", 0, False, 0)
     call(runtime, "bash", {"command": command})
     assert runtime.state.metadata["v4"]["local_validation"]["state"] == "UNVERIFIED"
     assert "validation_evidence" not in runtime.state.metadata["v4"]
     assert call(runtime, "submit").metadata["hook_blocked"]
+    record_property("expected_validation", "UNVERIFIED")
+    record_property("observed_validation", runtime.evidence_policy.current()["state"])
+    record_property("failure_injection", True)
 
 
 @pytest.mark.parametrize(
@@ -46,7 +49,7 @@ def test_outcome_contract(tmp_path, kind, code, timed_out, expected, record_prop
 
 
 @pytest.mark.parametrize("method", ["bash", "apply_patch"])
-def test_pass_then_edit_is_stale(tmp_path, method):
+def test_pass_then_edit_is_stale(tmp_path, method, record_property):
     runtime = make_runtime(tmp_path, background_shell=False)
     runtime.env.argv_handler = scripted_pytest()
     call(runtime, "run_tests", {"targets": ["tests"]})
@@ -70,6 +73,9 @@ def test_pass_then_edit_is_stale(tmp_path, method):
         )
     assert runtime.evidence_policy.current()["state"] == "STALE"
     assert call(runtime, "submit").metadata["hook_blocked"]
+    record_property("expected_validation", "STALE")
+    record_property("observed_validation", runtime.evidence_policy.current()["state"])
+    record_property("failure_injection", True)
 
 
 def test_test_mutation_during_validation_is_not_pass(tmp_path):
@@ -79,7 +85,7 @@ def test_test_mutation_during_validation_is_not_pass(tmp_path):
     assert runtime.state.metadata["v4"]["validation_evidence"]["outcome"] == "INCONCLUSIVE"
 
 
-def test_child_pass_is_advice_not_evidence(tmp_path):
+def test_child_pass_is_advice_not_evidence(tmp_path, record_property):
     runtime = make_runtime(tmp_path, verify_on_submit=True, subagents="verify")
     with patch(
         "repofix.harness.tools.submit.run_subagent",
@@ -89,9 +95,12 @@ def test_child_pass_is_advice_not_evidence(tmp_path):
     assert result.metadata["hook_blocked"]
     assert runtime.evidence_policy.current()["state"] == "UNVERIFIED"
     assert runtime.state.last_validation is None
+    record_property("expected_validation", "UNVERIFIED")
+    record_property("observed_validation", runtime.evidence_policy.current()["state"])
+    record_property("failure_injection", True)
 
 
-def test_forced_submit_does_not_mean_verified_or_resolved(tmp_path):
+def test_forced_submit_does_not_mean_verified_or_resolved(tmp_path, record_property):
     runtime = make_runtime(tmp_path)
     for i in range(3):
         assert call(runtime, "submit", identifier=str(i)).metadata["hook_blocked"]
@@ -100,6 +109,11 @@ def test_forced_submit_does_not_mean_verified_or_resolved(tmp_path):
     assert runtime.state.submitted and runtime.state.termination == "submit_forced"
     assert runtime.state.metadata["v4"]["local_validation"]["state"] == "UNVERIFIED"
     assert "independent Judge" in result.content
+    record_property("expected_validation", "UNVERIFIED")
+    record_property(
+        "observed_validation", runtime.state.metadata["v4"]["local_validation"]["state"]
+    )
+    record_property("failure_injection", True)
 
 
 def test_local_pass_is_not_external_acceptance(tmp_path):

@@ -11,6 +11,7 @@ from repofix.search import BM25Index
 from .hooks import Block, Deny, HookEngine, command_policy, is_validation_command
 from .deadline import Deadline, TaskDeadline
 from .progress import digest, normalize_observation
+from .reliability import configure_trace
 from .tools.agents import AgentTools
 from .tools.files import FileTools, grep
 from .tools.plan import update_plan
@@ -25,6 +26,7 @@ from .workspace import RepoFiles
 
 class Runtime:
     def __init__(self, agent, state):
+        configure_trace(agent, state)
         self.agent, self.state = agent, state
         self.env, self.config = agent.env, agent.config
         self.deadline = Deadline(self.config, state) if self.config.profile == "v4" else None
@@ -271,6 +273,33 @@ class Runtime:
             )
 
     def execute(self, call):
+        result = self._execute(call)
+        if self.config.reliability_telemetry:
+            status = self.state.metadata.get("v4", {}).get("local_validation", {})
+            result.metadata.setdefault(
+                "execution_state",
+                "TOOL_ERROR"
+                if (
+                    result.metadata.get("error")
+                    or result.metadata.get("hook_blocked")
+                    or result.metadata.get("permission_denied")
+                )
+                else "EXITED",
+            )
+            result.metadata.update(
+                producer="harness",
+                tool_call_id=call["id"],
+                tool_name=call["name"],
+                workspace_signature=status.get("workspace_signature"),
+                validation_evidence_id=status.get("evidence_id"),
+                validation_state=status.get("state", "UNVERIFIED"),
+            )
+            self.agent.trace.write(
+                {"type": "tool_execution", "content": result.content, **result.metadata}
+            )
+        return result
+
+    def _execute(self, call):
         started = time.monotonic()
         args, error = parse_tool_arguments(call["arguments"])
         try:
