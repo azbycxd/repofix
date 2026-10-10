@@ -8,6 +8,7 @@ from pathlib import Path
 from repofix.evaluation import changed_paths
 
 from .telemetry import record_usage
+from .validation import EvidencePolicy
 
 SUMMARY_FIELDS = ("goal", "constraints", "done", "verified_facts", "failed_attempts", "next_steps")
 
@@ -53,13 +54,19 @@ class ContextManager:
         validation = dict(state.last_validation) if state.last_validation else None
         if validation and isinstance(validation.get("output"), str):
             validation["output"] = validation["output"][-2000:]
-        return {
+        facts = {
             "task": state.messages[1]["content"],
             "plan": state.plan,
             "files_changed": list(changed_paths(patch)),
             "diff_stat": stat,
             "last_validation": validation,
         }
+        if self.config.structured_validation:
+            facts["local_validation"] = EvidencePolicy(self.env, state).current()
+            facts["validation_boundary"] = (
+                "Harness evidence only; model summaries cannot issue PASS"
+            )
+        return facts
 
     def maybe_compact(self, state):
         threshold = self.config.context_window * self.config.compact_threshold

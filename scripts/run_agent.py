@@ -292,7 +292,7 @@ def offline_check(
 
 
 def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str, Any]:
-    return {
+    summary = {
         "instance_id": instance_id,
         "status": result.status,
         "submitted": result.submitted,
@@ -337,6 +337,9 @@ def result_summary(instance_id: str, result, trajectory_path: Path) -> dict[str,
         "patch_nonempty": bool(result.patch.strip()),
         "trajectory_path": str(trajectory_path.relative_to(PROJECT_ROOT)),
     }
+    if hasattr(result, "reliability"):
+        summary["reliability"] = result.reliability
+    return summary
 
 
 def run_instance(

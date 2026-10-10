@@ -24,6 +24,32 @@ class ExecutionResult:
 
 
 @dataclass(frozen=True)
+class ArgvExecutionResult:
+    stdout: str
+    stderr: str
+    exit_code: int | None
+    timed_out: bool
+    latency_seconds: float
+    completed: bool = True
+    cancelled: bool = False
+    error: str | None = None
+
+    @property
+    def output(self):
+        return self.stdout + self.stderr
+
+    @property
+    def execution_state(self):
+        if self.cancelled:
+            return "CANCELLED"
+        if self.timed_out:
+            return "TIMEOUT"
+        if self.error or not self.completed or self.exit_code is None:
+            return "ENV_ERROR"
+        return "EXITED"
+
+
+@dataclass(frozen=True)
 class StrReplaceResult:
     output: str
     success: bool
@@ -177,6 +203,81 @@ class DockerEnv:
         if result.timed_out or result.exit_code != 0:
             raise RuntimeError("Unable to collect final git diff")
         return result.output
+
+    def execute_argv(self, argv, timeout=180, cwd="/testbed") -> ArgvExecutionResult:
+        """V4 direct exec: every argument stays an argument; never shell-interpolated.
+
+        Resolve the image's testbed interpreter once via a fixed login-shell query.
+        The test process itself uses its absolute executable and GNU timeout argv.
+        """
+        if self.container is None or self.client is None:
+            raise RuntimeError("DockerEnv has not been started")
+        if (
+            not isinstance(argv, (list, tuple))
+            or not argv
+            or any(not isinstance(arg, str) or "\0" in arg for arg in argv)
+        ):
+            raise ValueError("argv must be nonempty strings without NUL")
+        if cwd != self.workdir or isinstance(timeout, bool) or not 0 < timeout <= 600:
+            raise ValueError("direct exec requires /testbed and timeout in (0,600]")
+        argv = list(argv)
+        if argv[0] == "python":
+            if not getattr(self, "_testbed_python", None):
+                located = self.execute("command -v python", timeout=10)
+                path = located.output.strip()
+                if located.exit_code != 0 or not path.startswith("/") or "\n" in path:
+                    raise RuntimeError("unable to locate testbed Python")
+                self._testbed_python = path
+            argv[0] = self._testbed_python
+        stdout, stderr, state = [], [], {"id": None, "error": None}
+
+        def worker():
+            try:
+                created = self.client.api.exec_create(
+                    self.container.id,
+                    ["timeout", "--signal=TERM", "--kill-after=1", str(timeout), *argv],
+                    workdir=cwd,
+                    user=self.sandbox_user or "root",
+                )
+                state["id"] = created["Id"]
+                for out, err in self.client.api.exec_start(created["Id"], stream=True, demux=True):
+                    if out:
+                        stdout.append(out)
+                    if err:
+                        stderr.append(err)
+            except Exception as exc:
+                state["error"] = str(exc)
+
+        started = time.monotonic()
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+        thread.join(timeout + 3)
+        code = None
+        if state["id"] and not thread.is_alive() and not state["error"]:
+            code = self.client.api.exec_inspect(state["id"]).get("ExitCode")
+        timed_out = thread.is_alive() or code in (124, 137)
+        return ArgvExecutionResult(
+            b"".join(stdout).decode("utf-8", errors="replace"),
+            b"".join(stderr).decode("utf-8", errors="replace"),
+            code,
+            timed_out,
+            time.monotonic() - started,
+            not thread.is_alive() and code is not None,
+            error=state["error"],
+        )
+
+    def read_validation_report(self, path, max_bytes=8 * 1024 * 1024):
+        if not re.fullmatch(r"/tmp/repofix_validation/[0-9a-f]{32}\.xml", path):
+            raise ValueError("invalid validation report path")
+        stream, info = self.container.get_archive(path)
+        if info.get("size", 0) > max_bytes:
+            raise ValueError("validation report exceeds size limit")
+        payload = b"".join(stream)
+        with tarfile.open(fileobj=io.BytesIO(payload)) as archive:
+            members = archive.getmembers()
+            if len(members) != 1 or not members[0].isfile() or members[0].size > max_bytes:
+                raise ValueError("validation report must be a bounded regular file")
+            return archive.extractfile(members[0]).read()
 
     def get_tracked_changes(self) -> list[tuple[str, str]]:
         """Return modified/staged tracked paths without including untracked files."""

@@ -6,7 +6,7 @@ import re
 import shlex
 from copy import deepcopy
 
-from repofix.env import DockerEnv, ExecutionResult, StrReplaceResult
+from repofix.env import ArgvExecutionResult, DockerEnv, ExecutionResult, StrReplaceResult
 
 
 class FakeEnv:
@@ -19,6 +19,26 @@ class FakeEnv:
         self.executed = []
         self.output_files = {}
         self.symlinks = {}
+        self.executed_argv = []
+        self.argv_handler = None
+
+    def execute_argv(self, argv, timeout=180, cwd="/testbed"):
+        self.executed_argv.append(list(argv))
+        if self.argv_handler:
+            return self.argv_handler(self, list(argv), timeout, cwd)
+        return ArgvExecutionResult(
+            "",
+            "unscripted argv in FakeEnv",
+            None,
+            False,
+            0,
+            completed=False,
+            error="UNSCRIPTED_FAKE_EXEC",
+        )
+
+    def read_validation_report(self, path, max_bytes=8 * 1024 * 1024):
+        payload = self.output_files[path]
+        return payload.encode() if isinstance(payload, str) else payload
 
     def resolve(self, path):
         if not isinstance(path, str) or not path or "\x00" in path or ".." in path.split("/"):

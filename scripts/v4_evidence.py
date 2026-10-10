@@ -72,6 +72,7 @@ def record(label, command, *, extra_env=None, timeout=1800):
     folder.mkdir(parents=True, exist_ok=False)
     redact = TrajectoryWriter(folder / "unused.jsonl", secrets=[key()])._redact_text
     env = dict(os.environ, PYTHONPATH=str(ROOT / "src"), PYTHONUNBUFFERED="1")
+    env["V4_EVIDENCE_DIR"] = str(OUT / "traces" / label)
     env.pop("DEEPSEEK_API_KEY", None)
     env.update(extra_env or {})
     started = time.monotonic()

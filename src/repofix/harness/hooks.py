@@ -187,7 +187,8 @@ class HookEngine:
         if config.hooks_enabled:
             self.pre_hooks.insert(0, self._command_policy)
             self.post_hooks.insert(0, self._syntax_check)
-            self.submit_hooks.append(verify_before_submit)
+            if not config.structured_validation:
+                self.submit_hooks.append(verify_before_submit)
         self.changed = {}
 
     def _command_policy(self, call, state):
@@ -266,7 +267,8 @@ class HookEngine:
                     "step": self.state.step,
                 }
                 if (
-                    result.exit_code == 0
+                    not self.config.structured_validation
+                    and result.exit_code == 0
                     and not result.metadata.get("timed_out")
                     and not result.metadata.get("still_running")
                 ):

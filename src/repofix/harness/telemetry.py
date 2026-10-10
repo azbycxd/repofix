@@ -1,10 +1,15 @@
 """Legacy-compatible result plus extensible V3 summary."""
 
 import json
-from dataclasses import asdict, fields
+from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 
 from repofix.core import AgentResult
+
+
+@dataclass(frozen=True)
+class ReliableAgentResult(AgentResult):
+    reliability: dict
 
 
 class TerminationReason(StrEnum):
@@ -89,7 +94,16 @@ def finish(agent, state, runtime, wall):
     ):
         if key in behavior:
             values[key] = behavior[key]
-    result = AgentResult(**values)
+    if agent.config.profile == "v4":
+        reliability = {
+            **state.metadata.get("v4", {}),
+            "submission_state": state.termination,
+            "judge_verdict": "NOT_JUDGED",
+            "producer": "harness",
+        }
+        result = ReliableAgentResult(**values, reliability=reliability)
+    else:
+        result = AgentResult(**values)
     summary = {
         **asdict(result),
         "termination_reason": state.termination,

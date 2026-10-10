@@ -8,6 +8,7 @@ V4_FIELDS = frozenset(
         "progress_monitor",
         "checkpoint_limits",
         "reliability_telemetry",
+        "run_tests_timeout",
     }
 )
 
@@ -51,13 +52,17 @@ class HarnessConfig(AgentConfig):
     progress_monitor: bool = False
     checkpoint_limits: bool = False
     reliability_telemetry: bool = False
+    run_tests_timeout: int = 180
 
     def __post_init__(self):
         if self.profile not in {"v1", "v3", "v4"} or self.task_kind not in {"bugfix", "feature"}:
             raise ValueError("invalid profile or task_kind")
-        if any(type(getattr(self, name)) is not bool for name in V4_FIELDS):
+        switches = V4_FIELDS - {"run_tests_timeout"}
+        if any(type(getattr(self, name)) is not bool for name in switches):
             raise ValueError("V4 switches must be booleans")
-        if self.profile != "v4" and any(getattr(self, name) for name in V4_FIELDS):
+        if type(self.run_tests_timeout) is not int or not 1 <= self.run_tests_timeout <= 600:
+            raise ValueError("run_tests_timeout must be an integer in 1..600")
+        if self.profile != "v4" and any(getattr(self, name) for name in switches):
             raise ValueError("V4 mechanisms require profile v4")
         if self.subagents not in {"none", "explore", "verify", "both"}:
             raise ValueError("invalid subagents mode")
@@ -121,7 +126,7 @@ class HarnessConfig(AgentConfig):
             else {}
         )
         if profile == "v4":
-            enabled.update({name: True for name in V4_FIELDS})
+            enabled.update({name: True for name in V4_FIELDS - {"run_tests_timeout"}})
         enabled.update(overrides)
         if profile == "v1" and any(
             enabled.get(name, False)

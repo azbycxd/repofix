@@ -16,6 +16,7 @@ from .tools.result import ToolResult as ToolResult
 from .tools.search import SearchTools
 from .tools.shell import ShellTools, benign_exit
 from .tools.submit import SubmitTool
+from .validation import EvidencePolicy, ValidationRunner
 from .workspace import RepoFiles
 
 
@@ -42,6 +43,10 @@ class Runtime:
         shared_index = getattr(agent, "shared_code_index", None)
         self.index, self.index_stats = shared_index or BM25Index.from_repository(self.env)
         self.file_tools = FileTools(self.files, self.state, self.config)
+        self.validation = (
+            ValidationRunner(agent, state) if self.config.structured_validation else None
+        )
+        self.evidence_policy = EvidencePolicy(self.env, state) if self.validation else None
         self.search_tools = SearchTools(self.index)
         self.submit_tool = SubmitTool(self)
         self.agent_tools = AgentTools(self)
@@ -61,6 +66,33 @@ class Runtime:
             )
             for item in TOOLS
         )
+        if self.validation:
+            self.registry.add(
+                ToolSpec(
+                    "run_tests",
+                    schema(
+                        "run_tests",
+                        "Run pytest directly (no shell). Returns structured, workspace-bound "
+                        "local test evidence. Run after edits; local PASS is not official task resolution.",
+                        {
+                            "runner": {"type": "string", "enum": ["pytest"], "default": "pytest"},
+                            "targets": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 1,
+                            },
+                            "args": {"type": "array", "items": {"type": "string"}},
+                            "timeout": {
+                                "type": "integer",
+                                "maximum": self.config.run_tests_timeout,
+                            },
+                        },
+                        ["targets"],
+                    ),
+                    False,
+                    self.validation.run,
+                )
+            )
         self.registry.add(
             ToolSpec(
                 "grep",
@@ -241,6 +273,8 @@ class Runtime:
                 if isinstance(decision, (Block, Deny)):
                     return ToolResult(decision.reason, metadata={"hook_blocked": True})
                 before = self.hooks.before()
+            if self.validation and call["name"] == "run_tests":
+                self.validation.call_id = call["id"]
             result = self.registry.execute(call["name"], hooked["args"])
             if getattr(self.agent, "subagent_mode", None) == "verify" and call["name"] == "bash":
                 self.state.metadata.setdefault("verification_commands", []).append(
@@ -259,6 +293,15 @@ class Runtime:
             result = ToolResult(f"{call['name']} error: {exc}", metadata={"error": True})
             if call["name"] == "str_replace":
                 result.metadata["str_replace_failures"] = 1
+        if self.evidence_policy:
+            try:
+                status = self.evidence_policy.current()
+            except Exception as exc:
+                status = {"state": "UNVERIFIED", "reason": "workspace unavailable: " + str(exc)}
+            if not self.state.metadata.get("submit_forced"):
+                self.state.metadata.setdefault("v4", {})["local_validation"] = status
+            result.metadata["producer"] = "harness"
+            result.metadata["validation_state"] = status["state"]
         path = None
         if len(result.content) > self.config.tool_output_max_chars:
             # Call IDs are provider-controlled. Never use them as filesystem paths.

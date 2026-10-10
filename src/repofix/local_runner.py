@@ -186,6 +186,8 @@ def run_local_repository(
         "wall_time_seconds": time.monotonic() - started,
         "error": error,
     }
+    if result is not None and hasattr(result, "reliability"):
+        summary["reliability"] = result.reliability
     (output / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

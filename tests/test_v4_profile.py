@@ -31,7 +31,9 @@ def make_agent(tmp_path, profile="v4", script=()):
 def test_profile_defaults_and_legacy_serialization():
     for profile in ("v1", "v3", "v4"):
         config = HarnessConfig.for_profile(profile)
-        assert all(getattr(config, name) == (profile == "v4") for name in V4_FIELDS)
+        assert all(
+            getattr(config, name) == (profile == "v4") for name in V4_FIELDS - {"run_tests_timeout"}
+        )
         assert set(serialize_config(config)).intersection(V4_FIELDS) == (
             V4_FIELDS if profile == "v4" else set()
         )

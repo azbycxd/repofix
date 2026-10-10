@@ -25,15 +25,29 @@ class SubmitTool:
                 if verified["verdict"] == "FAIL":
                     self.state.count("hook_blocks")
                     return ToolResult(json.dumps(verified), metadata={"hook_blocked": True})
-                self.state.last_validation = {
-                    "command": "verify subagent",
-                    "output": verified["evidence"],
-                    "exit_code": 0,
-                }
-                self.state.last_validation_version = self.state.workspace_version
+                if not self.config.structured_validation:
+                    self.state.last_validation = {
+                        "command": "verify subagent",
+                        "output": verified["evidence"],
+                        "exit_code": 0,
+                    }
+                    self.state.last_validation_version = self.state.workspace_version
+                else:
+                    self.state.events.append(
+                        {
+                            "type": "verify_advice",
+                            "producer": "subagent",
+                            "verdict": verified["verdict"],
+                            "trusted_validation": False,
+                        }
+                    )
             else:
                 self.state.metadata["submit_forced"] = True
                 self.state.submit_blocks = 3
+        if self.runtime.evidence_policy:
+            reason = self.runtime.evidence_policy.before_submit()
+            if reason:
+                return ToolResult(reason, metadata={"hook_blocked": True, "producer": "harness"})
         if self.hooks:
             decision = self.hooks.pre_submit()
             if isinstance(decision, (Block, Deny)):
@@ -42,4 +56,13 @@ class SubmitTool:
         self.state.termination = (
             "submit_forced" if self.state.metadata.get("submit_forced") else "submitted"
         )
+        if self.runtime.evidence_policy:
+            local = self.state.metadata["v4"]["local_validation"]
+            if self.state.metadata.get("submit_forced"):
+                local["state"] = "UNVERIFIED"
+            return ToolResult(
+                "Candidate patch accepted; local_validation="
+                + local["state"]
+                + "; task acceptance requires an independent Judge."
+            )
         return ToolResult("Submission accepted.")
