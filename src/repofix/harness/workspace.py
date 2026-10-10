@@ -6,9 +6,15 @@ import posixpath
 import shlex
 import uuid
 
+from .compat import compatible_source
+
 
 def run_python(env, source):
-    result = env.execute("python -c " + shlex.quote(source), timeout=60)
+    prefix = ""
+    if getattr(env, "v4_helpers", False):
+        source = compatible_source(source, PATH_HELPER)
+        prefix = "LC_ALL=C.UTF-8 LANG=C.UTF-8 PYTHONIOENCODING=utf-8 "
+    result = env.execute(prefix + "python -c " + shlex.quote(source), timeout=60)
     if result.exit_code != 0 or result.timed_out:
         raise RuntimeError(result.output or "repository helper failed")
     return result.output

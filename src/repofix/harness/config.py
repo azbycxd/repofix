@@ -16,6 +16,8 @@ V4_FIELDS = V4_SWITCHES | {
     "progress_no_progress_steps",
     "progress_max_replans",
     "progress_job_poll_budget",
+    "checkpoint_max_bytes",
+    "checkpoint_keep_generations",
 }
 
 
@@ -63,6 +65,8 @@ class HarnessConfig(AgentConfig):
     progress_no_progress_steps: int = 8
     progress_max_replans: int = 2
     progress_job_poll_budget: int = 20
+    checkpoint_max_bytes: int = 64 * 1024 * 1024
+    checkpoint_keep_generations: int = 4
 
     def __post_init__(self):
         if self.profile not in {"v1", "v3", "v4"} or self.task_kind not in {"bugfix", "feature"}:

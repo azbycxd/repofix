@@ -5,7 +5,7 @@ import uuid
 from contextlib import ExitStack
 from pathlib import Path
 
-from repofix.agent import RepoFixAgent
+from repofix.agent import RepoFixAgent, TrajectoryWriter
 from repofix.env import DockerEnv
 from repofix.evaluation import build_evaluation_patch
 from repofix.python_sandbox import PythonSandboxImage
@@ -14,20 +14,23 @@ from repofix.tasks.spec import TaskSpec
 from repofix.worktree import TemporaryGitWorktree, inspect_repository
 
 from .checkpoint import CheckpointStore
+from .checkpoint_v4 import checkpoint_store
 from .config import HarnessConfig
 
 
 def resume_run(run_dir, api_key):
     run_dir = Path(run_dir).resolve()
-    state, _ = CheckpointStore(run_dir).load()
-    CheckpointStore.require_resumable(state)
     manifest = json.loads((run_dir / "resume.json").read_text())
+    config = HarnessConfig(**manifest["config"])
+    audit = TrajectoryWriter(run_dir / "resume-audit.jsonl", secrets=[api_key])
+    store = checkpoint_store(config, run_dir, audit._redact, audit.secrets)
+    state, _ = store.load()
+    CheckpointStore.require_resumable(state)
     if manifest.get("python_hooks_present"):
         raise ValueError("Python hooks must be re-registered via the programmatic resume API")
     holdout = Path(__file__).resolve().parents[3] / "holdout.txt"
     if manifest.get("instance_id") in set(holdout.read_text().split()):
         raise ValueError("Refusing to resume a HOLDOUT task")
-    config = HarnessConfig(**manifest["config"])
     if config.profile not in {"v3", "v4"}:
         raise ValueError("resume requires a v3 or v4 checkpoint")
     name = Path(manifest["trajectory"])
@@ -67,7 +70,7 @@ def resume_run(run_dir, api_key):
                     sandbox_user=config.sandbox_user,
                 )
             )
-        state = CheckpointStore(run_dir).resume(env)
+        state = store.resume(env)
         agent = RepoFixAgent(
             env, manifest["issue"], run_dir / name, api_key, manifest["git_commit"], config
         )

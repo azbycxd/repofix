@@ -36,7 +36,7 @@
 - 边界：本地测试范围不代表 issue 已解决；目标仓库/插件本身属于可信输入，XML 不是
   对抗恶意同容器 root 的安全证明。后续官方 Judge 独立记录，不升级本地证据。
 
-## M2 — PASS
+## M2 — PASS / aae1868556fab2a4df19b653a2bf22fecad414e6
 
 - 复用 HookEngine 内容指纹与 file_reads；不重建 BM25。不变的工具/输出、计划改写不会
   重置无进展计数；代码变化和新测试结果会重置。默认重复 3 次 WARN，8 步无进展 REPLAN，
@@ -49,7 +49,26 @@
 - 监测逐步记录 duration_seconds/feedback_bytes；stuck 保留 patch/预算但不 submitted/resolved。
   原始命令与轨迹：runs/v4-reliability-20261010/{commands,traces}/M2-*。
 
+## M3 — PASS
+
+- V4 schema=4，单调 generation/state hash + 内容寻址 snapshot；双内容签名检测捕获期间变化。
+  pre_dispatch 失败时不执行工具；post_mutation/end_step 保留配对状态。旧 V3 store 规则不动。
+- 上限 64 MiB 未压缩快照、最近 4 个完整 generation；只删除无 manifest 引用的 blob。
+  相同内容复用 blob。明确拒绝凭证、路径逃逸、非 regular tar、超限/磁盘写失败。
+- 新进程恢复 pending call 为唯一 INTERRUPTED_UNKNOWN，不重放；保留预算/步数，重算
+  evidence 状态；旧后台 job LOST_AFTER_RESTART；只清理匹配本 run label 的旧容器。
+- 定向离线 28 passed；完整离线 193 passed / 18 skipped / 5 subtests。
+  最终真实 Docker 9 passed（173.553s wall）：6 项 SIGKILL/独立进程恢复（pre_dispatch、
+  post_edit、mid_write、active_job、坏 manifest、坏 blob），2 项真实环境拒绝副作用，
+  1 项实际 Django13343 Python 3.6 编辑/语法回滚/快照恢复。
+- 初次 Docker 7 failed / 2 passed，完整保留。修复：加载状态不再污染可审计 manifest；
+  Python3.6 ASCII locale 遇真实 Unicode 文件名失败，V4 direct argv/helper 明确 UTF-8。
+  helper 的 Path API/text/unlink 兼容变换只作用于宿主自有模板和 V4，不改目标源码。
+- 原始证据：runs/v4-reliability-20261010/{commands,traces}/M3-*。
+  SIGKILL 实际 process_exit=-9、resume_exit=0、旧容器移除与签名对齐写在各 fault.json。
+- 约束：快照为乐观双签名一致性检查，不宣称任意恶意并发写者下的文件系统级原子快照。
+  restore 仅作用于可丢弃容器 /testbed，宿主不 reset。旧 schema 不隐式迁移。
+
 ## Pending
 
-M3 checkpoint consistency/kill-resume；
 M4 lifecycle/deadline；M5 fault suite/metrics；M6 real DEV/Judge/docs。

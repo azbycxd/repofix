@@ -26,6 +26,15 @@ class Runtime:
     def __init__(self, agent, state):
         self.agent, self.state = agent, state
         self.env, self.config = agent.env, agent.config
+        if self.config.profile == "v4":
+            self.env.v4_helpers = True
+            container = getattr(self.env, "container", None)
+            if container is not None:
+                state.metadata.setdefault("v4", {})["container"] = {
+                    "id": container.id,
+                    "run_id": self.env.run_id,
+                    "instance_id": self.env.instance_id,
+                }
         self.files = RepoFiles(self.env)
         self.shell_tools = ShellTools(self.env, self.config)
         self.jobs = self.shell_tools.jobs

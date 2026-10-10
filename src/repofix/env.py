@@ -230,6 +230,13 @@ class DockerEnv:
                 self._testbed_python = path
             argv[0] = self._testbed_python
         stdout, stderr, state = [], [], {"id": None, "error": None}
+        environment = {"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "PYTHONIOENCODING": "utf-8"}
+        if getattr(self, "_testbed_python", None):
+            image_env = self.container.attrs.get("Config", {}).get("Env", [])
+            inherited_path = next(
+                (v[5:] for v in image_env if v.startswith("PATH=")), "/usr/bin:/bin"
+            )
+            environment["PATH"] = posixpath.dirname(self._testbed_python) + ":" + inherited_path
 
         def worker():
             try:
@@ -238,6 +245,7 @@ class DockerEnv:
                     ["timeout", "--signal=TERM", "--kill-after=1", str(timeout), *argv],
                     workdir=cwd,
                     user=self.sandbox_user or "root",
+                    environment=environment,
                 )
                 state["id"] = created["Id"]
                 for out, err in self.client.api.exec_start(created["Id"], stream=True, demux=True):

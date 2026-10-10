@@ -8,7 +8,8 @@ from threading import RLock
 from repofix.reproduction import ReproductionTelemetry
 from repofix.tasks.prompts import task_messages
 
-from .checkpoint import CheckpointStore, atomic_write
+from .checkpoint import atomic_write
+from .checkpoint_v4 import checkpoint_store, save_boundary
 from .config import serialize_config
 from .context import ContextManager
 from .model import OpenAICompatibleClient
@@ -49,7 +50,9 @@ def run_v3(agent):
         agent.config, model, agent.env, agent.trace.path.parent, agent.trace._redact_text
     )
     checkpoints = (
-        CheckpointStore(agent.trace.path.parent, agent.trace._redact, agent.trace.secrets)
+        checkpoint_store(
+            agent.config, agent.trace.path.parent, agent.trace._redact, agent.trace.secrets
+        )
         if agent.config.checkpointing
         else None
     )
@@ -145,8 +148,8 @@ def run_v3(agent):
         state.pending_calls = list(calls)
         # Persist the assistant/tool-call protocol before any tool can interrupt
         # or mutate the workspace. Resume marks pending calls, never replays them.
-        if checkpoints:
-            checkpoints.save(state, agent.env)
+        if not save_boundary(checkpoints, state, runtime, "pre_dispatch"):
+            break
         if state.budget.estimated_cost >= agent.config.max_cost_usd:
             state.termination = "max_cost"
             for call in calls:
@@ -196,8 +199,13 @@ def run_v3(agent):
                     **result.metadata,
                 }
             )
-            if checkpoints and call["name"] in {"bash", "str_replace", "apply_patch", "verify"}:
-                checkpoints.save(state, agent.env)
+            if checkpoints and (
+                call["name"] in {"bash", "str_replace", "apply_patch", "verify"}
+                or agent.config.checkpoint_limits
+                and call["name"] == "run_tests"
+            ):
+                if not save_boundary(checkpoints, state, runtime, "post_mutation"):
+                    break
             if state.termination:
                 for pending in state.pending_calls:
                     state.messages.append(
@@ -237,7 +245,7 @@ def run_v3(agent):
                     {"role": "user", "content": "Continue using tools, or submit when done."}
                 )
                 state.metadata["nudge_used"] = True
-        if checkpoints:
-            checkpoints.save(state, agent.env)
+        if not save_boundary(checkpoints, state, runtime, "end_step"):
+            break
     state.termination = state.termination or "max_steps"
     return finish(agent, state, runtime, time.monotonic() - started)
