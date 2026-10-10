@@ -1,6 +1,24 @@
-from dataclasses import dataclass, fields
+from dataclasses import asdict, dataclass, fields
 
 from repofix.core import AgentConfig
+
+V4_FIELDS = frozenset(
+    {
+        "structured_validation",
+        "progress_monitor",
+        "checkpoint_limits",
+        "reliability_telemetry",
+    }
+)
+
+
+def serialize_config(config):
+    """Keep legacy trace/resume config keys byte-compatible; V4 alone adds fields."""
+    payload = asdict(config)
+    if getattr(config, "profile", "v1") != "v4":
+        for name in V4_FIELDS:
+            payload.pop(name, None)
+    return payload
 
 
 @dataclass(frozen=True)
@@ -29,10 +47,18 @@ class HarnessConfig(AgentConfig):
     verification_patterns: tuple[str, ...] = ()
     verify_on_submit: bool = False
     readonly_workers: int = 4
+    structured_validation: bool = False
+    progress_monitor: bool = False
+    checkpoint_limits: bool = False
+    reliability_telemetry: bool = False
 
     def __post_init__(self):
-        if self.profile not in {"v1", "v3"} or self.task_kind not in {"bugfix", "feature"}:
+        if self.profile not in {"v1", "v3", "v4"} or self.task_kind not in {"bugfix", "feature"}:
             raise ValueError("invalid profile or task_kind")
+        if any(type(getattr(self, name)) is not bool for name in V4_FIELDS):
+            raise ValueError("V4 switches must be booleans")
+        if self.profile != "v4" and any(getattr(self, name) for name in V4_FIELDS):
+            raise ValueError("V4 mechanisms require profile v4")
         if self.subagents not in {"none", "explore", "verify", "both"}:
             raise ValueError("invalid subagents mode")
         if (
@@ -71,8 +97,8 @@ class HarnessConfig(AgentConfig):
 
     @classmethod
     def for_profile(cls, profile="v1", **overrides):
-        if profile not in {"v1", "v3"}:
-            raise ValueError("profile must be v1 or v3")
+        if profile not in {"v1", "v3", "v4"}:
+            raise ValueError("profile must be v1, v3 or v4")
         if profile == "v1" and overrides.get("task_kind", "bugfix") != "bugfix":
             raise ValueError("feature tasks require --profile v3")
         enabled = (
@@ -91,9 +117,11 @@ class HarnessConfig(AgentConfig):
                     "permissions_enabled",
                 )
             }
-            if profile == "v3"
+            if profile in {"v3", "v4"}
             else {}
         )
+        if profile == "v4":
+            enabled.update({name: True for name in V4_FIELDS})
         enabled.update(overrides)
         if profile == "v1" and any(
             enabled.get(name, False)

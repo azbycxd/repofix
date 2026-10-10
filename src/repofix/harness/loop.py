@@ -9,6 +9,7 @@ from repofix.reproduction import ReproductionTelemetry
 from repofix.tasks.prompts import task_messages
 
 from .checkpoint import CheckpointStore, atomic_write
+from .config import serialize_config
 from .context import ContextManager
 from .model import OpenAICompatibleClient
 from .runtime import Runtime
@@ -51,7 +52,7 @@ def run_v3(agent):
     if checkpoints:
         manifest = {
             "python_hooks_present": any(agent.python_hooks.values()),
-            "config": asdict(agent.config),
+            "config": serialize_config(agent.config),
             "issue": agent.issue,
             "git_commit": agent.git_commit,
             "trajectory": agent.trace.path.name,
@@ -74,7 +75,7 @@ def run_v3(agent):
         {
             "type": "config",
             "git_commit": agent.git_commit,
-            "config": asdict(agent.config),
+            "config": serialize_config(agent.config),
             "problem_statement": agent.issue,
         }
     )

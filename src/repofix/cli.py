@@ -25,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo", required=True, type=Path)
     parser.add_argument("--issue", "--task", dest="issue", required=True)
     parser.add_argument("--kind", choices=("bugfix", "feature"), default="bugfix")
-    parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
+    parser.add_argument("--profile", choices=("v1", "v3", "v4"), default="v1")
     parser.add_argument("--permissions-file")
     parser.add_argument("--hooks-file")
     parser.add_argument("--config", type=Path, help="JSON HarnessConfig overrides (no credentials)")

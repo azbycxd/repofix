@@ -28,8 +28,8 @@ def resume_run(run_dir, api_key):
     if manifest.get("instance_id") in set(holdout.read_text().split()):
         raise ValueError("Refusing to resume a HOLDOUT task")
     config = HarnessConfig(**manifest["config"])
-    if config.profile != "v3":
-        raise ValueError("resume requires a v3 checkpoint")
+    if config.profile not in {"v3", "v4"}:
+        raise ValueError("resume requires a v3 or v4 checkpoint")
     name = Path(manifest["trajectory"])
     if name.name != str(name):
         raise ValueError("trajectory must be inside the run directory")

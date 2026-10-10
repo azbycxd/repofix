@@ -122,7 +122,7 @@ def run_local_repository(
                     result = agent.run()
                     full_diff = result.patch
             worktree.materialize_patch(
-                full_diff, stage_new=getattr(config, "profile", "v1") == "v3"
+                full_diff, stage_new=getattr(config, "profile", "v1") in {"v3", "v4"}
             )
             isolated_patch_materialized = worktree.diff() == full_diff
             if full_diff and not isolated_patch_materialized:

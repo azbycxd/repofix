@@ -205,3 +205,11 @@ REPOFIX_DOCKER_INTEGRATION=1 pytest -q --docker tests/test_local_sandbox_integra
 ```
 
 所有新结果写到用户指定的运行目录；不会改写历史 `dev_artifacts/`。
+
+## V4：可靠性合同（隔离实施）
+
+`--profile v4` 显式开启；默认仍为 v1，v1/v3 原有工具 schema 和运行配置不变。
+V4 复用现有 Loop/Runtime，逐里程碑实现结构化本地验证、无进展纠偏与恢复边界。
+候选补丁（submission）、指定测试通过（local validation）、独立官方判分
+（task acceptance）是三个不同结果，不能合并称为 success。
+实现与实测进度见 `docs/v4/V4_PROGRESS.md`；未完成机制不得视为已验收。

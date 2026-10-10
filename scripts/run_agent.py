@@ -8,7 +8,6 @@ import os
 import posixpath
 import subprocess
 import sys
-from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -18,7 +17,7 @@ from dotenv import load_dotenv
 from swebench.harness.utils import make_test_spec
 
 from repofix.cli import main as cli_main
-from repofix.harness.config import HarnessConfig
+from repofix.harness.config import HarnessConfig, serialize_config
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = PROJECT_ROOT / "src"
@@ -352,7 +351,7 @@ def run_instance(
     spec = make_test_spec(instance)
     instance_id = spec.instance_id
     trajectory_path = trajectory_dir / f"{instance_id}.jsonl"
-    if getattr(config, "profile", "v1") == "v3":
+    if getattr(config, "profile", "v1") in {"v3", "v4"}:
         trajectory_path = trajectory_dir / instance_id / "trajectory.jsonl"
     patch = ""
     reviewer_initial_patch = ""
@@ -385,7 +384,7 @@ def run_instance(
                     "step": 0,
                     "model": config.model,
                     "git_commit": git_commit,
-                    "config": asdict(config),
+                    "config": serialize_config(config),
                     "problem_statement": instance["problem_statement"],
                 }
             )
@@ -484,7 +483,7 @@ def run_instance(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile", choices=("v1", "v3"), default="v1")
+    parser.add_argument("--profile", choices=("v1", "v3", "v4"), default="v1")
     parser.add_argument("--resume", type=Path)
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--instance-id")
