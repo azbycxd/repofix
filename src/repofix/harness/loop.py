@@ -12,6 +12,7 @@ from .checkpoint import atomic_write
 from .checkpoint_v4 import checkpoint_store, save_boundary
 from .config import serialize_config
 from .context import ContextManager
+from .deadline import DeadlineModel, TaskDeadline
 from .model import OpenAICompatibleClient
 from .progress import ProgressMonitor
 from .runtime import Runtime
@@ -40,12 +41,36 @@ def run_v3(agent):
         behavior_data["_failed_reproduction_keys"] = set(behavior_data["_failed_reproduction_keys"])
     behavior = ReproductionTelemetry(**behavior_data)
     runtime = Runtime(agent, state)
+    if agent.config.profile != "v4":
+        return finish(agent, state, runtime, drive(agent, state, runtime, behavior))
+    started = time.monotonic()
+    try:
+        wall = drive(agent, state, runtime, behavior)
+    except KeyboardInterrupt:
+        state.termination = "interrupted"
+        wall = time.monotonic() - started
+    except TaskDeadline as exc:
+        state.termination = "task_deadline"
+        agent.trace.write({"type": "deadline", "producer": "harness", "error": str(exc)})
+        wall = time.monotonic() - started
+    except Exception as exc:
+        state.termination = "runtime_error"
+        agent.trace.write({"type": "runtime_error", "producer": "harness", "error": str(exc)})
+        wall = time.monotonic() - started
+    finally:
+        runtime.cleanup()
+    return finish(agent, state, runtime, wall)
+
+
+def drive(agent, state, runtime, behavior):
     progress = (
         ProgressMonitor(agent.config, agent.env, state) if agent.config.progress_monitor else None
     )
     model = (
         agent.client if hasattr(agent.client, "complete") else OpenAICompatibleClient(agent.client)
     )
+    if runtime.deadline:
+        model = DeadlineModel(model, runtime.deadline)
     context = ContextManager(
         agent.config, model, agent.env, agent.trace.path.parent, agent.trace._redact_text
     )
@@ -88,6 +113,8 @@ def run_v3(agent):
     )
     event_cursor = len(state.events)
     while state.step < agent.config.max_steps and not state.termination:
+        if runtime.deadline:
+            runtime.deadline.check()
         if agent.config.context_management:
             with agent.budget_lock:
                 event = (
@@ -112,6 +139,10 @@ def run_v3(agent):
                     break
                 response = model.complete(state.messages, runtime.registry.schemas, agent.config)
                 record_usage(state.budget, response.usage, agent.config)
+        except TaskDeadline as exc:
+            state.termination = "task_deadline"
+            agent.trace.write({"type": "deadline", "producer": "harness", "error": str(exc)})
+            break
         except KeyboardInterrupt:
             state.termination = "interrupted"
             break
@@ -248,4 +279,4 @@ def run_v3(agent):
         if not save_boundary(checkpoints, state, runtime, "end_step"):
             break
     state.termination = state.termination or "max_steps"
-    return finish(agent, state, runtime, time.monotonic() - started)
+    return time.monotonic() - started

@@ -32,16 +32,23 @@ def benign_exit(command, code):
 
 
 class JobManager:
-    def __init__(self, env):
+    def __init__(self, env, reliable=False, max_jobs=2):
         self.env = env
         self.jobs = {}
+        self.reliable, self.max_jobs = reliable, max_jobs
 
     def start(self, command):
+        if (
+            self.reliable
+            and sum(self.output(j)["still_running"] for j in self.jobs) >= self.max_jobs
+        ):
+            raise ValueError("background job limit reached; inspect or stop an existing job")
         job_id = uuid.uuid4().hex[:16]
         job = {"id": job_id, "command": command, "start": time.monotonic(), "pid": None}
         if hasattr(self.env, "files"):
             job["result"] = self.env.execute(command)
         else:
+            effective_command = "set -o pipefail\n" + command if self.reliable else command
             worker = """import subprocess, pathlib, sys
 command, stem = sys.argv[1:]
 with open(stem + '.log', 'wb', buffering=0) as out:
@@ -53,7 +60,7 @@ folder = pathlib.Path('/tmp/repofix_jobs'); folder.mkdir(mode=0o700, exist_ok=Tr
 stem = str(folder / {job_id!r})
 environment = dict(os.environ); environment.update({SHELL_ENV!r})
 with open(os.devnull, 'wb') as null:
-    p = subprocess.Popen(['python', '-c', {worker!r}, {command!r}, stem], cwd='/testbed',
+    p = subprocess.Popen(['python', '-c', {worker!r}, {effective_command!r}, stem], cwd='/testbed',
         env=environment, stdin=subprocess.DEVNULL, stdout=null, stderr=null, start_new_session=True)
 print(json.dumps(p.pid))
 """
@@ -102,7 +109,7 @@ print(json.dumps({{'output': output,
             output, code = data["output"], data["code"]
         if tail_lines is not None:
             output = "\n".join(output.splitlines()[-tail_lines:])
-        return {
+        data = {
             "output": output,
             "exit_code": code,
             "duration": elapsed,
@@ -111,6 +118,33 @@ print(json.dumps({{'output': output,
             "command": job["command"],
             "log_path": f"/tmp/repofix_jobs/{job_id}.log",
         }
+        if self.reliable:
+            data["execution_state"] = (
+                "CANCELLED" if job.get("cancelled") else "RUNNING" if code is None else "EXITED"
+            )
+            if (
+                hasattr(self.env, "files")
+                and code is None
+                and not job["result"].timed_out
+                and elapsed >= job["result"].latency_seconds
+            ):
+                data.update(still_running=False, execution_state="ENV_ERROR")
+            if code is None and not hasattr(self.env, "files"):
+                status_source = f"""import pathlib, json
+p = pathlib.Path('/proc/{job["pid"]}/stat')
+try: alive = p.read_text().rsplit(')', 1)[1].split()[0] != 'Z'
+except FileNotFoundError: alive = False
+print(json.dumps(alive))
+"""
+                if not json.loads(run_python(self.env, status_source)):
+                    data.update(still_running=False, execution_state="ENV_ERROR")
+            data["pipefail_enabled"] = True
+            data["pipeline_failure"] = bool(code not in (None, 0) and "|" in job["command"])
+            if code == 141 and "|" in job["command"]:
+                data["sigpipe_note"] = (
+                    "SIGPIPE may mean an early-closing consumer (e.g. head), not a test verdict."
+                )
+        return data
 
     def wait(self, job_id, timeout):
         deadline = time.monotonic() + timeout
@@ -139,7 +173,50 @@ except ProcessLookupError: pass
 pathlib.Path('/tmp/repofix_jobs/{job_id}.exit').write_text('137')
 """
             run_python(self.env, source)
+            if self.reliable:
+                verify = f"""import pathlib, time, json
+def live_group():
+    for path in pathlib.Path('/proc').glob('[0-9]*/stat'):
+        try: fields = path.read_text().rsplit(')', 1)[1].split()
+        except (FileNotFoundError, PermissionError): continue
+        if fields[0] != 'Z' and int(fields[2]) == {job["pid"]!r}: return True
+    return False
+for attempt in range(20):
+    if not live_group(): break
+    time.sleep(0.05)
+if live_group(): raise RuntimeError('tracked process group still alive after SIGKILL')
+"""
+                run_python(self.env, verify)
+        if self.reliable:
+            job["cancelled"] = True
         return self.output(job_id)
+
+    def cleanup(self):
+        events = []
+        for job_id in self.jobs:
+            try:
+                status = self.output(job_id, tail_lines=1)
+                if status["still_running"] or status.get("execution_state") == "ENV_ERROR":
+                    status = self.kill(job_id)
+                events.append(
+                    {
+                        "type": "job_cleanup",
+                        "producer": "harness",
+                        "job_id": job_id,
+                        "status": status.get("execution_state", "EXITED"),
+                    }
+                )
+            except Exception as exc:
+                events.append(
+                    {
+                        "type": "cleanup_error",
+                        "producer": "harness",
+                        "job_id": job_id,
+                        "status": "ERROR",
+                        "error": str(exc),
+                    }
+                )
+        return events
 
 
 def foreground(env, command, timeout):
@@ -164,7 +241,8 @@ from .result import ToolResult
 class ShellTools:
     def __init__(self, env, config):
         self.env, self.config = env, config
-        self.jobs = JobManager(env)
+        self.reliable = config.profile == "v4"
+        self.jobs = JobManager(env, self.reliable, config.max_background_jobs)
 
     def bash(self, args):
         command, timeout = args["command"], args.get("timeout", 120)
@@ -180,10 +258,37 @@ class ShellTools:
             data = (
                 self.jobs.output(job_id)
                 if args.get("run_in_background", False)
-                else self.jobs.wait(job_id, timeout)
+                else self.jobs.wait(
+                    job_id,
+                    min(timeout, self.env.v4_deadline.remaining())
+                    if getattr(self.env, "v4_deadline", None)
+                    else timeout,
+                )
             )
         else:
-            data = foreground(self.env, command, timeout)
+            effective = (
+                "set -o pipefail\n" + command
+                if self.reliable and not hasattr(self.env, "files")
+                else command
+            )
+            data = foreground(self.env, effective, timeout)
+            if self.reliable:
+                data["command"] = command
+                data["execution_state"] = (
+                    "TIMEOUT"
+                    if data["timed_out"]
+                    else "ENV_ERROR"
+                    if data["exit_code"] is None
+                    else "EXITED"
+                )
+                data["pipefail_enabled"] = True
+                data["pipeline_failure"] = bool(
+                    data["exit_code"] not in (None, 0) and "|" in command
+                )
+        if self.reliable and data.get("exit_code") == 141 and "|" in command:
+            data["sigpipe_note"] = (
+                "SIGPIPE may mean an early-closing consumer (e.g. head), not a test verdict."
+            )
         return self.shell_result(data)
 
     @staticmethod

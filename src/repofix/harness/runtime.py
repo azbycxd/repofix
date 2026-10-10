@@ -9,6 +9,7 @@ from repofix.core import TOOLS, format_tool_observation, parse_tool_arguments
 from repofix.search import BM25Index
 
 from .hooks import Block, Deny, HookEngine, command_policy, is_validation_command
+from .deadline import Deadline, TaskDeadline
 from .progress import digest, normalize_observation
 from .tools.agents import AgentTools
 from .tools.files import FileTools, grep
@@ -26,8 +27,11 @@ class Runtime:
     def __init__(self, agent, state):
         self.agent, self.state = agent, state
         self.env, self.config = agent.env, agent.config
+        self.deadline = Deadline(self.config, state) if self.config.profile == "v4" else None
         if self.config.profile == "v4":
             self.env.v4_helpers = True
+            self.env.v4_deadline = self.deadline
+            self.env.lifecycle_sink = self.lifecycle_event
             container = getattr(self.env, "container", None)
             if container is not None:
                 state.metadata.setdefault("v4", {})["container"] = {
@@ -270,6 +274,8 @@ class Runtime:
         started = time.monotonic()
         args, error = parse_tool_arguments(call["arguments"])
         try:
+            if self.deadline:
+                self.deadline.check()
             if error:
                 raise ValueError(error)
             hooked = {**call, "args": args}
@@ -300,10 +306,19 @@ class Runtime:
                 )
             if self.hooks:
                 result = self.hooks.post(hooked, result, before)
+        except TaskDeadline as exc:
+            self.state.termination = "task_deadline"
+            result = ToolResult(str(exc), metadata={"execution_state": "TIMEOUT", "error": True})
         except Exception as exc:
             result = ToolResult(f"{call['name']} error: {exc}", metadata={"error": True})
             if call["name"] == "str_replace":
                 result.metadata["str_replace_failures"] = 1
+        if self.deadline:
+            if self.deadline.remaining() <= 0:
+                self.state.termination = "task_deadline"
+            result.metadata.setdefault(
+                "execution_state", "TOOL_ERROR" if result.metadata.get("error") else "EXITED"
+            )
         if self.evidence_policy:
             try:
                 status = self.evidence_policy.current()
@@ -353,12 +368,31 @@ class Runtime:
                     header += " | benign_exit"
                     result.metadata["benign_exit"] = True
             result.content = header + "\n" + result.content
+            if self.deadline:
+                result.content = (
+                    "execution_state: " + result.metadata["execution_state"] + "\n" + result.content
+                )
+                if result.metadata.get("sigpipe_note"):
+                    result.content += "\n" + result.metadata["sigpipe_note"]
         result.metadata.update(
             {key: value for key, value in asdict(observation).items() if key != "content"}
         )
         result.metadata["duration_seconds"] = time.monotonic() - started
         result.metadata["returned_chars"] = len(result.content)
         return result
+
+    def lifecycle_event(self, event):
+        self.state.events.append(event)
+        self.state.metadata.setdefault("v4", {}).setdefault("cleanup_events", []).append(event)
+        self.agent.trace.write(event)
+
+    def cleanup(self):
+        if self.deadline:
+            self.deadline.enforcing = (
+                False  # bounded cleanup and patch capture get their own timeout
+            )
+            for event in self.jobs.cleanup():
+                self.lifecycle_event(event)
 
     def bash(self, args):
         return self.shell_tools.bash(args)

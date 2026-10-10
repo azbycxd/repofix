@@ -147,6 +147,8 @@ class DockerEnv:
             raise RuntimeError("DockerEnv has not been started")
         if timeout <= 0:
             raise ValueError("timeout must be positive")
+        timeout = self._bounded_timeout(timeout)
+        reliable = getattr(self, "v4_helpers", False)
 
         chunks: list[bytes] = []
         state: dict[str, object] = {"exec_id": None, "error": None}
@@ -158,7 +160,7 @@ class DockerEnv:
                     [
                         "timeout",
                         "--signal=TERM",
-                        "--kill-after=5",
+                        "--kill-after=1" if reliable else "--kill-after=5",
                         str(timeout),
                         "bash",
                         "-lc",
@@ -177,10 +179,12 @@ class DockerEnv:
         started = time.monotonic()
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
-        thread.join(timeout + 7)
+        thread.join(timeout + (3 if reliable else 7))
         host_timeout = thread.is_alive()
         exec_id = state["exec_id"]
-        if host_timeout and exec_id:
+        if host_timeout and reliable:
+            self._cancel_unresponsive_exec()
+        elif host_timeout and exec_id:
             inspected = self.client.api.exec_inspect(str(exec_id))
             pid = inspected.get("Pid")
             if pid:
@@ -220,6 +224,7 @@ class DockerEnv:
             raise ValueError("argv must be nonempty strings without NUL")
         if cwd != self.workdir or isinstance(timeout, bool) or not 0 < timeout <= 600:
             raise ValueError("direct exec requires /testbed and timeout in (0,600]")
+        timeout = self._bounded_timeout(timeout)
         argv = list(argv)
         if argv[0] == "python":
             if not getattr(self, "_testbed_python", None):
@@ -260,6 +265,8 @@ class DockerEnv:
         thread = threading.Thread(target=worker, daemon=True)
         thread.start()
         thread.join(timeout + 3)
+        if thread.is_alive():
+            self._cancel_unresponsive_exec()
         code = None
         if state["id"] and not thread.is_alive() and not state["error"]:
             code = self.client.api.exec_inspect(state["id"]).get("ExitCode")
@@ -504,7 +511,88 @@ class DockerEnv:
             False,
         )
 
+    def _bounded_timeout(self, timeout):
+        deadline = getattr(self, "v4_deadline", None)
+        if deadline and deadline.enforcing:
+            deadline.check()
+            return min(timeout, max(0.001, deadline.remaining()))
+        return timeout
+
+    def _lifecycle(self, event):
+        event = {"producer": "harness", **event}
+        sink = getattr(self, "lifecycle_sink", None)
+        if sink:
+            sink(event)
+        else:
+            self.lifecycle_events = getattr(self, "lifecycle_events", []) + [event]
+
+    def _cancel_unresponsive_exec(self):
+        # ExecInspect.Pid is not a container-namespace PID. Never guess a kill target.
+        try:
+            self.container.kill()
+            self._lifecycle(
+                {
+                    "type": "exec_cancelled",
+                    "status": "CANCELLED",
+                    "reason": "host exec deadline",
+                    "container_id": self.container.id,
+                }
+            )
+        except Exception as exc:
+            self._lifecycle({"type": "cleanup_error", "status": "ERROR", "error": str(exc)})
+
+    def _close_reliable(self):
+        container, client = self.container, self.client
+        self.container = self.client = None
+        if container is not None:
+            try:
+                container.stop(timeout=2)
+            except docker.errors.NotFound:
+                pass
+            except Exception as exc:
+                self._lifecycle(
+                    {"type": "cleanup_error", "phase": "stop", "status": "ERROR", "error": str(exc)}
+                )
+            try:
+                container.remove(force=True)
+                self._lifecycle(
+                    {"type": "container_cleanup", "status": "REMOVED", "container_id": container.id}
+                )
+            except docker.errors.NotFound:
+                self._lifecycle(
+                    {
+                        "type": "container_cleanup",
+                        "status": "ALREADY_ABSENT",
+                        "container_id": container.id,
+                    }
+                )
+            except Exception as exc:
+                self._lifecycle(
+                    {
+                        "type": "cleanup_error",
+                        "phase": "remove",
+                        "status": "ERROR",
+                        "error": str(exc),
+                        "container_id": container.id,
+                    }
+                )
+        if client is not None:
+            try:
+                client.close()
+            except Exception as exc:
+                self._lifecycle(
+                    {
+                        "type": "cleanup_error",
+                        "phase": "client_close",
+                        "status": "ERROR",
+                        "error": str(exc),
+                    }
+                )
+
     def close(self) -> None:
+        if getattr(self, "v4_helpers", False):
+            self._close_reliable()
+            return
         container, client = self.container, self.client
         self.container = None
         self.client = None

@@ -15,6 +15,7 @@ from pathlib import Path, PurePosixPath
 
 from .checkpoint import CheckpointStore, atomic_write, restore_workspace
 from .compat import PY36_PATH_HELPER
+from .deadline import TaskDeadline
 from .state import Budget, RunState
 from .validation import EvidencePolicy, workspace_signature
 from .workspace import run_python
@@ -351,6 +352,8 @@ def save_boundary(store, state, runtime, reason):
         store.save(state, runtime.env)
         return True
     try:
+        if runtime.deadline:
+            runtime.deadline.check()
         jobs = []
         for job_id in runtime.jobs.jobs:
             status = runtime.jobs.output(job_id, tail_lines=1)
@@ -367,8 +370,11 @@ def save_boundary(store, state, runtime, reason):
         runtime.agent.trace.write(event)
         return True
     except Exception as exc:
+        expired = (
+            isinstance(exc, TaskDeadline) or runtime.deadline and runtime.deadline.remaining() <= 0
+        )
         event = {
-            "type": "checkpoint_error",
+            "type": "deadline" if expired else "checkpoint_error",
             "producer": "harness",
             "reason": reason,
             "error": str(exc),
@@ -376,13 +382,13 @@ def save_boundary(store, state, runtime, reason):
         }
         state.events.append(event)
         runtime.agent.trace.write(event)
-        state.termination = "checkpoint_error"
+        state.termination = "task_deadline" if expired else "checkpoint_error"
         for call in state.pending_calls:
             state.messages.append(
                 {
                     "role": "tool",
                     "tool_call_id": call["id"],
-                    "content": "[not executed: required checkpoint failed]",
+                    "content": "[not executed: " + state.termination + "]",
                 }
             )
         state.pending_calls = []

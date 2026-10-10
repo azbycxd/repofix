@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass, fields
+import math
 
 from repofix.core import AgentConfig
 
@@ -18,6 +19,8 @@ V4_FIELDS = V4_SWITCHES | {
     "progress_job_poll_budget",
     "checkpoint_max_bytes",
     "checkpoint_keep_generations",
+    "task_deadline_seconds",
+    "max_background_jobs",
 }
 
 
@@ -67,6 +70,8 @@ class HarnessConfig(AgentConfig):
     progress_job_poll_budget: int = 20
     checkpoint_max_bytes: int = 64 * 1024 * 1024
     checkpoint_keep_generations: int = 4
+    task_deadline_seconds: float = 1800.0
+    max_background_jobs: int = 2
 
     def __post_init__(self):
         if self.profile not in {"v1", "v3", "v4"} or self.task_kind not in {"bugfix", "feature"}:
@@ -76,9 +81,15 @@ class HarnessConfig(AgentConfig):
             raise ValueError("V4 switches must be booleans")
         if type(self.run_tests_timeout) is not int or not 1 <= self.run_tests_timeout <= 600:
             raise ValueError("run_tests_timeout must be an integer in 1..600")
-        for name in V4_FIELDS - V4_SWITCHES - {"run_tests_timeout"}:
+        for name in V4_FIELDS - V4_SWITCHES - {"run_tests_timeout", "task_deadline_seconds"}:
             if type(getattr(self, name)) is not int or getattr(self, name) < 1:
                 raise ValueError(name + " must be a positive integer")
+        if (
+            type(self.task_deadline_seconds) not in {int, float}
+            or not math.isfinite(self.task_deadline_seconds)
+            or self.task_deadline_seconds <= 0
+        ):
+            raise ValueError("task_deadline_seconds must be finite and positive")
         if self.profile != "v4" and any(getattr(self, name) for name in switches):
             raise ValueError("V4 mechanisms require profile v4")
         if self.subagents not in {"none", "explore", "verify", "both"}:

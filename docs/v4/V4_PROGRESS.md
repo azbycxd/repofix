@@ -49,7 +49,7 @@
 - 监测逐步记录 duration_seconds/feedback_bytes；stuck 保留 patch/预算但不 submitted/resolved。
   原始命令与轨迹：runs/v4-reliability-20261010/{commands,traces}/M2-*。
 
-## M3 — PASS
+## M3 — PASS / c4d96ba474db7e98a067a02aac19c9dc21e6bda6
 
 - V4 schema=4，单调 generation/state hash + 内容寻址 snapshot；双内容签名检测捕获期间变化。
   pre_dispatch 失败时不执行工具；post_mutation/end_step 保留配对状态。旧 V3 store 规则不动。
@@ -69,6 +69,24 @@
 - 约束：快照为乐观双签名一致性检查，不宣称任意恶意并发写者下的文件系统级原子快照。
   restore 仅作用于可丢弃容器 /testbed，宿主不 reset。旧 schema 不隐式迁移。
 
+## M4 — PASS
+
+- V4 前台/后台 bash 均 pipefail，保留真实退出码；grep benign 仅展示提示，SIGPIPE 141
+  明示可能因 head 提前关闭；bash 永不生成 ValidationEvidence。
+- RUNNING、EXITED、TIMEOUT、CANCELLED、ENV_ERROR、TOOL_ERROR 单独记录。
+  后台上限 2；总 deadline 1800s（含恢复等待时间），工具/Provider 等待受剩余时限约束。
+  Provider 超总时限的晚响应不再触发工具，用量未知明确记录，非计为免费调用。
+- 终止时 kill 已追踪 process group 并检查没有非 zombie 活进程；finally 移除所属容器。
+  Docker daemon 故障产生 cleanup_error，不能静默写已回收。容器 close 的 V4 等待为 2s。
+- 离线目标 25 passed / 1 skipped；完整离线 203 passed / 25 skipped / 5 subtests。
+  真实 Docker 7 passed（69.897s wall），实测 inspect：network=none、4GiB、2 CPU、
+  pids=512、cap_drop=ALL、no-new-privileges。正常提交/中断/Provider 异常/总时限均清理。
+- 第一次 Docker 4 failed / 2 passed，原因是新增测试错误地把 DockerClient 当 context manager；
+  改为 closing(client) 并完整重跑，未放宽断言。旧 V3 管道仍返回其原协议。
+- 原始记录：runs/v4-reliability-20261010/{commands,traces}/M4-*。
+- 边界：Python 无法强杀请求线程，迟到响应会丢弃；网络线程可能待 SDK 自身 timeout 后退出。
+  任务时限后允许有限的清理/patch 收集宽限；不是硬实时调度或多租户安全隔离。
+
 ## Pending
 
-M4 lifecycle/deadline；M5 fault suite/metrics；M6 real DEV/Judge/docs。
+M5 fault suite/metrics；M6 real DEV/Judge/docs。
